@@ -1,0 +1,4 @@
+module clang_c {
+  umbrella header "clang.h"
+  link "clang"
+}
