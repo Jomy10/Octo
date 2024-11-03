@@ -25,3 +25,13 @@ extension CXTypeKind: CXKind {
     "type kind"
   }
 }
+
+extension CXTokenKind: CXKind {
+  public var spelling: String? {
+    return nil
+  }
+
+  public var kindName: String {
+    "token kind"
+  }
+}

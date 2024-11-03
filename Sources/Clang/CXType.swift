@@ -47,4 +47,8 @@ extension CXType: Equatable {
   public static func ==(lhs: CXType, rhs: CXType) -> Bool {
     clang_equalTypes(lhs, rhs) == 1
   }
+
+  public var size: Int64 {
+    clang_Type_getSizeOf(self)
+  }
 }

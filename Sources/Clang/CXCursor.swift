@@ -76,6 +76,28 @@ extension CXCursor {
   public var location: CXSourceLocation {
     clang_getCursorLocation(self)
   }
+
+  public var semanticParent: CXCursor {
+    clang_getCursorSemanticParent(self)
+  }
+
+  public var translationUnit: CXTranslationUnit {
+    clang_Cursor_getTranslationUnit(self)
+  }
+
+  public var extent: CXSourceRange {
+    clang_getCursorExtent(self)
+  }
+}
+
+extension CXCursor: Hashable, Equatable {
+  public static func ==(lhs: Self, rhs: Self) -> Bool {
+    clang_equalCursors(lhs, rhs) != 0
+  }
+
+  public func hash(into hasher: inout Hasher) {
+    hasher.combine(clang_hashCursor(self))
+  }
 }
 
 public enum Language: Int32 {

@@ -11,13 +11,17 @@ extension URL {
 internal func unhandledKind(_ kind: some CXKind, location: CXSourceLocation? = nil, file: String = #file, function: String = #function, line: Int = #line) -> Never {
   var msg = "Unhandled \(kind.kindName) (\(kind.rawValue)): \(kind.spelling!) @ \(file) \(function):\(line)"
   if let location = location {
-    msg += "\nOrigiinated at \(location)"
+    msg += "\nOriginated at \(location)"
   }
   fatalError(msg)
 }
 
+internal func unhandledToken(_ token: CXToken, translationUnit: CXTranslationUnit, file: String = #file, function: String = #function, line: Int = #line) -> Never {
+  fatalError("Unhandled token: \(token.spelling(translationUnit: translationUnit)!) @ \(file) \(function):\(line)\nOriginated at \(token.sourceLocation(translationUnit: translationUnit))")
+}
+
 @main
-struct HeaderBridge: ParsableCommand {
+struct Brooklyn: ParsableCommand {
   @Option(name: .shortAndLong, help: "At which severity level of diagnostics does the program exit")
   var severityError: String = "error"
 
@@ -82,7 +86,7 @@ struct HeaderBridge: ParsableCommand {
   }
 
   mutating func run() throws {
-    let compilerInfo = clangInfo()
+    let compilerInfo = try clangInfo()
     let commandLineArguments = compilerInfo.searchPaths.map { $0.asArgument } + self.clangFlag
     print(commandLineArguments)
     let index = CXIndex(excludeDeclarationsFromPCH: false, displayDiagnostics: false)!
@@ -120,7 +124,16 @@ struct HeaderBridge: ParsableCommand {
     do {
       try cursor.visitChildren(visit, userData: &prog)
     } catch let err {
-      print(err)
+      fatalError("\(err)")
     }
+
+    print(prog)
+
+    let rubyOptions = ConversionOptions.rubyOptions(
+      libraryName: "Test",
+      ffiLibraryName: "test"
+    )
+    let rubySource = try! prog.convert(language: .ruby, headerIncludes: isHeaderIncluded, options: rubyOptions)
+    print(rubySource)
   }
 }

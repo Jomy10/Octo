@@ -1,8 +1,12 @@
 import Clang
 
+enum Language {
+  case ruby
+}
+
 struct CProgram {
   var userTypes: [String:CUserType]
-  var typedefs: [String:CType]
+  var typedefs: [String:CTypedef]
   var globalVariables: [String:CVariable]
   var functions: [String:CFunction]
 
@@ -14,6 +18,9 @@ struct CProgram {
     case enumConstantExists(name: String)
     case userTypeWrongType(name: String, expected: String)
     case functionExists(name: String)
+    case functionDoesntExist(name: String)
+    case parameterExists(name: String, functionName: String)
+    case parameterDoesntExist(name: String, functionName: String)
   }
 
   public init() {
@@ -21,6 +28,16 @@ struct CProgram {
     self.typedefs = [:]
     self.globalVariables = [:]
     self.functions = [:]
+  }
+
+  public func convert(
+    language: Language,
+    headerIncludes: ((String) throws -> Bool)? = nil,
+    options: ConversionOptions
+  ) throws -> String {
+    switch (language) {
+      case .ruby: return try self.convertRuby(headerIncludes, options: options)
+    }
   }
 
   public mutating func addUserType(_ type: CUserType) /*throws(Self.Error)*/ throws {
@@ -66,12 +83,12 @@ struct CProgram {
     self.userTypes[enumName] = .enum(e)
   }
 
-  public mutating func addTypedef(_ typedefName: String, _ referredToType: CType) /*throws(Self.Error)*/ throws {
-    if self.typedefs[typedefName] != nil {
-      throw Self.Error.typedefExists(name: typedefName)
+  public mutating func addTypedef(_ typedef: CTypedef) /*throws(Self.Error)*/ throws {
+    if self.typedefs[typedef.name] != nil {
+      throw Self.Error.typedefExists(name: typedef.name)
     }
 
-    self.typedefs[typedefName] = referredToType
+    self.typedefs[typedef.name] = typedef
   }
 
   public mutating func addGlobalVariable(_ variable: CVariable) /*throws(Self.Error)*/ throws {
@@ -88,6 +105,38 @@ struct CProgram {
     }
 
     self.functions[fn.name] = fn
+  }
+
+  public mutating func addParam(to functionName: String, _ param: CParam) throws {
+    if self.functions[functionName] == nil {
+      throw Self.Error.functionDoesntExist(name: functionName)
+    }
+
+    try self.functions[functionName]!.addParam(param)
+  }
+
+  public mutating func addAttribute(toFunction functionName: String, _ attr: CAttribute) throws {
+    if self.functions[functionName] == nil {
+      throw Self.Error.functionDoesntExist(name: functionName)
+    }
+
+    self.functions[functionName]!.addAttribute(attr)
+  }
+
+  public mutating func addAttribute(toParameter parameterCursor: CXCursor, belongingToFunction functionName: String, _ attr: CAttribute) throws {
+    if self.functions[functionName] == nil {
+      throw Self.Error.functionDoesntExist(name: functionName)
+    }
+
+    try self.functions[functionName]!.addAttribute(toParameter: parameterCursor, attr)
+  }
+
+  public mutating func addAttribute(toRecord recordName: String, _ attr: CAttribute) throws {
+    if self.userTypes[recordName] == nil {
+      throw Self.Error.userTypeDoesntExist(name: recordName)
+    }
+
+    self.userTypes[recordName]!.addAttribute(attr)
   }
 }
 
@@ -125,12 +174,35 @@ extension CUserType {
         return e.name
     }
   }
+
+  var origin: CXSourceLocation {
+    switch (self) {
+      case .struct(let record): return record.origin
+      case .union(let record): return record.origin
+      case .enum(let cenum): return cenum.origin
+    }
+  }
+
+  mutating func addAttribute(_ attr: CAttribute) {
+    switch (self) {
+      case .struct(var record):
+        record.addAttribute(attr)
+        self = .struct(record)
+      case .union(var record):
+        record.addAttribute(attr)
+        self = .union(record)
+      case .enum(var cenum):
+        cenum.addAttribute(attr)
+        self = .enum(cenum)
+    }
+  }
 }
 
 struct CRecord {
   let name: String
   var fields: [CField]
   let origin: CXSourceLocation
+  var attributes: [CAttribute] = []
 
   init(name: String, origin: CXSourceLocation) {
     self.name = name
@@ -140,6 +212,10 @@ struct CRecord {
 
   mutating func addField(_ field: CField) {
     self.fields.append(field)
+  }
+
+  mutating func addAttribute(_ attr: CAttribute) {
+    self.attributes.append(attr)
   }
 }
 
@@ -153,6 +229,8 @@ struct CEnum {
   let name: String
   var constants: [String:CEnumConstant]
   let origin: CXSourceLocation
+  var attributes: [CAttribute] = []
+
   var isSigned: Bool {
     return self.type.kind == .Int
   }
@@ -171,15 +249,26 @@ struct CEnum {
 
     self.constants[ecase.name] = ecase
   }
+
+  mutating func addAttribute(_ attr: CAttribute) {
+    self.attributes.append(attr)
+  }
 }
 
 struct CEnumConstant {
   let name: String
   let value: Self.Value
 
-  enum Value {
+  enum Value: CustomStringConvertible {
     case signed(Int64)
     case unsigned(UInt64)
+
+    var description: String {
+      switch (self) {
+        case .signed(let value): return String(value)
+        case .unsigned(let value): return String(value)
+      }
+    }
   }
 
   init(name: String, signedValue: Int64) {
@@ -208,4 +297,72 @@ struct CVariable {
 struct CFunction {
   let type: CType
   let name: String
+  let origin: CXSourceLocation
+  var parameters: [CParam] = []
+  var parametersMap: [CXCursor:Int] = [:]
+  var attributes: [CAttribute] = []
+
+  var returnType: CType {
+    switch (self.type.kind) {
+      case .FunctionProto(callingConv: _, args: _, result: let result): return result
+      case .FunctionNoProto(callingConv: _, args: _, result: let result): return result
+      default: fatalError("Invalid function type \(self.type)")
+    }
+  }
+
+  mutating func addParam(_ param: CParam) throws {
+    if self.parametersMap[param.cursor] != nil {
+      throw CProgram.Error.parameterExists(name: param.name ?? "unnamed", functionName: self.name)
+    }
+
+    let id = self.parameters.count
+    self.parameters.append(param)
+    self.parametersMap[param.cursor] = id
+  }
+
+  mutating func addAttribute(_ attr: CAttribute) {
+    self.attributes.append(attr)
+  }
+
+  mutating func addAttribute(toParameter parameterCursor: CXCursor, _ attr: CAttribute) throws {
+    if self.parametersMap[parameterCursor] == nil {
+      throw CProgram.Error.parameterDoesntExist(name: parameterCursor.spelling!, functionName: self.name)
+    }
+
+    self.parameters[self.parametersMap[parameterCursor]!].addAttribute(attr)
+  }
+}
+
+struct CParam {
+  let type: CType
+  let name: String?
+  let cursor: CXCursor
+  var attributes: [CAttribute] = []
+
+  mutating func addAttribute(_ attr: CAttribute) {
+    self.attributes.append(attr)
+  }
+}
+
+enum CAttributeType {
+  case annotate
+  case unexposed
+}
+
+struct CAttribute {
+  let name: String
+  let type: CAttributeType
+  let params: [String]
+
+  init(name: String, type: CAttributeType, params: [String] = []) {
+    self.name = name
+    self.type = type
+    self.params = params
+  }
+}
+
+struct CTypedef {
+  let name: String
+  let refersTo: CType
+  let origin: CXSourceLocation
 }

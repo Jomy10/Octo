@@ -1,7 +1,7 @@
 import clang_c
 
 extension CXSourceLocation {
-  var expansionLocation: (
+  public var expansionLocation: (
     file: CXFile,
     line: UInt32,
     column: UInt32,
