@@ -19,7 +19,13 @@ extension CXSourceLocation {
 
 extension CXSourceLocation: CustomStringConvertible {
   public var description: String {
-    let (file, line, column, offset) = self.expansionLocation
+    let (file, line, column, _) = self.expansionLocation
     return "\(file)@\(line):\(column)"
+  }
+}
+
+extension CXSourceLocation: Equatable {
+  public static func ==(lhs: Self, rhs: Self) -> Bool {
+    lhs.expansionLocation == rhs.expansionLocation
   }
 }

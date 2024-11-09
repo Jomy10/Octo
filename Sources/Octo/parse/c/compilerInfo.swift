@@ -64,8 +64,6 @@ func clangInfo(language: String = "c") throws -> CompilerInfo {
   let endSearchPaths = lines.firstIndex(of: "End of search list.")!
   let searchPaths = lines[(startSearchPaths+1)..<endSearchPaths]
 
-  print(startSearchPaths, endSearchPaths, searchPaths)
-
   return CompilerInfo(
     searchPaths: searchPaths.map { line in
       if line.contains("(framework directory)") {
@@ -81,17 +79,16 @@ func clangInfo(language: String = "c") throws -> CompilerInfo {
   )
 }
 
-// TODO: would be cleaner using libclang
-func clangWcharSize() throws -> Int {
-  return Int(try execClang(
-    code: """
-    #include <wchar.h>
-    #include <stdio.h>
+//func clangWcharSize() throws -> Int {
+//  return Int(try execClang(
+//    code: """
+//    #include <wchar.h>
+//    #include <stdio.h>
 
-    int main(void) {
-      printf("%lu\n", sizeof(wchar_t));
-      return 0;
-    }
-    """
-  ))!
-}
+//    int main(void) {
+//      printf("%lu\n", sizeof(wchar_t));
+//      return 0;
+//    }
+//    """
+//  ))!
+//}

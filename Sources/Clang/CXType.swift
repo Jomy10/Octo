@@ -51,4 +51,12 @@ extension CXType: Equatable {
   public var size: Int64 {
     clang_Type_getSizeOf(self)
   }
+
+  public var arraySize: Int64 {
+    clang_getArraySize(self)
+  }
+
+  public var arrayElementType: CXType {
+    clang_getArrayElementType(self)
+  }
 }

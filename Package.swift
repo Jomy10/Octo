@@ -3,12 +3,12 @@
 import PackageDescription
 
 let package = Package(
-  name: "Brooklyn",
+  name: "Octo",
   platforms: [.macOS(.v13)],
   products: [
     .executable(
-      name: "Brooklyn",
-      targets: ["Brooklyn"]
+      name: "octo",
+      targets: ["Octo"]
     ),
   ],
   dependencies: [
@@ -17,12 +17,16 @@ let package = Package(
   ],
   targets: [
     .executableTarget(
-      name: "Brooklyn",
+      name: "Octo",
       dependencies: [
         "Clang",
         .product(name: "ArgumentParser", package: "swift-argument-parser"),
+        "OctoIO"
         //.product(name: "Glob", package: "swift-glob"),
       ]
+    ),
+    .target(
+      name: "OctoIO"
     ),
     .systemLibrary(
       name: "clang_c",
