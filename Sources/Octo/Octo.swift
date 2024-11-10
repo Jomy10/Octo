@@ -44,7 +44,14 @@ struct Octo: ParsableCommand {
       ))
     )
     let library = try! LanguageParser.parse(language: self.inputLanguage, config: config)
-    print(library)
-    library.destroy()
+    defer { library.destroy() }
+
+    let generationOptions = GenerationOptions(
+      indent: "  ",
+      libs: ["test"] // from config
+    )
+    let rubyCode = CodeGenerator.generate(language: self.outputLanguage, lib: library, options: generationOptions)
+
+    print(rubyCode)
   }
 }

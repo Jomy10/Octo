@@ -48,6 +48,21 @@ struct OctoType: CustomStringConvertible, Equatable {
       nullable: nullable
     )
   }
+
+  var containsUserType: Bool {
+    switch (self.kind) {
+      case .Pointer(to: let type):
+        return type.containsUserType
+      case .UserDefined(name: _):
+        return true
+      case .ConstantArray(type: let type, size: _):
+        return type.containsUserType
+      case .Function(callingConv: _, args: let args, result: let resultType):
+        return (args.first(where: { $0.containsUserType }) != nil) || (resultType.containsUserType)
+      default:
+        return false
+    }
+  }
 }
 
 enum OctoTypeKind: Equatable {
@@ -71,7 +86,7 @@ enum OctoTypeKind: Equatable {
   case FLong
   indirect case Pointer(to: OctoType)
   indirect case Function(
-    callingConv: CXCallingConv,
+    callingConv: OctoCallingConv,
     args: [OctoType],
     result: OctoType
   )
@@ -135,7 +150,7 @@ extension OctoTypeKind {
       case CXType_FunctionProto: fallthrough
       case CXType_FunctionNoProto:
         guard let resultType = OctoType(cxType: cxType.resultType) else { unhandledKind(cxType.resultType.kind) }
-        let callingConv = cxType.functionTypeCallingConv
+        let callingConv = OctoCallingConv(cxCallingConv: cxType.functionTypeCallingConv)
         let argTypes = cxType.argTypes.map { cxt in
           guard let ty = OctoType(cxType: cxt) else {
             unhandledKind(cxt.kind)
@@ -181,6 +196,27 @@ extension OctoTypeKind {
       return true
     } else {
       return false
+    }
+  }
+}
+
+enum OctoCallingConv {
+  case `default`
+  case c
+  case swift
+  case swiftAsync
+  case win64
+  case invalid
+
+  init(cxCallingConv: CXCallingConv) {
+    switch (cxCallingConv) {
+      case CXCallingConv_Default: self = .`default`
+      case CXCallingConv_C: self = .c
+      case CXCallingConv_Swift: self = .swift
+      case CXCallingConv_SwiftAsync: self = .swiftAsync
+      case CXCallingConv_Win64: self = .win64
+      case CXCallingConv_Invalid: self = .invalid
+      default: fatalError("unimplemented")
     }
   }
 }

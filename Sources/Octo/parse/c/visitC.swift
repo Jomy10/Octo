@@ -261,6 +261,7 @@ fileprivate func addAttribute(
     fatalError("\(parent.spelling!) is unknown")
   }
 
+  //print("Add attribute to: \(objectId), \(attr), id: \(cursor)")
   lib.addAttribute(to: objectId, attr, id: cursor)
 }
 

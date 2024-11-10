@@ -15,6 +15,10 @@ struct OctoRecord {
     self.name
   }
 
+  var hasDeinitializer: Bool {
+    self.deinitializer != nil
+  }
+
   enum RecordType {
     case `struct`
     case `union`

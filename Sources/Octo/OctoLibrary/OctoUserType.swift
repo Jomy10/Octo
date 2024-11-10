@@ -4,7 +4,7 @@ struct OctoUserType: OctoObject {
   let id: UUID = UUID()
 
   var inner: Self.Data
-    
+
   var origin: OctoOrigin {
     switch (self.inner) {
       case .record(let record): return record.origin
@@ -15,5 +15,11 @@ struct OctoUserType: OctoObject {
   enum Data {
     case `record`(OctoRecord)
     case `enum`(OctoEnum)
+  }
+}
+
+extension OctoUserType: Equatable {
+  static func ==(lhs: Self, rhs: Self) -> Bool {
+    lhs.id == rhs.id
   }
 }

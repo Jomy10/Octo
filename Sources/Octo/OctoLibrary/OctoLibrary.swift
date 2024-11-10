@@ -103,8 +103,8 @@ struct OctoLibrary {
 
   mutating func addAttribute<ID: Into>(to parentId: UUID, _ attr: OctoAttribute, id: ID) where ID.T == LangId {
     self.addObject(attr, id: id.into(), name: nil)
-    let objectType = self.objectTypeLookup[parentId]
-    if objectType == OctoFunction.self {
+    let parentObjectType = self.objectTypeLookup[parentId]
+    if parentObjectType == OctoFunction.self {
       switch (attr.octoData) {
       case .attach(to: let userTypeName, type: let functionType):
         guard let userTypeId = self.getUserType(name: userTypeName) else {
@@ -122,11 +122,14 @@ struct OctoLibrary {
             v.attachFunction(parentId, type: functionType)
           }) { fatalError("Couldn't mutate \(userTypeId)") }
         }
+        print("attached to: \(self.getUserType(id: userTypeId)!)")
 
         // Mark the function as attached
         if !(self.mutateFunction(id: parentId) { (function: inout OctoFunction) in
-          function.markAttached(type: functionType)
+          function.markAttached(type: functionType, toType: userTypeId)
         }) { fatalError("Couldn't mutate \(parentId)") }
+
+        print("the function: \(self.getFunction(id: parentId)!)")
         // End attach function
       case .rename(to: let newName):
         if !(self.mutateFunction(id: parentId) { (function: inout OctoFunction) in
@@ -145,12 +148,13 @@ struct OctoLibrary {
               function.canReturnNull = false
             }) { fatalError("Couldn't mutate \(parentId)") }
           default:
+            print("[WARNING] Attribute \(attr.name) ignored")
             break // ignore
         }
       default:
         fatalError("[\(attr.origin)] ERROR: Attribute type \(String(describing: attr.octoData)) cannot be applied to function (for attribute \(attr))")
       }
-    } else if objectType == OctoParam.self {
+    } else if parentObjectType == OctoParam.self {
       switch (attr.octoData) {
       //case .hidden:
       //  if !(self.mutateParameter(id: parentId) { param in
@@ -168,12 +172,13 @@ struct OctoLibrary {
             param.nullable = true
           }) { fatalError("Couldn't mutate \(parentId)") }
         default:
+          print("[WARNING] Attribute \(attr.name) ignored")
           break // ignore
         }
       default:
         fatalError("[\(attr.origin)] ERROR: Attribute type \(String(describing: attr.octoData)) cannot be applied to function parameter (for attribute \(attr))")
       }
-    } else if objectType == OctoField.self {
+    } else if parentObjectType == OctoField.self {
       switch (attr.octoData) {
       case .hidden:
         if !(self.mutateField(id: parentId) { field in
@@ -191,13 +196,14 @@ struct OctoLibrary {
             field.nullable = true
           }) { fatalError("Couldn't mutate \(parentId)") }
         default:
+          print("[WARNING] Attribute \(attr.name) ignored")
           break // ignore
         }
         default:
           fatalError("[\(attr.origin)] Attribute '\(attr.name)' cannot be applied to record field")
       }
     } else { // end function
-      fatalError("Unhandled OctoObject type in `addAttribute`: \(String(describing: objectType))")
+      fatalError("Unhandled OctoObject type in `addAttribute`: \(String(describing: parentObjectType))")
     }
   }
 
@@ -249,22 +255,13 @@ struct OctoLibrary {
     return self.getUserType(name: name) != nil
   }
 
-  private func isTypedefId(id: UUID) -> Bool {
-    if OctoTypedef.self == self.objectTypeLookup[id] {
-      return true
-    } else {
-      // Object is of the wrong type
-      return false
-    }
-  }
-
   func getTypedef(name: String) -> UUID? {
     guard let objid = self.nameLookup[name] else {
       // Object doesn't exist
       return nil
     }
 
-    return self.isTypedefId(id: objid) ? objid : nil
+    return self.isTypedef(id: objid) ? objid : nil
   }
 
   func getTypedef<ID: Into>(lid: ID) -> UUID? where ID.T == LangId {
@@ -272,7 +269,20 @@ struct OctoLibrary {
       return nil
     }
 
-    return self.isTypedefId(id: objid) ? objid : nil
+    return self.isTypedef(id: objid) ? objid : nil
+  }
+
+  func getTypedef(id: UUID) -> OctoTypedef? {
+    self.typedefs[id]
+  }
+
+  func isTypedef(id: UUID) -> Bool {
+    if OctoTypedef.self == self.objectTypeLookup[id] {
+      return true
+    } else {
+      // Object is of the wrong type
+      return false
+    }
   }
 
   func getFunction<ID: Into>(lid: ID) -> UUID? where ID.T == LangId {
@@ -283,8 +293,24 @@ struct OctoLibrary {
     return self.isFunction(id: objid) ? objid : nil
   }
 
+  func getFunction(id: UUID) -> OctoFunction? {
+    self.functions[id]
+  }
+
   func isFunction(id: UUID) -> Bool {
     return self.functions[id] != nil
+  }
+
+  func getField(id: UUID) -> OctoField? {
+    self.recordFields[id]
+  }
+
+  func getParameter(id: UUID) -> OctoParam? {
+    self.functionParameters[id]
+  }
+
+  func getEnumCase(id: UUID) -> OctoEnumCase? {
+    self.enumCases[id]
   }
 
   // Setters

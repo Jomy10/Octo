@@ -18,7 +18,7 @@ struct OctoAttribute: OctoObject {
     self.origin = origin
 
     let nameSplit = name.split(separator: ":")
-    if type == .annotate && nameSplit.count == 2 && nameSplit[1] == "octo" {
+    if type == .annotate && nameSplit.count == 2 && nameSplit[0] == "octo" {
       self.octoData = OctoAttrData(name: name, params: params, origin: origin)
     } else {
       self.octoData = nil

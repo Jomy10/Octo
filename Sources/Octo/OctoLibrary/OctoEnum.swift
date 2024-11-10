@@ -44,3 +44,12 @@ struct OctoEnumCase: OctoObject {
     case unsigned(UInt64)
   }
 }
+
+extension OctoEnumCase.Value {
+  var stringValue: String {
+    switch (self) {
+      case .signed(let s): return "\(s)"
+      case .unsigned(let u): return "\(u)"
+    }
+  }
+}
