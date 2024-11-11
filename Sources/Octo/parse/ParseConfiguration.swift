@@ -8,10 +8,10 @@ struct ParseConfiguration {
 
   struct CConfig {
     let headerFile: URL
-    let clangFlags: [String]
-    let includeHeaders: [String]
+    let clangFlags: [Substring]
+    let includeHeaders: [Substring]
     /// The libraries to link against
-    let link: [String]
+    let link: [Substring]
     let logLevel: CXDiagnosticSeverity
     let errorLevel: CXDiagnosticSeverity
   }

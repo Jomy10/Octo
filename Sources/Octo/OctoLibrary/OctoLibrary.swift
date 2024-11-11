@@ -15,6 +15,7 @@ struct OctoLibrary {
 
   enum LangId: Hashable {
     case c(CXCursor)
+    case arg(Int)
   }
 
   var userTypes: [UUID:OctoUserType] = [:]
@@ -202,6 +203,22 @@ struct OctoLibrary {
         default:
           fatalError("[\(attr.origin)] Attribute '\(attr.name)' cannot be applied to record field")
       }
+    } else if parentObjectType == OctoUserType.self {
+      switch (attr.octoData) {
+      case .rename(to: let newName):
+        switch (self.getUserType(id: parentId)!.inner) {
+        case .record(_):
+          if !(self.mutateRecord(id: parentId) { record in
+            record.rename(to: newName)
+          }) { fatalError("Couldn't mutate \(parentId)") }
+        case .enum(_):
+          if !(self.mutateEnum(id: parentId) { record in
+            record.rename(to: newName)
+          }) { fatalError("Couldn't mutate \(parentId)") }
+        }
+      default:
+        fatalError("[\(attr.origin)] Attribute '\(attr.name)' cannot be applied to user type")
+      }
     } else { // end function
       fatalError("Unhandled OctoObject type in `addAttribute`: \(String(describing: parentObjectType))")
     }
@@ -209,7 +226,11 @@ struct OctoLibrary {
 
   // Getters
   func getObject<ID: Into>(lid: ID) -> UUID? where ID.T == LangId {
-    return self.cursorMap[lid.into()]
+    self.cursorMap[lid.into()]
+  }
+
+  func getObject(name: String) -> UUID? {
+    self.nameLookup[name]
   }
 
   private func getUserTypeId(possibleId objid: UUID) -> UUID? {

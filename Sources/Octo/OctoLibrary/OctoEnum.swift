@@ -3,13 +3,14 @@ import Foundation
 struct OctoEnum {
   let type: OctoType
   let name: String
+  var customName: String? = nil
   let origin: OctoOrigin
   var cases: [UUID] = []
   var methods: [UUID] = []
   var staticMethods: [UUID] = []
 
   var bindingName: String {
-    self.name
+    self.customName ?? self.name
   }
 
   mutating func addCase(_ id: UUID) {
@@ -25,6 +26,10 @@ struct OctoEnum {
       default:
         fatalError("[\(self.origin)] ERROR: Enums can't have attached functions of type \(type)")
     }
+  }
+
+  mutating func rename(to newName: String) {
+    self.customName = newName
   }
 }
 

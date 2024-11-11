@@ -27,21 +27,10 @@ extension OctoFunction {
     let inputParameters = aInputParameters.joined(separator: ", ")
 
     var fnCall = "\(ffiModuleName).\(self.rubyFFIName)(\(inputParameters))"
-    //let updateFnCall: (OctoType) -> Void = { (returnType: OctoType) -> Void in
-    switch (returnType.kind) {
-    case .UserDefined(name: let name):
-      let userTypeId = lib.getUserType(name: name)!
-      switch (lib.getUserType(id: userTypeId)!.inner) {
-      case .record(let record):
-        fnCall = "\(record.bindingName).new(fromRawPtr: \(fnCall))"
-      case .`enum`:
-        break
-        //fnCall = "\(enu.bindingName).new(fromRawPtr: \(fnCall))"
-      }
-    case .ConstantArray:
-      print("[WARNING] unimplemented")
-    case .Pointer(to: let type):
-      switch (type.kind) {
+
+    if self.functionType != .`init` {
+      // convert return type to ruby type
+      switch (returnType.kind) {
       case .UserDefined(name: let name):
         let userTypeId = lib.getUserType(name: name)!
         switch (lib.getUserType(id: userTypeId)!.inner) {
@@ -53,14 +42,26 @@ extension OctoFunction {
         }
       case .ConstantArray:
         print("[WARNING] unimplemented")
+      case .Pointer(to: let type):
+        switch (type.kind) {
+        case .UserDefined(name: let name):
+          let userTypeId = lib.getUserType(name: name)!
+          switch (lib.getUserType(id: userTypeId)!.inner) {
+          case .record(let record):
+            fnCall = "\(record.bindingName).new(fromRawPtr: \(fnCall))"
+          case .`enum`:
+            break
+            //fnCall = "\(enu.bindingName).new(fromRawPtr: \(fnCall))"
+          }
+        case .ConstantArray:
+          print("[WARNING] unimplemented")
+        default:
+          break
+        }
       default:
         break
       }
-    default:
-      break
     }
-    //}
-    //updateFnCall(self.returnType)
 
     switch (self.functionType) {
     case .function: fallthrough
@@ -105,7 +106,7 @@ extension OctoFunction {
         if args.is_a? Hash
         \(options.indent)@ptr = args[:fromRawPtr]
         else
-        \(options.indent)\(fnCall)
+        \(options.indent)@ptr = \(fnCall)
         end
         """
       }))

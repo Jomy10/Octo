@@ -38,7 +38,7 @@ fileprivate func execCommand(_ cmd: String, outputFrom: CommandOutput = .stdout)
   }
   task.arguments = ["-c", cmd]
   task.launchPath = "/bin/sh"
-  task.launch()
+  try task.run() // task.launch()
   task.waitUntilExit()
 
   let data = pipe.fileHandleForReading.readDataToEndOfFile()

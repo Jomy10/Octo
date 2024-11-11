@@ -1,4 +1,6 @@
 flags = `/usr/local/Cellar/llvm/17.0.1/bin/llvm-config --cflags --ldflags --libs --system-libs`.split(" ")
+#umbrella header "clang.h"
+
 
 flags = flags
   .map do |flag|

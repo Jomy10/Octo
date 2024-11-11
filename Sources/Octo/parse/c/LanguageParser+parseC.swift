@@ -4,7 +4,7 @@ import OctoIO
 extension LanguageParser {
   static func parseC(config: ParseConfiguration) throws -> OctoLibrary {
     let compilerInfo = try clangInfo()
-    let commandLineArguments = compilerInfo.searchPaths.map { $0.asArgument } + config.cConfig!.clangFlags
+    let commandLineArguments = compilerInfo.searchPaths.map { $0.asArgument } + config.cConfig!.clangFlags.map { String($0) }
     let index = CXIndex(excludeDeclarationsFromPCH: false, displayDiagnostics: false)!
     /// Parse the header file
     let unit = try CXTranslationUnit(

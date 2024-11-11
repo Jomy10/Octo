@@ -2,6 +2,7 @@ import Foundation
 
 struct OctoRecord {
   let name: String
+  var customName: String? = nil
   let origin: OctoOrigin
   let type: RecordType
   var fields: [UUID] = []
@@ -12,7 +13,7 @@ struct OctoRecord {
   var staticMethods: [UUID] = []
 
   var bindingName: String {
-    self.name
+    self.customName ?? self.name
   }
 
   var hasDeinitializer: Bool {
@@ -41,6 +42,10 @@ struct OctoRecord {
       case .function:
         fatalError("Cannot attach function of type 'function' to record")
     }
+  }
+
+  mutating func rename(to newName: String) {
+    self.customName = newName
   }
 }
 

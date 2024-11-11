@@ -192,7 +192,7 @@ extension OctoTypeKind {
   }
 
   var isPtr: Bool {
-    if case .Pointer(to: let _) = self {
+    if case .Pointer(to: _) = self {
       return true
     } else {
       return false
