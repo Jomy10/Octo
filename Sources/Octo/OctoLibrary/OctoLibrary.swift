@@ -123,14 +123,12 @@ public struct OctoLibrary {
             v.attachFunction(parentId, type: functionType)
           }) { fatalError("Couldn't mutate \(userTypeId)") }
         }
-        print("attached to: \(self.getUserType(id: userTypeId)!)")
 
         // Mark the function as attached
         if !(self.mutateFunction(id: parentId) { (function: inout OctoFunction) in
           function.markAttached(type: functionType, toType: userTypeId)
         }) { fatalError("Couldn't mutate \(parentId)") }
 
-        print("the function: \(self.getFunction(id: parentId)!)")
         // End attach function
       case .rename(to: let newName):
         if !(self.mutateFunction(id: parentId) { (function: inout OctoFunction) in

@@ -56,7 +56,8 @@ struct OctoArgumentsParsed {
       let container = try decoder.container(keyedBy: CodingKeys.self)
       //self.outputLanguage = try container.decode(Language.self, forKey: .containerLanguage)
       self.outputLocation = try URL(fileURLWithPath: container.decode(String.self, forKey: .outputLocation))
-      self.langOutOpts = try container.decodeIfPresent([TOMLLanguageOption].self, forKey: .langOutOpts)?.map { $0.asLanguageOption } ?? []
+      //self.langOutOpts = try container.decodeIfPresent([TOMLLanguageOption].self, forKey: .langOutOpts)?.map { $0.asLanguageOption } ?? []
+      self.langOutOpts = try getLangOpts(for: container, forKey: CodingKeys.langOutOpts)
       //self.outputLibraryName = try container.decode(String.self, forKey: .containerLibraryName)
       //self.link = try container.decodeIfPresent([String].self, forKey: .link) ?? []
       self.indentCount = try container.decodeIfPresent(Int.self, forKey: .indentCount) ?? 2
@@ -158,6 +159,7 @@ struct OctoArgumentsParsed {
   }
 }
 
+// Parse TOML file
 extension OctoArgumentsParsed: Decodable {
   enum CodingKeys: String, CodingKey {
     case input
@@ -173,19 +175,7 @@ extension OctoArgumentsParsed: Decodable {
     case attributes
   }
 
-  //enum OutputCodingKeys: String, CodingKey {
-  //  case outputLanguage = "language"
-  //  case outputLocation = "location"
-  //  case langOutOpt = "options"
-  //  case outputLibraryName = "libName"
-  //  case link
-  //  case indentCount
-  //  case indentType
-  //}
-
   init(from decoder: Decoder) throws {
-    print(decoder)
-
     let container = try decoder.container(keyedBy: CodingKeys.self)
     let input = try container.nestedContainer(keyedBy: InputCodingKeys.self, forKey: .input)
     let output = try container.nestedContainer(keyedBy: Language.self, forKey: .output)
@@ -195,13 +185,45 @@ extension OctoArgumentsParsed: Decodable {
 
     self.inputLanguage = try input.decode(Language.self, forKey: .inputLanguage)
     self.inputLocation = try URL(fileURLWithPath: input.decode(String.self, forKey: .inputLocation))
-    self.langInOpts = try input.decodeIfPresent([TOMLLanguageOption].self, forKey: .langInOpt)?.map { $0.asLanguageOption } ?? []
     self.attributes = try input.decodeIfPresent([Attribute].self, forKey: .attributes) ?? []
+    self.langInOpts = try getLangOpts(for: input, forKey: .langInOpt)
 
     self.outputOptions = [:]
     for key in output.allKeys {
       self.outputOptions[key] = try output.decode(OutputOptions.self, forKey: key)
     }
+  }
+}
+
+fileprivate func getLangOpts<Key: CodingKey>(for input: KeyedDecodingContainer<Key>, forKey key: Key) throws -> [LanguageOption] {
+  // as array of objects (key-value pairs)
+  if let kv = (try? input.decodeIfPresent([TOMLLanguageOption].self, forKey: key)) {
+    return kv.map { $0.asLanguageOption }
+  // As an object
+  } else {
+    guard let dict: [String:TOMLLanguageOptionValue] = try input.decodeIfPresent([String:TOMLLanguageOptionValue].self, forKey: key) else {
+      return []
+    }
+    var opts: [LanguageOption] = []
+    for (opt, val) in dict {
+      switch (val) {
+        case .string(let str):
+          opts.append(LanguageOption(name: opt, value: str[str.startIndex..<str.endIndex]))
+        case .array(let arr):
+          var optName = opt
+          if opt == "flags" {
+            optName = "flag"
+          }
+          for str in arr {
+            opts.append(LanguageOption(name: optName, value: str[str.startIndex..<str.endIndex]))
+          }
+        case .bool(let bool):
+          if bool {
+            opts.append(LanguageOption(name: opt, value: nil))
+          }
+      }
+    }
+    return opts
   }
 }
 

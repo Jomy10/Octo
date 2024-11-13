@@ -40,7 +40,7 @@ struct LanguageOption: Equatable, Hashable, ExpressibleByArgument {
     )
   }
 
-  fileprivate init(
+  init(
     name: some StringProtocol,
     value: Substring?
   ) {
@@ -58,9 +58,41 @@ struct LanguageOption: Equatable, Hashable, ExpressibleByArgument {
   }
 }
 
+enum TOMLLanguageOptionValue: Decodable {
+  case string(String)
+  case array([String])
+  case bool(Bool)
+
+  init(from decoder: Decoder) throws {
+    let container = try decoder.singleValueContainer()
+
+    if let x = try? container.decode(String.self) {
+      self = .string(x)
+    } else if let x = try? container.decode([String].self) {
+      self = .array(x)
+    } else if let x = try? container.decode(Bool.self) {
+      self = .bool(x)
+    } else {
+      throw DecodingError.typeMismatch(Self.self, DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "Expected String, Array of strings or a boolean value"))
+    }
+  }
+}
+
 struct TOMLLanguageOption: Decodable {
   let name: String
   let value: String?
+
+  enum Value {
+    case string(String)
+    case array([String])
+    case none
+  }
+
+  //init(from decoder: Decoder) throws {
+  //  let container = try decoder.singleValueContainer()
+  //  let dict = try container.decode([String:Value])
+  //  self.name =
+  //}
 
   var asLanguageOption: LanguageOption {
     LanguageOption(
