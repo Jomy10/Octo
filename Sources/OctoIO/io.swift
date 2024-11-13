@@ -3,10 +3,8 @@ import Darwin
 #elseif canImport(Glibc)
 import Glibc
 #else
-#error("Unhandled platform in OctoIO (TODO)")
+#warning("Unhandled platform in OctoIO, all output will be redirected to stdout (pull requests are welcome)")
 #endif
-
-#if canImport(Darwin) || canImport(Glibc)
 
 public enum IOStream: TextOutputStream {
   case stdout
@@ -28,16 +26,19 @@ public enum IOStream: TextOutputStream {
   }
   #endif
 
+  #if canImport(Darwin) || canImport(Glibc)
   public mutating func write(_ string: String) {
     fputs(string, self.to)
   }
+  #else
+  public mutating func write(_ string: String) {
+    // TODO!!
+    print(string)
+  }
+  #endif
 }
-
-#endif
 
 public func print(_ msgs: String..., to stream: IOStream) {
   var s = stream
   print(msgs.joined(separator: " "), to: &s)
 }
-
-// TODO: other platforms
