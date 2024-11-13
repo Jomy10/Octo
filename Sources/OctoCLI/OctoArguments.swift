@@ -8,10 +8,10 @@ struct OctoArguments: ParsableArguments {
   // Input (parse) options //
 
   @Option(name: .customLong("from"), help: "The input language to create bindings for")
-  var inputLanguage: Language = .c
+  var inputLanguage: Language? = nil // required if no config file specified
 
   @Option(name: [.customShort("i"), .customLong("input-location")], help: "Input path")
-  var inputLocation: URL
+  var inputLocation: URL? = nil // required if no config file specified
 
   @Option(name: [.customShort("I"), .long], help: """
   Specify a language specific option for the language being parsed (format: <langName>:<optName>[=value])
@@ -29,16 +29,16 @@ struct OctoArguments: ParsableArguments {
   // Output (generation) options //
 
   @Option(name: .customLong("to"), help: "The output language to create bindings in")
-  var outputLanguage: Language
+  var outputLanguage: Language? = nil // required if no config file specified
 
   @Option(name: [.customLong("output"), .customShort("o")], help: "Output path")
-  var outputLocation: URL
+  var outputLocation: URL? = nil // required if no config file specified
 
   @Option(name: [.long, .customShort("O")], help: "")
   var langOutOpt: [LanguageOption] = []
 
   @Option(name: [.customLong("lib-name"), .customShort("n")], help: "The name of the library to be generated")
-  var outputLibraryName: String
+  var outputLibraryName: String? = nil // required if no config file specified
 
   @Option(name: .shortAndLong, help: "The library/libraries to link against in the output")
   var link: [String] = []
@@ -49,111 +49,116 @@ struct OctoArguments: ParsableArguments {
   @Option(name: .long, help: "`tabs` or `spaces`")
   var indentType: IndentType = .spaces
 
-  var indent: String {
-    String(repeating: self.indentType == .spaces ? " " : "\t", count: self.indentCount)
-  }
 
-  /// The library/libraries to link against
-  var linkLibs: [String] {
-    if self.link.count == 0 { return [self.outputLibraryName] }
-    return self.link
-  }
+//  mutating func validate() throws {
+//    print("Validating arguments")
+//  }
 
-  // Parsing language options //
+//  var indent: String {
+//    String(repeating: self.indentType == .spaces ? " " : "\t", count: self.indentCount)
+//  }
 
-  static func getLangOptionArray(opts: [LanguageOption], _  name: Substring) -> [Substring] {
-    let options: [LanguageOption] = opts.filter { (opt: LanguageOption) in opt.name == name }
-    return options.map { (opt: LanguageOption) in
-      guard let value = opt.value else {
-        fatalError("\(name) should have a value")
-      }
-      return value
-    }
-  }
+//  /// The library/libraries to link against
+//  var linkLibs: [String] {
+//    if self.link.count == 0 { return [self.outputLibraryName] }
+//    return self.link
+//  }
 
-  static func getLangOption(opts: [LanguageOption], _ name: Substring) -> Substring? {
-    let options = opts.filter { opt in opt.name == name }
-    if options.count > 1 {
-      fatalError("Option \(name) specified multiple times")
-    }
-    return options.first?.value
-  }
+//  // Parsing language options //
 
-  static func getLangFlag(opts: [LanguageOption], _ name: Substring) -> Bool {
-    let options = opts.filter { opt in opt.name == name }
-    if options.count > 1 {
-      fatalError("Flag \(name) specified multiple times")
-    }
-    return options.count == 1
-  }
+//  static func getLangOptionArray(opts: [LanguageOption], _  name: Substring) -> [Substring] {
+//    let options: [LanguageOption] = opts.filter { (opt: LanguageOption) in opt.name == name }
+//    return options.map { (opt: LanguageOption) in
+//      guard let value = opt.value else {
+//        fatalError("\(name) should have a value")
+//      }
+//      return value
+//    }
+//  }
 
-  // Parsed language input options //
+//  static func getLangOption(opts: [LanguageOption], _ name: Substring) -> Substring? {
+//    let options = opts.filter { opt in opt.name == name }
+//    if options.count > 1 {
+//      fatalError("Option \(name) specified multiple times")
+//    }
+//    return options.first?.value
+//  }
 
-  //== C ==//
+//  static func getLangFlag(opts: [LanguageOption], _ name: Substring) -> Bool {
+//    let options = opts.filter { opt in opt.name == name }
+//    if options.count > 1 {
+//      fatalError("Flag \(name) specified multiple times")
+//    }
+//    return options.count == 1
+//  }
 
-  lazy var cInOpts: [LanguageOption] = {
-    return self.langInOpt.filter { opt in
-      opt.language == .c
-    }
-  }()
+//  // Parsed language input options //
 
-  lazy var cIn_clangFlags: [Substring] = {
-    Self.getLangOptionArray(opts: self.cInOpts, "flag")
-  }()
+//  //== C ==//
 
-  lazy var cIn_includeHeaders: [Substring] = {
-    Self.getLangOptionArray(opts: self.cInOpts, "include")
-  }()
+//  lazy var cInOpts: [LanguageOption] = {
+//    return self.langInOpt.filter { opt in
+//      opt.language == .c
+//    }
+//  }()
 
-  lazy var cIn_logLevel: ClangDiagnostic? = {
-    if let logLevel = Self.getLangOption(opts: self.cInOpts, "logLevel") {
-      guard let l = ClangDiagnostic(fromString: logLevel) else {
-        fatalError("Invalid clang diagnostic for logLevel '\(logLevel)'")
-      }
-      return l
-    } else {
-      return nil
-    }
-  }()
+//  lazy var cIn_clangFlags: [Substring] = {
+//    Self.getLangOptionArray(opts: self.cInOpts, "flag")
+//  }()
 
-  lazy var cIn_errorLevel: ClangDiagnostic? = {
-    if let errorLevel = Self.getLangOption(opts: self.cInOpts, "errorLevel") {
-      guard let l = ClangDiagnostic(fromString: errorLevel) else {
-        fatalError("Invalid clang diagnostic for errorLevel '\(errorLevel)'")
-      }
-      return l
-    } else {
-      return nil
-    }
-  }()
+//  lazy var cIn_includeHeaders: [Substring] = {
+//    Self.getLangOptionArray(opts: self.cInOpts, "include")
+//  }()
 
-  //init() {}
+//  lazy var cIn_logLevel: ClangDiagnostic? = {
+//    if let logLevel = Self.getLangOption(opts: self.cInOpts, "logLevel") {
+//      guard let l = ClangDiagnostic(fromString: logLevel) else {
+//        fatalError("Invalid clang diagnostic for logLevel '\(logLevel)'")
+//      }
+//      return l
+//    } else {
+//      return nil
+//    }
+//  }()
 
-  //init(
-  //  inputLanguage: Language,
-  //  inputLocation: URL,
-  //  langInOpt: [LanguageOption]?,
-  //  attributes: [Attribute]?,
+//  lazy var cIn_errorLevel: ClangDiagnostic? = {
+//    if let errorLevel = Self.getLangOption(opts: self.cInOpts, "errorLevel") {
+//      guard let l = ClangDiagnostic(fromString: errorLevel) else {
+//        fatalError("Invalid clang diagnostic for errorLevel '\(errorLevel)'")
+//      }
+//      return l
+//    } else {
+//      return nil
+//    }
+//  }()
 
-  //  outputLanguage: Language,
-  //  outputLocation: URL,
-  //  langOutOpt: [LanguageOption]?,
-  //  outputLibraryName: String,
-  //  link: [String]?,
-  //  indentCount: Int?,
-  //  indentType: IndentType?
-  //) {
-  //  self.inputLanguage = inputLanguage
-  //  self.inputLocation = inputLocation
-  //  self.langInOpt = langInOpt ?? []
-  //  self.attributes = attributes ?? []
+//  //init() {}
 
-  //  self.outputLanguage = outputLanguage
-  //  self.outputLocation = outputLocation
-  //  self.langOutOpt = langOutOpt ?? []
-  //  self.outputLibraryName = outputLibraryName
-  //  self.link = link ?? []
-  //  self.indentCount = indentCount ?? 2
-  //  self.indentType = indentType ?? .spaces
-  //}
+//  //init(
+//  //  inputLanguage: Language,
+//  //  inputLocation: URL,
+//  //  langInOpt: [LanguageOption]?,
+//  //  attributes: [Attribute]?,
+
+//  //  outputLanguage: Language,
+//  //  outputLocation: URL,
+//  //  langOutOpt: [LanguageOption]?,
+//  //  outputLibraryName: String,
+//  //  link: [String]?,
+//  //  indentCount: Int?,
+//  //  indentType: IndentType?
+//  //) {
+//  //  self.inputLanguage = inputLanguage
+//  //  self.inputLocation = inputLocation
+//  //  self.langInOpt = langInOpt ?? []
+//  //  self.attributes = attributes ?? []
+
+//  //  self.outputLanguage = outputLanguage
+//  //  self.outputLocation = outputLocation
+//  //  self.langOutOpt = langOutOpt ?? []
+//  //  self.outputLibraryName = outputLibraryName
+//  //  self.link = link ?? []
+//  //  self.indentCount = indentCount ?? 2
+//  //  self.indentType = indentType ?? .spaces
+//  //}
 }

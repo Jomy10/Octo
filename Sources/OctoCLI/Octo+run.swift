@@ -2,6 +2,8 @@ import Octo
 
 extension Octo {
   mutating func run() throws {
+    try self.initArgs()
+
     if self.verbose {
       setOctoLogLevel(.info)
     }
@@ -32,7 +34,8 @@ extension Octo {
     var library = try LanguageParser.parse(language: self.args.inputLanguage, config: parseConfig)
     defer { library.destroy() }
 
-    for (i: Int, attribute: Attribute) in self.attributes.enumerated() {
+    let attributesEnumerated: EnumeratedSequence<[Attribute]> = self.args.attributes.enumerated()
+    for (i, attribute) in attributesEnumerated {
       guard let objectId = library.getObject(name: String(attribute.symbolName)) else {
         // TODO: replace with throw
         fatalError("Symbol '\(attribute.symbolName)' doesn't exist (passed as argument to --argument)")

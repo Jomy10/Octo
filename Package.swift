@@ -296,7 +296,7 @@ let package = Package(
     )
   ],
   dependencies: [
-    .package(url: "https://github.com/apple/swift-argument-parser", from: "1.5.0"),
+    .package(url: "https://github.com/apple/swift-argument-parser", branch: "main"),
     .package(url: "https://github.com/LebJe/TOMLKit.git", from: "0.6.0")
     //.package(url: "https://github.com/davbeck/swift-glob.git", from: "0.1.0"),
   ],

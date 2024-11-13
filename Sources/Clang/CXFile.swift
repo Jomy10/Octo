@@ -12,8 +12,8 @@ extension CXFile: CustomStringConvertible {
   }
 }
 
-extension CXFile: Equatable {
-  public static func ==(lhs: Self, rhs: Self) -> Bool {
-    clang_File_isEqual(lhs, rhs) != 0
-  }
-}
+//extension CXFile: Equatable {
+//  public static func ==(lhs: Self, rhs: Self) -> Bool {
+//    clang_File_isEqual(lhs, rhs) != 0
+//  }
+//}

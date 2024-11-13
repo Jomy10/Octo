@@ -13,6 +13,6 @@ flags = flags
     end
   end
 
-system "swift build -c debug #{flags.join(" ")}"
+system "swift build -c #{ARGV[0] || "debug"} #{flags.join(" ")}"
 
 abort("Error while compiling") unless $?.to_i == 0

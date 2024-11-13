@@ -24,5 +24,42 @@ struct Octo: ParsableCommand {
   var configFile: URL? = nil
 
   // Language options //
-  @OptionGroup var args: OctoArguments
+  @OptionGroup var cliArgs: OctoArguments
+
+  var _args: OctoArgumentsParsedContainer = OctoArgumentsParsedContainer()
+
+  lazy var args: OctoArgumentsParsed = {
+    guard let args = self._args.args else {
+      fatalError("bug")
+    }
+    return args
+  }()
+
+  mutating func validate() throws {
+    if self.configFile == nil {
+      if self.cliArgs.inputLanguage == nil {
+        throw ValidationError("Missing expected argument '--input-language <input-language>'")
+      }
+      if self.cliArgs.inputLocation == nil {
+        throw ValidationError("Missing expected argument '--input-location <input-location>'")
+      }
+      if self.cliArgs.outputLanguage == nil {
+        throw ValidationError("Missing expected argument '--output-language <output-language>'")
+      }
+      if self.cliArgs.outputLocation == nil {
+        throw ValidationError("Missing expected argument '--output-location <output-location>'")
+      }
+      if self.cliArgs.outputLibraryName == nil {
+        throw ValidationError("Missing expected argument '--lib-name <lib-name>'")
+      }
+    }
+  }
+
+  mutating func initArgs() throws {
+    if let configFile = self.configFile {
+      self._args.args = try OctoArgumentsParsed(decodingTOMLFile: configFile)
+    } else {
+      self._args.args = OctoArgumentsParsed(fromCommandLineArguments: self.cliArgs)
+    }
+  }
 }
