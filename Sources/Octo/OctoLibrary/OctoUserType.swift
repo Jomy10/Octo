@@ -1,11 +1,11 @@
 import Foundation
 
-struct OctoUserType: OctoObject {
-  let id: UUID = UUID()
+public struct OctoUserType: OctoObject {
+  public let id: UUID = UUID()
 
   var inner: Self.Data
 
-  var origin: OctoOrigin {
+  public var origin: OctoOrigin {
     switch (self.inner) {
       case .record(let record): return record.origin
       case .enum(let e): return e.origin
@@ -19,7 +19,7 @@ struct OctoUserType: OctoObject {
 }
 
 extension OctoUserType: Equatable {
-  static func ==(lhs: Self, rhs: Self) -> Bool {
+  public static func ==(lhs: Self, rhs: Self) -> Bool {
     lhs.id == rhs.id
   }
 }

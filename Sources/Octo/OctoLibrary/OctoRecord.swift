@@ -1,6 +1,6 @@
 import Foundation
 
-struct OctoRecord {
+public struct OctoRecord {
   let name: String
   var customName: String? = nil
   let origin: OctoOrigin
@@ -49,12 +49,12 @@ struct OctoRecord {
   }
 }
 
-struct OctoField: OctoObject {
-  let id = UUID()
+public struct OctoField: OctoObject {
+  public let id = UUID()
 
   var type: OctoType
   let name: String
-  let origin: OctoOrigin
+  public let origin: OctoOrigin
   var fields: [UUID] = []
   var visible = true
 

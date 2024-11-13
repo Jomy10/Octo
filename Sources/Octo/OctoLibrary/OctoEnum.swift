@@ -1,6 +1,6 @@
 import Foundation
 
-struct OctoEnum {
+public struct OctoEnum {
   let type: OctoType
   let name: String
   var customName: String? = nil
@@ -33,12 +33,12 @@ struct OctoEnum {
   }
 }
 
-struct OctoEnumCase: OctoObject {
-  let id = UUID()
+public struct OctoEnumCase: OctoObject {
+  public let id = UUID()
 
   let name: String
   let value: Value
-  let origin: OctoOrigin
+  public let origin: OctoOrigin
 
   var bindingName: String {
     self.name

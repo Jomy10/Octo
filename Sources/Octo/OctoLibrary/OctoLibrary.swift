@@ -1,7 +1,7 @@
 import Foundation
 import Clang
 
-struct OctoLibrary {
+public struct OctoLibrary {
   var name: String
 
   /// Look up an Octo object based on its cursor
@@ -11,9 +11,9 @@ struct OctoLibrary {
   /// Retrieve the type of an octo object
   var objectTypeLookup: [UUID:OctoObject.Type] = [:]
 
-  var destroy: () -> Void = {}
+  public var destroy: () -> Void = {}
 
-  enum LangId: Hashable {
+  public enum LangId: Hashable {
     case c(CXCursor)
     case arg(Int)
   }
@@ -55,15 +55,15 @@ struct OctoLibrary {
     }
   }
 
-  mutating func addUserType<ID: Into>(enum v: OctoEnum, id: ID) where ID.T == LangId {
+  public mutating func addUserType<ID: Into>(enum v: OctoEnum, id: ID) where ID.T == LangId {
     self.addObject(OctoUserType(inner: .enum(v)), id: id.into(), name: v.name)
   }
 
-  mutating func addUserType<ID: Into>(record: OctoRecord, id: ID) where ID.T == LangId {
+  public mutating func addUserType<ID: Into>(record: OctoRecord, id: ID) where ID.T == LangId {
     self.addObject(OctoUserType(inner: .record(record)), id: id.into(), name: record.name)
   }
 
-  mutating func addField<ID: Into>(to recordId: UUID, _ field: OctoField, id: ID) where ID.T == LangId {
+  public mutating func addField<ID: Into>(to recordId: UUID, _ field: OctoField, id: ID) where ID.T == LangId {
     self.addObject(field, id: id.into(), name: field.name)
     if !(self.mutateRecord(id: recordId) { (record: inout OctoRecord) in
       record.addField(field.id)
@@ -72,7 +72,7 @@ struct OctoLibrary {
     }
   }
 
-  mutating func addEnumCase<ID: Into>(to enumId: UUID, _ enumCase: OctoEnumCase, id: ID) where ID.T == LangId {
+  public mutating func addEnumCase<ID: Into>(to enumId: UUID, _ enumCase: OctoEnumCase, id: ID) where ID.T == LangId {
     self.addObject(enumCase, id: id.into(), name: enumCase.name)
     if !(self.mutateEnum(id: enumId) { (v: inout OctoEnum) in
       v.addCase(enumCase.id)
@@ -81,19 +81,19 @@ struct OctoLibrary {
     }
   }
 
-  mutating func addGlobalVariable<ID: Into>(_ variable: OctoGlobalVariable, id: ID) where ID.T == LangId {
+  public mutating func addGlobalVariable<ID: Into>(_ variable: OctoGlobalVariable, id: ID) where ID.T == LangId {
     self.addObject(variable, id: id.into(), name: variable.name)
   }
 
-  mutating func addTypedef<ID: Into>(_ typedef: OctoTypedef, id: ID) where ID.T == LangId {
+  public mutating func addTypedef<ID: Into>(_ typedef: OctoTypedef, id: ID) where ID.T == LangId {
     self.addObject(typedef, id: id.into(), name: typedef.name)
   }
 
-  mutating func addFunction<ID: Into>(_ function: OctoFunction, id: ID) where ID.T == LangId {
+  public mutating func addFunction<ID: Into>(_ function: OctoFunction, id: ID) where ID.T == LangId {
     self.addObject(function, id: id.into(), name: function.name)
   }
 
-  mutating func addParam<ID: Into>(to functionId: UUID, _ param: OctoParam, id: ID) where ID.T == LangId {
+  public mutating func addParam<ID: Into>(to functionId: UUID, _ param: OctoParam, id: ID) where ID.T == LangId {
     self.addObject(param, id: id.into(), name: param.name)
     if !(self.mutateFunction(id: functionId) { (fun: inout OctoFunction) in
       fun.addParam(param.id)
@@ -102,7 +102,7 @@ struct OctoLibrary {
     }
   }
 
-  mutating func addAttribute<ID: Into>(to parentId: UUID, _ attr: OctoAttribute, id: ID) where ID.T == LangId {
+  public mutating func addAttribute<ID: Into>(to parentId: UUID, _ attr: OctoAttribute, id: ID) where ID.T == LangId {
     self.addObject(attr, id: id.into(), name: nil)
     let parentObjectType = self.objectTypeLookup[parentId]
     if parentObjectType == OctoFunction.self {
@@ -225,11 +225,11 @@ struct OctoLibrary {
   }
 
   // Getters
-  func getObject<ID: Into>(lid: ID) -> UUID? where ID.T == LangId {
+  public func getObject<ID: Into>(lid: ID) -> UUID? where ID.T == LangId {
     self.cursorMap[lid.into()]
   }
 
-  func getObject(name: String) -> UUID? {
+  public func getObject(name: String) -> UUID? {
     self.nameLookup[name]
   }
 
@@ -250,7 +250,7 @@ struct OctoLibrary {
     }
   }
 
-  func getUserType(name: String) -> UUID? {
+  public func getUserType(name: String) -> UUID? {
     guard let objid = self.nameLookup[name] else {
       // Type doesn't exist
       return nil
@@ -259,7 +259,7 @@ struct OctoLibrary {
     return self.getUserTypeId(possibleId: objid)
   }
 
-  func getUserType<ID: Into>(lid: ID) -> UUID? where ID.T == LangId {
+  public func getUserType<ID: Into>(lid: ID) -> UUID? where ID.T == LangId {
     guard let objid = self.cursorMap[lid.into()] else {
       // Type doesn't exist
       return nil
@@ -268,15 +268,15 @@ struct OctoLibrary {
     return self.getUserTypeId(possibleId: objid)
   }
 
-  func getUserType(id: UUID) -> OctoUserType? {
+  public func getUserType(id: UUID) -> OctoUserType? {
     return self.userTypes[id]
   }
 
-  func isUserType(name: String) -> Bool {
+  public func isUserType(name: String) -> Bool {
     return self.getUserType(name: name) != nil
   }
 
-  func getTypedef(name: String) -> UUID? {
+  public func getTypedef(name: String) -> UUID? {
     guard let objid = self.nameLookup[name] else {
       // Object doesn't exist
       return nil
@@ -285,7 +285,7 @@ struct OctoLibrary {
     return self.isTypedef(id: objid) ? objid : nil
   }
 
-  func getTypedef<ID: Into>(lid: ID) -> UUID? where ID.T == LangId {
+  public func getTypedef<ID: Into>(lid: ID) -> UUID? where ID.T == LangId {
     guard let objid = self.cursorMap[lid.into()] else {
       return nil
     }
@@ -293,11 +293,11 @@ struct OctoLibrary {
     return self.isTypedef(id: objid) ? objid : nil
   }
 
-  func getTypedef(id: UUID) -> OctoTypedef? {
+  public func getTypedef(id: UUID) -> OctoTypedef? {
     self.typedefs[id]
   }
 
-  func isTypedef(id: UUID) -> Bool {
+  public func isTypedef(id: UUID) -> Bool {
     if OctoTypedef.self == self.objectTypeLookup[id] {
       return true
     } else {
@@ -306,7 +306,7 @@ struct OctoLibrary {
     }
   }
 
-  func getFunction<ID: Into>(lid: ID) -> UUID? where ID.T == LangId {
+  public func getFunction<ID: Into>(lid: ID) -> UUID? where ID.T == LangId {
     guard let objid = self.cursorMap[lid.into()] else {
       return nil
     }
@@ -314,19 +314,19 @@ struct OctoLibrary {
     return self.isFunction(id: objid) ? objid : nil
   }
 
-  func getFunction(id: UUID) -> OctoFunction? {
+  public func getFunction(id: UUID) -> OctoFunction? {
     self.functions[id]
   }
 
-  func isFunction(id: UUID) -> Bool {
+  public func isFunction(id: UUID) -> Bool {
     return self.functions[id] != nil
   }
 
-  func getField(id: UUID) -> OctoField? {
+  public func getField(id: UUID) -> OctoField? {
     self.recordFields[id]
   }
 
-  func getParameter(id: UUID) -> OctoParam? {
+  public func getParameter(id: UUID) -> OctoParam? {
     self.functionParameters[id]
   }
 
@@ -335,7 +335,7 @@ struct OctoLibrary {
   }
 
   // Setters
-  mutating func mutateRecord(id: UUID, _ mutate: (inout OctoRecord) throws -> Void) rethrows -> Bool {
+  public mutating func mutateRecord(id: UUID, _ mutate: (inout OctoRecord) throws -> Void) rethrows -> Bool {
     if case .record(var record) = self.userTypes[id]?.inner {
       try mutate(&record)
       self.userTypes[id]!.inner = .record(record)
@@ -345,7 +345,7 @@ struct OctoLibrary {
     }
   }
 
-  mutating func mutateEnum(id: UUID, _ mutate: (inout OctoEnum) throws -> Void) rethrows -> Bool {
+  public mutating func mutateEnum(id: UUID, _ mutate: (inout OctoEnum) throws -> Void) rethrows -> Bool {
     if case .`enum`(var e) = self.userTypes[id]?.inner {
       try mutate(&e)
       self.userTypes[id]!.inner = .`enum`(e)
@@ -355,7 +355,7 @@ struct OctoLibrary {
     }
   }
 
-  mutating func mutateFunction(id: UUID, _ mutate: (inout OctoFunction) throws -> Void) rethrows -> Bool {
+  public mutating func mutateFunction(id: UUID, _ mutate: (inout OctoFunction) throws -> Void) rethrows -> Bool {
     if self.functions[id] == nil {
       return false
     }
@@ -363,7 +363,7 @@ struct OctoLibrary {
     return true
   }
 
-  mutating func mutateParameter(id: UUID, _ mutate: (inout OctoParam) throws -> Void) rethrows -> Bool {
+  public mutating func mutateParameter(id: UUID, _ mutate: (inout OctoParam) throws -> Void) rethrows -> Bool {
     if self.functionParameters[id] == nil {
       return false
     }
@@ -371,7 +371,7 @@ struct OctoLibrary {
     return true
   }
 
-  mutating func mutateField(id: UUID, _ mutate: (inout OctoField) throws -> Void) rethrows -> Bool {
+  public mutating func mutateField(id: UUID, _ mutate: (inout OctoField) throws -> Void) rethrows -> Bool {
     if self.recordFields[id] == nil {
       return false
     }
@@ -381,14 +381,14 @@ struct OctoLibrary {
 }
 
 extension OctoLibrary.LangId: Into {
-  typealias T = OctoLibrary.LangId
-  func into() -> T {
+  public typealias T = OctoLibrary.LangId
+  public func into() -> T {
     self
   }
 }
 
 extension OctoLibrary: CustomStringConvertible {
-  var description: String {
+  public var description: String {
     """
     Library: \(self.name)
     =========\(String(repeating: "=", count: self.name.count))

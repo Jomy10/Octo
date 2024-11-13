@@ -1,9 +1,7 @@
 #if canImport(Darwin)
 import Darwin
-
 #elseif canImport(Glibc)
 import Glibc
-
 #else
 #error("Unhandled platform in OctoIO (TODO)")
 #endif

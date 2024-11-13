@@ -1,14 +1,14 @@
 import Foundation
 import OctoIO
 
-struct OctoFunction: OctoObject {
-  let id = UUID()
+public struct OctoFunction: OctoObject {
+  public let id = UUID()
 
   var type: OctoType
   let name: String
   /// Name of 'octo:rename' attribute
   var customName: String? = nil
-  let origin: OctoOrigin
+  public let origin: OctoOrigin
   var functionType: OctoFunctionType = .function
   var params: [UUID] = []
   var visible = true
@@ -116,12 +116,12 @@ struct OctoFunction: OctoObject {
   }
 }
 
-struct OctoParam: OctoObject {
-  let id = UUID()
+public struct OctoParam: OctoObject {
+  public let id = UUID()
 
   var type: OctoType
   let name: String?
-  let origin: OctoOrigin
+  public let origin: OctoOrigin
   var visible = true
 
   var bindingName: String? {
@@ -138,7 +138,7 @@ struct OctoParam: OctoObject {
   }
 }
 
-enum OctoFunctionType {
+public enum OctoFunctionType {
   case `init`
   case `deinit`
   case method

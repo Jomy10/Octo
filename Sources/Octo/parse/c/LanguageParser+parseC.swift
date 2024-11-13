@@ -26,12 +26,12 @@ extension LanguageParser {
       if severity.rawValue > highestSeverity.rawValue {
         highestSeverity = severity
       }
-      if severity.rawValue >= config.cConfig!.logLevel.rawValue {
+      if severity.rawValue >= config.cConfig!.logLevel.cxDiagnosticSeverity.rawValue {
         print(diagnostic.format(CXDiagnostic_DisplaySourceLocation.rawValue | CXDiagnostic_DisplayColumn.rawValue), to: .stderr)
       }
     }
 
-    if highestSeverity.rawValue >= config.cConfig!.errorLevel.rawValue {
+    if highestSeverity.rawValue >= config.cConfig!.errorLevel.cxDiagnosticSeverity.rawValue {
       fatalError("Error while parsing header file")
     }
 

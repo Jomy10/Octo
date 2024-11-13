@@ -1,10 +1,10 @@
 import Foundation
 
-struct OctoGlobalVariable: OctoObject {
-  let id = UUID()
+public struct OctoGlobalVariable: OctoObject {
+  public let id = UUID()
 
   let type: OctoType
   let name: String
   let external: Bool
-  let origin: OctoOrigin
+  public let origin: OctoOrigin
 }

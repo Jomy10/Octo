@@ -1,13 +1,13 @@
 import Clang
 
-struct OctoOrigin {
+public struct OctoOrigin {
   private let inner: OriginData
 
   init(c: CXSourceLocation) {
     self.inner = .c(c)
   }
 
-  init(arg: String) {
+  public init(arg: String) {
     self.inner = .arg(arg)
   }
 
@@ -39,7 +39,7 @@ struct OctoOrigin {
 }
 
 extension OctoOrigin: CustomStringConvertible {
-  var description: String {
+  public var description: String {
     if case .arg(let arg) = self.inner {
       return "argument: \(arg)"
     }

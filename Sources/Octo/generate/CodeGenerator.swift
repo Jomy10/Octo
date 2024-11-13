@@ -1,7 +1,7 @@
 import Foundation
 
-struct CodeGenerator {
-  static func generate(language lang: Language, lib: OctoLibrary, options: GenerationOptions) -> any GeneratedCode {
+public struct CodeGenerator {
+  public static func generate(language lang: Language, lib: OctoLibrary, options: GenerationOptions) -> any GeneratedCode {
     switch (lang) {
       case .ruby:
         return lib.rubyGenerate(options: options)
@@ -11,13 +11,21 @@ struct CodeGenerator {
   }
 }
 
-struct GenerationOptions {
-  let indent: String
+public struct GenerationOptions {
+  public let indent: String
   /// Libraries to link against
-  let libs: [String]
+  public let libs: [String]
+
+  public init(
+    indent: String,
+    libs: [String]
+  ) {
+    self.indent = indent
+    self.libs = libs
+  }
 }
 
-protocol GeneratedCode: CustomStringConvertible {
+public protocol GeneratedCode: CustomStringConvertible {
   func write(to url: URL) throws
 }
 

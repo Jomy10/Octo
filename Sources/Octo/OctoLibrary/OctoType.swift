@@ -1,6 +1,6 @@
 import Clang
 
-struct OctoType: CustomStringConvertible, Equatable {
+public struct OctoType: CustomStringConvertible, Equatable {
   private let inner: CXType // TODO: language agnostic
   let kind: OctoTypeKind
   /// Nullable for ptr types and function types
@@ -65,7 +65,7 @@ struct OctoType: CustomStringConvertible, Equatable {
   }
 }
 
-enum OctoTypeKind: Equatable {
+public enum OctoTypeKind: Equatable {
   case Void
   case Bool
   case U8
@@ -200,7 +200,7 @@ extension OctoTypeKind {
   }
 }
 
-enum OctoCallingConv {
+public enum OctoCallingConv {
   case `default`
   case c
   case swift

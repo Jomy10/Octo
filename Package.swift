@@ -292,8 +292,8 @@ let package = Package(
   products: [
     .executable(
       name: "octo",
-      targets: ["Octo"]
-    ),
+      targets: ["OctoCLI"]
+    )
   ],
   dependencies: [
     .package(url: "https://github.com/apple/swift-argument-parser", from: "1.5.0"),
@@ -301,10 +301,17 @@ let package = Package(
   ],
   targets: [
     .executableTarget(
+      name: "OctoCLI",
+      dependencies: [
+        "Octo",
+        "OctoIO",
+        .product(name: "ArgumentParser", package: "swift-argument-parser")
+      ]
+    ),
+    .target(
       name: "Octo",
       dependencies: [
         "Clang",
-        .product(name: "ArgumentParser", package: "swift-argument-parser"),
         "OctoIO"
         //.product(name: "Glob", package: "swift-glob"),
       ],

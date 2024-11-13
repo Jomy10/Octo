@@ -1,17 +1,17 @@
 import Foundation
 
-struct OctoAttribute: OctoObject {
-  let id = UUID()
+public struct OctoAttribute: OctoObject {
+  public let id = UUID()
 
   let name: String
   let type: AttrType
   let params: [Parameter]
-  var origin: OctoOrigin
+  public var origin: OctoOrigin
 
   /// Data for annotate
   let octoData: OctoAttrData?
 
-  init(name: String, type: AttrType, params: [Parameter], origin: OctoOrigin) {
+  public init(name: String, type: AttrType, params: [Parameter], origin: OctoOrigin) {
     self.name = name
     self.type = type
     self.params = params
@@ -25,17 +25,17 @@ struct OctoAttribute: OctoObject {
     }
   }
 
-  enum AttrType {
+  public enum AttrType {
     case annotate
     case unexposed
   }
 
-  enum Parameter: Equatable {
+  public enum Parameter: Equatable {
     case string(Substring)
     case int(Int)
     case double(Double)
 
-    init?(_ param: String) {
+    public init?(_ param: String) {
       if param.hasPrefix("\"") && param.hasSuffix("\"") && !param.hasSuffix("\\\"") {
         self = .string(param[param.index(param.startIndex, offsetBy: 1)..<param.index(param.endIndex, offsetBy: -1)])
       } else if let i = Int(param) {
