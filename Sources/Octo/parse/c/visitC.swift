@@ -238,9 +238,19 @@ func visitParmDecl(_ cursor: CXCursor, parent: CXCursor, _ lib: inout OctoLibrar
     name = nil
   }
   let functionName = parent.spelling!
+
+  guard let objectId = lib.getObject(lid: parent) else {
+    fatalError("[\(cursor.location)] ERROR: \(functionName) is unknown")
+  }
+  let objectType = lib.getObjectType(id: objectId)!
+  if objectType != OctoFunction.self {
+    log("DEBUG: visiting ParamDecl: \(functionName) is of type \(objectType), not function. This will be unhandled")
+    return CXChildVisit_Continue
+  }
+
   log("@ParmDecl \(functionName) -> \(type) \(name ?? "unnamed")")
   guard let functionId = lib.getFunction(lid: parent) else {
-    fatalError("\(functionName) is unknown")
+    fatalError("[\(cursor.location)] ERROR: \(functionName) is unknown")
   }
   lib.addParam(
     to: functionId,

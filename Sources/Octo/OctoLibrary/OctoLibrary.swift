@@ -231,6 +231,10 @@ public struct OctoLibrary {
     self.nameLookup[name]
   }
 
+  public func getObjectType(id: UUID) -> OctoObject.Type? {
+    self.objectTypeLookup[id]
+  }
+
   private func getUserTypeId(possibleId objid: UUID) -> UUID? {
     let type = self.objectTypeLookup[objid]
     if type == OctoUserType.self {

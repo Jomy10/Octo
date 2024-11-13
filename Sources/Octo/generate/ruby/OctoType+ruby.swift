@@ -33,7 +33,7 @@ extension OctoType {
       case .S128: return nil
       case .F32: return ":float"
       case .F64: return ":double"
-      case .FLong: return nil
+      case .FLong: return ":long_double"
       case .Pointer(to: let pointeeType):
         switch (pointeeType.kind) {
           case .UserDefined(name: let name): return "\(name)\(isDefinition ? ".ptr" : "")"

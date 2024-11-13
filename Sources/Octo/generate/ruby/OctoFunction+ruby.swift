@@ -32,7 +32,12 @@ extension OctoFunction {
       // convert return type to ruby type
       switch (returnType.kind) {
       case .UserDefined(name: let name):
-        let userTypeId = lib.getUserType(name: name)!
+        guard let userTypeId = lib.getUserType(name: name) else {
+          guard let typedeId = lib.getTypedef(name: name) else {
+            fatalError("[\(self.origin)] ERROR: Cannot find user type \(name)")
+          }
+          break // it's a regular C type that is typedef'd
+        }
         switch (lib.getUserType(id: userTypeId)!.inner) {
         case .record(let record):
           fnCall = "\(record.bindingName).new(fromRawPtr: \(fnCall))"
@@ -147,7 +152,14 @@ extension OctoType {
   func rubyConvertParameterToFFI(ofName parameterName: String, ffiModuleName: String, in lib: OctoLibrary) -> String {
     switch (self.kind) {
     case .UserDefined(name: let name):
-      let userTypeId = lib.getUserType(name: name)!
+      guard let userTypeId = lib.getUserType(name: name) else {
+        guard let typedeId = lib.getTypedef(name: name) else {
+          fatalError("ERROR: Cannot find user type \(name)")
+        }
+        // it's a regular C type that is typedef'd
+        return parameterName
+      }
+
       switch (lib.getUserType(id: userTypeId)!.inner) {
       case .record:
         return "\(parameterName).\(rubyInnerPtrName)"
