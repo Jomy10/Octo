@@ -32,7 +32,7 @@ public enum ClangDiagnostic {
 
 public struct ParseConfiguration {
   public let outputLibraryName: String
-  public let outputLocation: URL
+  //public let outputLocation: URL
   public let languageSpecificConfig: LanguageSpecificConfiguration
 
   public struct CConfig {
@@ -59,11 +59,11 @@ public struct ParseConfiguration {
 
   public init(
     outputLibraryName: some StringProtocol,
-    outputLocation: URL,
+    //outputLocation: URL,
     languageSpecificConfig: LanguageSpecificConfiguration
   ) {
     self.outputLibraryName = String(outputLibraryName)
-    self.outputLocation = outputLocation
+    //self.outputLocation = outputLocation
     self.languageSpecificConfig = languageSpecificConfig
   }
 

@@ -27,7 +27,7 @@ extension Octo {
     }
     let parseConfig = ParseConfiguration(
       outputLibraryName: self.args.outputLibraryName,
-      outputLocation: self.args.outputLocation,
+      //outputLocation: self.args.outputLocation,
       languageSpecificConfig: languageSpecificConfig
     )
 
@@ -44,12 +44,14 @@ extension Octo {
     }
 
     // Generate code //
-    let generationOptions = GenerationOptions(
-      indent: self.args.indent,
-      libs: self.args.linkLibs
-    )
-    let code = CodeGenerator.generate(language: self.args.outputLanguage, lib: library, options: generationOptions)
+    for (language, args) in self.args.outputOptions {
+      let generationOptions = GenerationOptions(
+        indent: args.indent,
+        libs: self.args.linkLibs
+      )
+      let code = CodeGenerator.generate(language: language, lib: library, options: generationOptions)
 
-    try code.write(to: self.args.outputLocation)
+      try code.write(to: args.outputLocation)
+    }
   }
 }

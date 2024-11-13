@@ -7,14 +7,14 @@ import ArgumentParser
 struct OctoArguments: ParsableArguments {
   // Input (parse) options //
 
-  @Option(name: .customLong("from"), help: "The input language to create bindings for")
+  @Option(name: .customLong("from"), help: "The input language to create bindings for (required)")
   var inputLanguage: Language? = nil // required if no config file specified
 
-  @Option(name: [.customShort("i"), .customLong("input-location")], help: "Input path")
+  @Option(name: [.customShort("i"), .customLong("input-location")], help: "Input path (required)")
   var inputLocation: URL? = nil // required if no config file specified
 
   @Option(name: [.customShort("I"), .long], help: """
-  Specify a language specific option for the language being parsed (format: <langName>:<optName>[=value])
+  Specify a language specific option for the language being parsed (format: <optName>[=value])
   # c
   - flag: a flag passed to clang for parsing
   - include: the header files whose symbols to include in the output (default: all header files included in the provided header)
@@ -28,22 +28,22 @@ struct OctoArguments: ParsableArguments {
 
   // Output (generation) options //
 
-  @Option(name: .customLong("to"), help: "The output language to create bindings in")
+  @Option(name: .customLong("to"), help: "The output language to create bindings in (required)")
   var outputLanguage: Language? = nil // required if no config file specified
 
-  @Option(name: [.customLong("output"), .customShort("o")], help: "Output path")
+  @Option(name: [.customLong("output"), .customShort("o")], help: "Output path (required)")
   var outputLocation: URL? = nil // required if no config file specified
 
-  @Option(name: [.long, .customShort("O")], help: "")
+  @Option(name: [.long, .customShort("O")], help: "Specify a language specific option for the language for which bindings are generated for (format: <optName>[=value])")
   var langOutOpt: [LanguageOption] = []
 
-  @Option(name: [.customLong("lib-name"), .customShort("n")], help: "The name of the library to be generated")
+  @Option(name: [.customLong("lib-name"), .customShort("n")], help: "The name of the library to be generated (required)")
   var outputLibraryName: String? = nil // required if no config file specified
 
   @Option(name: .shortAndLong, help: "The library/libraries to link against in the output")
   var link: [String] = []
 
-  @Option(name: .long)
+  @Option(name: .long, help: "The amount of --indent-type to indent")
   var indentCount: Int = 2
 
   @Option(name: .long, help: "`tabs` or `spaces`")
