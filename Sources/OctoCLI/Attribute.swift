@@ -2,11 +2,11 @@ import Octo
 import OctoIO
 import ArgumentParser
 
-struct Attribute: Equatable, Hashable, ExpressibleByArgument {
+struct Attribute: Equatable, ExpressibleByArgument {
   let symbolName: Substring
   let attributeName: Substring
   let arguments: [Substring]
-  let originalArgument: String
+  let origin: OctoOrigin
 
   enum ParseError: Swift.Error, CustomStringConvertible {
     case malformed(String)
@@ -49,7 +49,7 @@ struct Attribute: Equatable, Hashable, ExpressibleByArgument {
     self.symbolName = symbolName
     self.attributeName = attributeName
     self.arguments = arguments
-    self.originalArgument = originalArgument
+    self.origin = OctoOrigin(arg: originalArgument)
   }
 
   public init?(argument: String) {
@@ -74,7 +74,30 @@ struct Attribute: Equatable, Hashable, ExpressibleByArgument {
           return OctoAttribute.Parameter.string(arg)
         }
       },
-      origin: OctoOrigin(arg: originalArgument)
+      origin: self.origin
+    )
+  }
+}
+
+extension Attribute: Decodable {
+  enum CodingKeys: String, CodingKey {
+     case symbolName = "symbol"
+     case attributeName = "attribute"
+     case arguments
+  }
+
+  init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    let symbol = try container.decode(String.self, forKey: .symbolName)
+    let attribute = try container.decode(String.self, forKey: .attributeName)
+    let arguments: [String] = try container.decodeIfPresent([String].self, forKey: .arguments) ?? []
+    let argumentsSub: [Substring] = arguments.map { $0[$0.startIndex..<$0.endIndex] }
+
+    self = Attribute(
+      symbolName: symbol[symbol.startIndex..<symbol.endIndex],
+      attributeName: attribute[attribute.startIndex..<attribute.endIndex],
+      arguments: argumentsSub,
+      originalArgument: "TODO: line number in TOML file"
     )
   }
 }

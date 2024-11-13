@@ -297,6 +297,7 @@ let package = Package(
   ],
   dependencies: [
     .package(url: "https://github.com/apple/swift-argument-parser", from: "1.5.0"),
+    .package(url: "https://github.com/LebJe/TOMLKit.git", from: "0.6.0")
     //.package(url: "https://github.com/davbeck/swift-glob.git", from: "0.1.0"),
   ],
   targets: [
@@ -305,7 +306,8 @@ let package = Package(
       dependencies: [
         "Octo",
         "OctoIO",
-        .product(name: "ArgumentParser", package: "swift-argument-parser")
+        .product(name: "ArgumentParser", package: "swift-argument-parser"),
+        .product(name: "TOMLKit", package: "TOMLKit")
       ]
     ),
     .target(

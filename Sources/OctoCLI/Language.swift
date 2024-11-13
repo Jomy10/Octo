@@ -17,3 +17,18 @@ extension Language: ExpressibleByArgument {
     }
   }
 }
+
+extension Language: Decodable {
+  enum DecodingError: Swift.Error {
+    case languageNotValid(language: String)
+  }
+
+  public init(from decoder: Decoder) throws {
+    let value = try decoder.singleValueContainer()
+    let stringValue = try value.decode(String.self)
+    guard let language = Self(argument: stringValue) else {
+      throw Self.DecodingError.languageNotValid(language: stringValue)
+    }
+    self = language
+  }
+}

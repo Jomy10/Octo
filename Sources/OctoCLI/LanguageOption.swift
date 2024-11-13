@@ -42,7 +42,7 @@ struct LanguageOption: Equatable, Hashable, ExpressibleByArgument {
     )
   }
 
-  private init(
+  fileprivate init(
     language: Language,
     name: some StringProtocol,
     value: Substring?
@@ -58,6 +58,115 @@ struct LanguageOption: Equatable, Hashable, ExpressibleByArgument {
     } catch let error {
       print(error) // TODO: OctoLog
       return nil
+    }
+  }
+}
+
+struct LanguageOptions {
+  let inner: [LanguageOption]
+
+  init(_ inner: [LanguageOption]) {
+    self.inner = inner
+  }
+}
+
+extension LanguageOptions: RandomAccessCollection {
+  typealias Element = Array<LanguageOption>.Element
+  typealias Index = Array<LanguageOption>.Index
+  typealias Indices = Array<LanguageOption>.Indices
+  typealias SubSequence = Array<LanguageOption>.SubSequence
+
+  var startIndex: Self.Index {
+    self.inner.startIndex
+  }
+
+  var endIndex: Self.Index {
+    self.inner.endIndex
+  }
+
+  subscript(_ idx: Self.Index) -> Self.Element {
+    self.inner[idx]
+  }
+
+  subscript(_ range: Range<Self.Index>) -> Self.SubSequence {
+    self.inner[range]
+  }
+}
+
+// https://github.com/apple/swift-argument-parser/issues/682
+//extension LanguageOptions: ArgumentDefinitionContainer {
+//  typealias Contained = Self.Element
+//  typealias Initial = LanguageOptions
+
+//  static var helpOptions: ArgumentDefinition.Help.Options { [.isRepeating] }
+
+//  static func update(
+//    parsedValues: inout ParsedValues,
+//    value: Self.Element,
+//    key: InputKey,
+//    origin: InputOrgin
+//  ) {
+//    parsedValues.update(
+//      forKey: key,
+//      inputOrgin: origin,
+//      initial: .init([]),
+//      closure: { $0.append(value) }
+//    )
+//  }
+//}
+
+//extension LanguageOptions: ArgumentDefinitionContainerExpressibleByArgument
+//  where Element: ExpressibleByArgument
+//{
+//  static func defaultValueDescription(_ initial: Array<Element>?) -> String? {
+//    guard let initial = initial else { return nil }
+//    guard !initial.isEmpty else { return nil }
+//    return initial
+//      .lazy
+//      .map { $0.defaultValueDescription }
+//      .joined(separator: ", ")
+//  }
+//}
+
+// options = { language: "c", options: [...] }
+extension LanguageOptions: Decodable {
+  struct DecodedOption: Decodable {
+    let name: String
+    let value: String?
+
+    init(
+      name: String,
+      value: String?
+    ) {
+      self.name = name
+      self.value = value
+    }
+
+    init(from decoder: Decoder) throws {
+      var optionContainer = try decoder.unkeyedContainer()
+      let name = try optionContainer.decode(String.self)
+      let value = try optionContainer.decodeIfPresent(String.self)
+
+      self = DecodedOption(name: name, value: value)
+    }
+  }
+
+  enum CodingKeys: String, CodingKey {
+    case language
+    case options
+  }
+
+  init(from decoder: Decoder) throws {
+    let languageOptionsContainer = try decoder.container(keyedBy: CodingKeys.self)
+    let language = try languageOptionsContainer.decode(Language.self, forKey: .language)
+    let options = try languageOptionsContainer.decode([DecodedOption].self, forKey: .options)
+
+    self.inner = options.map { option in
+      LanguageOption(
+        language: language,
+        name: option.name,
+        value: option.value.map { $0[$0.startIndex..<$0.endIndex] }
+      )
     }
   }
 }

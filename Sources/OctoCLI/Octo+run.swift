@@ -11,28 +11,28 @@ extension Octo {
 
     // Parse //
     let languageSpecificConfig: ParseConfiguration.LanguageSpecificConfiguration
-    switch (self.inputLanguage) {
+    switch (self.args.inputLanguage) {
       case .c:
         languageSpecificConfig = .c(ParseConfiguration.CConfig(
-          headerFile: self.inputLocation,
-          clangFlags: self.cIn_clangFlags,
-          includeHeaders: self.cIn_includeHeaders,
-          logLevel: self.cIn_logLevel ?? .note,
-          errorLevel: self.cIn_errorLevel ?? .error
+          headerFile: self.args.inputLocation,
+          clangFlags: self.args.cIn_clangFlags,
+          includeHeaders: self.args.cIn_includeHeaders,
+          logLevel: self.args.cIn_logLevel ?? .note,
+          errorLevel: self.args.cIn_errorLevel ?? .error
         ))
       default:
-        fatalError("Parsing of language \(self.inputLanguage) is not yet supported")
+        fatalError("Parsing of language \(self.args.inputLanguage) is not yet supported")
     }
     let parseConfig = ParseConfiguration(
-      outputLibraryName: self.outputLibraryName,
-      outputLocation: self.outputLocation,
+      outputLibraryName: self.args.outputLibraryName,
+      outputLocation: self.args.outputLocation,
       languageSpecificConfig: languageSpecificConfig
     )
 
-    var library = try LanguageParser.parse(language: self.inputLanguage, config: parseConfig)
+    var library = try LanguageParser.parse(language: self.args.inputLanguage, config: parseConfig)
     defer { library.destroy() }
 
-    for (i, attribute) in self.attributes.enumerated() {
+    for (i: Int, attribute: Attribute) in self.attributes.enumerated() {
       guard let objectId = library.getObject(name: String(attribute.symbolName)) else {
         // TODO: replace with throw
         fatalError("Symbol '\(attribute.symbolName)' doesn't exist (passed as argument to --argument)")
@@ -42,11 +42,11 @@ extension Octo {
 
     // Generate code //
     let generationOptions = GenerationOptions(
-      indent: self.indent,
-      libs: self.linkLibs
+      indent: self.args.indent,
+      libs: self.args.linkLibs
     )
-    let code = CodeGenerator.generate(language: self.outputLanguage, lib: library, options: generationOptions)
+    let code = CodeGenerator.generate(language: self.args.outputLanguage, lib: library, options: generationOptions)
 
-    try code.write(to: self.outputLocation)
+    try code.write(to: self.args.outputLocation)
   }
 }

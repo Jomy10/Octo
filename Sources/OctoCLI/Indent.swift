@@ -1,6 +1,6 @@
 import ArgumentParser
 
-enum IndentType: ExpressibleByArgument {
+enum IndentType: ExpressibleByArgument, Decodable {
   case tabs
   case spaces
 
