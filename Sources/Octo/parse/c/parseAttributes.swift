@@ -5,7 +5,7 @@ func parseUnexposedAttribute(
   translationUnit: CXTranslationUnit,
   fromTokens _tokens: UnsafeMutablePointer<CXToken>,
   numTokens: UInt32
-) -> OctoAttribute {
+) throws -> OctoAttribute {
   let tokens = UnsafeMutableBufferPointer<CXToken>(start: _tokens, count: Int(numTokens))
   var name: String? = nil
   var params: [OctoAttribute.Parameter] = []
@@ -14,7 +14,7 @@ func parseUnexposedAttribute(
     switch (token.kind) {
       case CXToken_Identifier:
         if name != nil {
-          fatalError("unexpected identifier token \(String(describing: token.spelling(translationUnit: translationUnit)))")
+          throw ParseError("unexpected identifier token \(String(describing: token.spelling(translationUnit: translationUnit)))", origin)
         }
         name = token.spelling(translationUnit: translationUnit)
       case CXToken_Literal:
@@ -24,7 +24,7 @@ func parseUnexposedAttribute(
           break TokenIter
         }
       default:
-        unhandledToken(token, translationUnit: translationUnit)
+        throw unhandledToken(token, translationUnit: translationUnit)
     }
   }
 
@@ -35,7 +35,7 @@ func parseAnnotateAttrParams(
   translationUnit: CXTranslationUnit,
   fromTokens _tokens: UnsafeMutablePointer<CXToken>,
   numTokens: UInt32
-) -> [OctoAttribute.Parameter] {
+) throws -> [OctoAttribute.Parameter] {
   let tokens = UnsafeMutableBufferPointer<CXToken>(start: _tokens, count: Int(numTokens))
   var params: [OctoAttribute.Parameter] = []
 
@@ -43,7 +43,7 @@ func parseAnnotateAttrParams(
     switch (token.kind) {
       case CXToken_Identifier:
         if token.spelling(translationUnit: translationUnit)! != "annotate" {
-          fatalError("unexpected identifier token \(String(describing: token.spelling(translationUnit: translationUnit)))")
+          throw ParseError("unexpected identifier token \(String(describing: token.spelling(translationUnit: translationUnit)))", token.sourceLocation(translationUnit: translationUnit))
         }
       case CXToken_Literal:
         params.append(.init(token.spelling(translationUnit: translationUnit)!)!)
@@ -52,7 +52,7 @@ func parseAnnotateAttrParams(
           break TokenIter
         }
       default:
-        unhandledToken(token, translationUnit: translationUnit)
+        throw unhandledToken(token, translationUnit: translationUnit)
     }
   }
 

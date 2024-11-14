@@ -1,16 +1,18 @@
+import Foundation
 import Clang
 import OctoIO
 
-internal func unhandledKind(_ kind: some CXKind, location: CXSourceLocation? = nil, file: String = #file, function: String = #function, line: Int = #line) -> Never {
-  var msg = "Unhandled \(kind.kindName) (\(kind.rawValue)): \(kind.spelling!) @ \(file) \(function):\(line)"
+internal func unhandledKind(_ kind: some CXKind, location: CXSourceLocation? = nil, file: String = #file, function: String = #function, line: Int = #line) -> ParseError {
+  let msg = "Unhandled \(kind.kindName) (\(kind.rawValue)): \(kind.spelling!) @ \(file) \(function):\(line)"
   if let location = location {
-    msg += "\nOriginated at \(location)"
+    return ParseError(msg, location)
+  } else {
+    return ParseError(msg, location)
   }
-  fatalError(msg)
 }
 
-internal func unhandledToken(_ token: CXToken, translationUnit: CXTranslationUnit, file: String = #file, function: String = #function, line: Int = #line) -> Never {
-  fatalError("Unhandled token: \(token.spelling(translationUnit: translationUnit)!) @ \(file) \(function):\(line)\nOriginated at \(token.sourceLocation(translationUnit: translationUnit))")
+internal func unhandledToken(_ token: CXToken, translationUnit: CXTranslationUnit, file: String = #file, function: String = #function, line: Int = #line) -> ParseError {
+  ParseError("Unhandled token: \(token.spelling(translationUnit: translationUnit)!) @ \(file) \(function):\(line)", token.sourceLocation(translationUnit: translationUnit))
 }
 
 func visitC(
@@ -21,54 +23,59 @@ func visitC(
   let library: UnsafeMutablePointer<OctoLibrary> = UnsafeMutableRawPointer(clientData!)
     .bindMemory(to: OctoLibrary.self, capacity: 1)
 
-  switch (cursor.kind) {
-    case CXCursor_StructDecl:
-      return visitStructDecl(cursor, &library.pointee)
-    case CXCursor_FieldDecl:
-      return visitFieldDecl(cursor, parent: parent, &library.pointee)
-    case CXCursor_TypedefDecl:
-      return visitTypedefDecl(cursor, &library.pointee)
-    case CXCursor_VarDecl:
-      return visitVarDecl(cursor, &library.pointee)
-    case CXCursor_EnumDecl:
-      return visitEnumDecl(cursor, &library.pointee)
-    case CXCursor_EnumConstantDecl:
-      return visitEnumConstantDecl(cursor, parent: parent, &library.pointee)
-    case CXCursor_UnionDecl:
-      return visitUnionDecl(cursor, &library.pointee)
-    case CXCursor_FunctionDecl:
-      return visitFunctionDecl(cursor, &library.pointee)
-    case CXCursor_ParmDecl:
-      return visitParmDecl(cursor, parent: parent, &library.pointee)
-    case CXCursor_AnnotateAttr:
-      return visitAnnotateAttr(cursor, parent: parent, &library.pointee)
-    case CXCursor_TypeRef:
-      return CXChildVisit_Continue
-    case CXCursor_UnexposedAttr:
-      return visitUnexposedAttr(cursor, parent: parent, &library.pointee)
-    default: unhandledKind(cursor.kind, location: cursor.location)
+  do {
+    switch (cursor.kind) {
+      case CXCursor_StructDecl:
+        return try visitStructDecl(cursor, &library.pointee)
+      case CXCursor_FieldDecl:
+        return try visitFieldDecl(cursor, parent: parent, &library.pointee)
+      case CXCursor_TypedefDecl:
+        return try visitTypedefDecl(cursor, &library.pointee)
+      case CXCursor_VarDecl:
+        return try visitVarDecl(cursor, &library.pointee)
+      case CXCursor_EnumDecl:
+        return try visitEnumDecl(cursor, &library.pointee)
+      case CXCursor_EnumConstantDecl:
+        return try visitEnumConstantDecl(cursor, parent: parent, &library.pointee)
+      case CXCursor_UnionDecl:
+        return try visitUnionDecl(cursor, &library.pointee)
+      case CXCursor_FunctionDecl:
+        return try visitFunctionDecl(cursor, &library.pointee)
+      case CXCursor_ParmDecl:
+        return try visitParmDecl(cursor, parent: parent, &library.pointee)
+      case CXCursor_AnnotateAttr:
+        return try visitAnnotateAttr(cursor, parent: parent, &library.pointee)
+      case CXCursor_TypeRef:
+        return CXChildVisit_Continue
+      case CXCursor_UnexposedAttr:
+        return try visitUnexposedAttr(cursor, parent: parent, &library.pointee)
+      default: throw unhandledKind(cursor.kind, location: cursor.location)
+    }
+  } catch let error {
+    log(error.localizedDescription, .error)
+    exit(1)
   }
 }
 
-func parseVarDecl(_ cursor: CXCursor) -> (
+func parseVarDecl(_ cursor: CXCursor) throws -> (
   type: OctoType,
   name: String
 ) {
   let cursorType: CXType = cursor.cursorType
 
-  guard let varType = OctoType(cxType: cursorType) else {
-    unhandledKind(cursorType.kind, location: cursor.location)
+  guard let varType = try OctoType(cxType: cursorType) else {
+    throw unhandledKind(cursorType.kind, location: cursor.location)
   }
   let varName = cursor.spelling!
 
   return (type: varType, name: varName)
 }
 
-func visitStructDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) -> CXChildVisitResult {
+func visitStructDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) throws -> CXChildVisitResult {
   let cursorType: CXType = cursor.cursorType
 
   if (cursorType.kind != CXType_Record) {
-    unhandledKind(cursorType.kind, location: cursor.location)
+    throw unhandledKind(cursorType.kind, location: cursor.location)
   }
 
   let recordName = cursor.spelling!
@@ -81,12 +88,12 @@ func visitStructDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) -> CXChildVis
   return CXChildVisit_Recurse
 }
 
-func visitFieldDecl(_ cursor: CXCursor, parent: CXCursor, _ lib: inout OctoLibrary) -> CXChildVisitResult {
-  let decl = parseVarDecl(cursor)
+func visitFieldDecl(_ cursor: CXCursor, parent: CXCursor, _ lib: inout OctoLibrary) throws -> CXChildVisitResult {
+  let decl = try parseVarDecl(cursor)
 
   let parentTypeName = parent.spelling!
   guard let parentId = lib.getUserType(lid: parent) else {
-    fatalError("\(parentTypeName) is unknown")
+    throw ParseError("\(parentTypeName) is unknown", cursor.location)
   }
   log("@FieldDecl \(parentTypeName) -> \(decl.type) \(decl.name)")
   lib.addField(
@@ -99,14 +106,14 @@ func visitFieldDecl(_ cursor: CXCursor, parent: CXCursor, _ lib: inout OctoLibra
   return CXChildVisit_Recurse
 }
 
-func visitVarDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) -> CXChildVisitResult {
-  let decl = parseVarDecl(cursor)
+func visitVarDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) throws -> CXChildVisitResult {
+  let decl = try parseVarDecl(cursor)
 
   let global = cursor.hasVarDeclGlobalStorage
   let external = cursor.hasVarDeclExternalStorage
 
   if !global {
-    print("[WARN] Unhandled variable \(decl)", to: .stderr)
+    log("[WARN] Unhandled variable \(decl)", .warning)
     return CXChildVisit_Continue
   }
 
@@ -119,16 +126,16 @@ func visitVarDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) -> CXChildVisitR
   return CXChildVisit_Continue
 }
 
-func visitTypedefDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) -> CXChildVisitResult {
+func visitTypedefDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) throws -> CXChildVisitResult {
   let cursorType: CXType = cursor.cursorType
 
   if cursorType.kind != CXType_Typedef {
-    unhandledKind(cursorType.kind, location: cursor.location)
+    throw unhandledKind(cursorType.kind, location: cursor.location)
   }
 
   let typedefType = cursor.typedefDeclUnderlyingType
-  guard let type = OctoType(cxType: typedefType) else {
-    unhandledKind(typedefType.kind, location: cursor.location)
+  guard let type = try OctoType(cxType: typedefType) else {
+    throw unhandledKind(typedefType.kind, location: cursor.location)
   }
 
   let typedefName = cursorType.typedefName!
@@ -141,16 +148,16 @@ func visitTypedefDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) -> CXChildVi
   return CXChildVisit_Recurse
 }
 
-func visitEnumDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) -> CXChildVisitResult {
+func visitEnumDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) throws -> CXChildVisitResult {
   let cursorType: CXType = cursor.cursorType
 
   if cursorType.kind != CXType_Enum {
-    unhandledKind(cursorType.kind, location: cursor.location)
+    throw unhandledKind(cursorType.kind, location: cursor.location)
   }
 
   let enumName = cursor.spelling!
-  guard let enumDeclIntegerType = OctoType(cxType: cursor.enumDeclIntegerType) else {
-    unhandledKind(cursor.enumDeclIntegerType.kind, location: cursor.location)
+  guard let enumDeclIntegerType = try OctoType(cxType: cursor.enumDeclIntegerType) else {
+    throw unhandledKind(cursor.enumDeclIntegerType.kind, location: cursor.location)
   }
 
   log("@EnumDecl.Enum \(enumDeclIntegerType) \(enumName)")
@@ -162,15 +169,15 @@ func visitEnumDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) -> CXChildVisit
   return CXChildVisit_Recurse
 }
 
-func visitEnumConstantDecl(_ cursor: CXCursor, parent: CXCursor, _ lib: inout OctoLibrary) -> CXChildVisitResult {
+func visitEnumConstantDecl(_ cursor: CXCursor, parent: CXCursor, _ lib: inout OctoLibrary) throws -> CXChildVisitResult {
   let enumName = parent.spelling!
   let enumCaseName = cursor.spelling!
 
   guard let parentEnumId = lib.getUserType(lid: parent) else {
-    fatalError("\(enumName) is unknown")
+    throw ParseError("\(enumName) is unknown", cursor.location)
   }
   guard case .`enum`(let parentEnum) = lib.getUserType(id: parentEnumId)!.inner else {
-    fatalError("Wrong user type for enum \(enumName)")
+    throw ParseError("Wrong user type for enum \(enumName)", cursor.location)
   }
 
   let value: OctoEnumCase.Value
@@ -191,11 +198,11 @@ func visitEnumConstantDecl(_ cursor: CXCursor, parent: CXCursor, _ lib: inout Oc
   return CXChildVisit_Recurse
 }
 
-func visitUnionDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) -> CXChildVisitResult {
+func visitUnionDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) throws -> CXChildVisitResult {
   let cursorType: CXType = cursor.cursorType
 
   if cursorType.kind != CXType_Record {
-    unhandledKind(cursorType.kind, location: cursor.location)
+    throw unhandledKind(cursorType.kind, location: cursor.location)
   }
 
   let recordName = cursor.spelling!
@@ -210,10 +217,10 @@ func visitUnionDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) -> CXChildVisi
   return CXChildVisit_Recurse
 }
 
-func visitFunctionDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) -> CXChildVisitResult {
+func visitFunctionDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) throws -> CXChildVisitResult {
   let cursorType: CXType = cursor.cursorType
-  guard let type = OctoType(cxType: cursorType) else {
-    unhandledKind(cursorType.kind, location: cursor.location)
+  guard let type = try OctoType(cxType: cursorType) else {
+    throw unhandledKind(cursorType.kind, location: cursor.location)
   }
 
   let name = cursor.spelling!
@@ -226,11 +233,11 @@ func visitFunctionDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) -> CXChildV
   return CXChildVisit_Recurse
 }
 
-func visitParmDecl(_ cursor: CXCursor, parent: CXCursor, _ lib: inout OctoLibrary) -> CXChildVisitResult {
+func visitParmDecl(_ cursor: CXCursor, parent: CXCursor, _ lib: inout OctoLibrary) throws -> CXChildVisitResult {
   let cursorType: CXType = cursor.cursorType
 
-  guard let type = OctoType(cxType: cursorType) else {
-    unhandledKind(cursorType.kind, location: cursor.location)
+  guard let type = try OctoType(cxType: cursorType) else {
+    throw unhandledKind(cursorType.kind, location: cursor.location)
   }
 
   var name: String? = cursor.spelling!
@@ -240,17 +247,17 @@ func visitParmDecl(_ cursor: CXCursor, parent: CXCursor, _ lib: inout OctoLibrar
   let functionName = parent.spelling!
 
   guard let objectId = lib.getObject(lid: parent) else {
-    fatalError("[\(cursor.location)] ERROR: \(functionName) is unknown")
+    throw ParseError("\(functionName) is unknown", cursor.location)
   }
   let objectType = lib.getObjectType(id: objectId)!
   if objectType != OctoFunction.self {
-    log("DEBUG: visiting ParamDecl: \(functionName) is of type \(objectType), not function. This will be unhandled")
+    log("visiting ParamDecl: \(functionName) is of type \(objectType), not function. This will be unhandled", .debug)
     return CXChildVisit_Continue
   }
 
   log("@ParmDecl \(functionName) -> \(type) \(name ?? "unnamed")")
   guard let functionId = lib.getFunction(lid: parent) else {
-    fatalError("[\(cursor.location)] ERROR: \(functionName) is unknown")
+    throw ParseError("\(functionName) is unknown", cursor.location)
   }
   lib.addParam(
     to: functionId,
@@ -266,16 +273,16 @@ fileprivate func addAttribute(
   parent: CXCursor,
   _ attr: OctoAttribute,
   _ lib: inout OctoLibrary
-) {
+) throws {
   guard let objectId = lib.getObject(lid: parent) else {
-    fatalError("\(parent.spelling!) is unknown")
+    throw ParseError("\(parent.spelling!) is unknown", cursor.location)
   }
 
   //print("Add attribute to: \(objectId), \(attr), id: \(cursor)")
   lib.addAttribute(to: objectId, attr, id: cursor)
 }
 
-func visitAnnotateAttr(_ cursor: CXCursor, parent: CXCursor, _ lib: inout OctoLibrary) -> CXChildVisitResult {
+func visitAnnotateAttr(_ cursor: CXCursor, parent: CXCursor, _ lib: inout OctoLibrary) throws -> CXChildVisitResult {
   let name = cursor.spelling!
   let parentName = cursor.spelling!
   let range = cursor.extent
@@ -284,7 +291,7 @@ func visitAnnotateAttr(_ cursor: CXCursor, parent: CXCursor, _ lib: inout OctoLi
   var numTokens: UInt32 = 0
   clang_tokenize(cursor.translationUnit, range, &tokens, &numTokens)
   defer { clang_disposeTokens(cursor.translationUnit, tokens, numTokens) }
-  let params = parseAnnotateAttrParams(translationUnit: cursor.translationUnit, fromTokens: tokens!, numTokens: numTokens)
+  let params = try parseAnnotateAttrParams(translationUnit: cursor.translationUnit, fromTokens: tokens!, numTokens: numTokens)
 
   let attr = OctoAttribute(
     name: name,
@@ -295,12 +302,12 @@ func visitAnnotateAttr(_ cursor: CXCursor, parent: CXCursor, _ lib: inout OctoLi
 
   log("@AnnotateAttr \(parentName) -> \(name) \(String(describing: params))")
 
-  addAttribute(cursor: cursor, parent: parent, attr, &lib)
+  try addAttribute(cursor: cursor, parent: parent, attr, &lib)
 
   return CXChildVisit_Recurse
 }
 
-func visitUnexposedAttr(_ cursor: CXCursor, parent: CXCursor, _ lib: inout OctoLibrary) -> CXChildVisitResult {
+func visitUnexposedAttr(_ cursor: CXCursor, parent: CXCursor, _ lib: inout OctoLibrary) throws -> CXChildVisitResult {
   let parentName = parent.spelling!
   let range = cursor.extent
 
@@ -308,10 +315,10 @@ func visitUnexposedAttr(_ cursor: CXCursor, parent: CXCursor, _ lib: inout OctoL
   var numTokens: UInt32 = 0
   clang_tokenize(cursor.translationUnit, range, &tokens, &numTokens)
   defer { clang_disposeTokens(cursor.translationUnit, tokens, numTokens) }
-  let attr = parseUnexposedAttribute(origin: cursor.location, translationUnit: cursor.translationUnit, fromTokens: tokens!, numTokens: numTokens)
+  let attr = try parseUnexposedAttribute(origin: cursor.location, translationUnit: cursor.translationUnit, fromTokens: tokens!, numTokens: numTokens)
 
   log("@UnexposedAttr \(parentName) -> \(attr)")
-  addAttribute(cursor: cursor, parent: parent, attr, &lib)
+  try addAttribute(cursor: cursor, parent: parent, attr, &lib)
 
   return CXChildVisit_Recurse
 }

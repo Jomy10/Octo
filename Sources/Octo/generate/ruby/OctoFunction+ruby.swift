@@ -33,7 +33,7 @@ extension OctoFunction {
       switch (returnType.kind) {
       case .UserDefined(name: let name):
         guard let userTypeId = lib.getUserType(name: name) else {
-          guard let typedeId = lib.getTypedef(name: name) else {
+          if lib.getTypedef(name: name) == nil {
             fatalError("[\(self.origin)] ERROR: Cannot find user type \(name)")
           }
           break // it's a regular C type that is typedef'd
@@ -153,7 +153,7 @@ extension OctoType {
     switch (self.kind) {
     case .UserDefined(name: let name):
       guard let userTypeId = lib.getUserType(name: name) else {
-        guard let typedeId = lib.getTypedef(name: name) else {
+        if lib.getTypedef(name: name) == nil {
           fatalError("ERROR: Cannot find user type \(name)")
         }
         // it's a regular C type that is typedef'd

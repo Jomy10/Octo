@@ -25,8 +25,8 @@ public struct OctoType: CustomStringConvertible, Equatable {
     self.nullable = nullable
   }
 
-  init?(cxType: CXType) {
-    guard let kind = OctoTypeKind(cxType: cxType) else {
+  init?(cxType: CXType) throws {
+    guard let kind = try OctoTypeKind(cxType: cxType) else {
       return nil
     }
     self.kind = kind
@@ -95,7 +95,7 @@ public enum OctoTypeKind: Equatable {
 }
 
 extension OctoTypeKind {
-  init?(cxType: CXType) {
+  init?(cxType: CXType) throws {
     switch (cxType.kind) {
       case CXType_Invalid: return nil
       case CXType_Void: self = .Void
@@ -117,7 +117,7 @@ extension OctoTypeKind {
           case 64 / 8: self = .U64
           case 128 / 8: self = .U128
           default:
-            fatalError("Invalid length for unsigned integer variant \(cxType.size) bytes")
+            throw ParseError("Invalid length for unsigned integer variant \(cxType.size) bytes")
         }
       case CXType_Char_S: fallthrough
       case CXType_SChar: fallthrough
@@ -133,13 +133,13 @@ extension OctoTypeKind {
           case 64 / 8: self = .S64
           case 128 / 8: self = .S128
           default:
-            fatalError("Invalid length for signed integer variant \(cxType.size) bytes")
+            throw ParseError("Invalid length for signed integer variant \(cxType.size) bytes")
         }
       case CXType_Float: self = .F32
       case CXType_Double: self = .F64
       case CXType_LongDouble: self = .FLong
       case CXType_Pointer:
-        guard let type = OctoType(cxType: cxType.pointeeType) else { unhandledKind(cxType.pointeeType.kind) }
+        guard let type = try OctoType(cxType: cxType.pointeeType) else { throw ParseError("Unrecognised type \(cxType.pointeeType.kind)") }
         self = .Pointer(to: type)
       //case CXType_LValueReference: // &
       //  guard let type = CType(cxType: cxType.pointeeType) else { unhandledKind(cxType.pointeeType.kind) }
@@ -149,11 +149,11 @@ extension OctoTypeKind {
       //  self = .RValueReference(to: type)
       case CXType_FunctionProto: fallthrough
       case CXType_FunctionNoProto:
-        guard let resultType = OctoType(cxType: cxType.resultType) else { unhandledKind(cxType.resultType.kind) }
+        guard let resultType = try OctoType(cxType: cxType.resultType) else { throw ParseError("Unrecognised type \(cxType.resultType.kind)") }
         let callingConv = OctoCallingConv(cxCallingConv: cxType.functionTypeCallingConv)
-        let argTypes = cxType.argTypes.map { cxt in
-          guard let ty = OctoType(cxType: cxt) else {
-            unhandledKind(cxt.kind)
+        let argTypes = try cxType.argTypes.map { cxt in
+          guard let ty = try OctoType(cxType: cxt) else {
+            throw unhandledKind(cxt.kind)
           }
           return ty
         }
@@ -163,8 +163,8 @@ extension OctoTypeKind {
         //self = .UserType(name: parts.last!, prefix: parts.count > 1 ? parts[0..<parts.count-1].joined(separator: " ") : nil)
         self = .UserDefined(name: String(parts.last!))
       case CXType_ConstantArray:
-        guard let type = OctoType(cxType: cxType.arrayElementType) else {
-          unhandledKind(cxType.arrayElementType.kind)
+        guard let type = try OctoType(cxType: cxType.arrayElementType) else {
+          throw unhandledKind(cxType.arrayElementType.kind)
         }
         let size: Int64 = cxType.arraySize
         self = .ConstantArray(type: type, size: size)
