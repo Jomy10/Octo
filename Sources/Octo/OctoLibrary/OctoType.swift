@@ -142,10 +142,10 @@ extension OctoTypeKind {
         guard let type = try OctoType(cxType: cxType.pointeeType) else { throw ParseError("Unrecognised type \(cxType.pointeeType.kind)") }
         self = .Pointer(to: type)
       //case CXType_LValueReference: // &
-      //  guard let type = CType(cxType: cxType.pointeeType) else { unhandledKind(cxType.pointeeType.kind) }
+      //  guard let type = CType(cxType: cxType.pointeeType) else { ParseError.unhandledKind(cxType.pointeeType.kind) }
       //  self = .LValueReference(to: type)
       //case CXType_RValueReference: // &&
-      //  guard let type = CType(cxType: cxType.pointeeType) else { unhandledKind(cxType.pointeeType.kind) }
+      //  guard let type = CType(cxType: cxType.pointeeType) else { ParseError.unhandledKind(cxType.pointeeType.kind) }
       //  self = .RValueReference(to: type)
       case CXType_FunctionProto: fallthrough
       case CXType_FunctionNoProto:
@@ -153,7 +153,7 @@ extension OctoTypeKind {
         let callingConv = OctoCallingConv(cxCallingConv: cxType.functionTypeCallingConv)
         let argTypes = try cxType.argTypes.map { cxt in
           guard let ty = try OctoType(cxType: cxt) else {
-            throw unhandledKind(cxt.kind)
+            throw ParseError.unhandledKind(cxt.kind)
           }
           return ty
         }
@@ -164,7 +164,7 @@ extension OctoTypeKind {
         self = .UserDefined(name: String(parts.last!))
       case CXType_ConstantArray:
         guard let type = try OctoType(cxType: cxType.arrayElementType) else {
-          throw unhandledKind(cxType.arrayElementType.kind)
+          throw ParseError.unhandledKind(cxType.arrayElementType.kind)
         }
         let size: Int64 = cxType.arraySize
         self = .ConstantArray(type: type, size: size)

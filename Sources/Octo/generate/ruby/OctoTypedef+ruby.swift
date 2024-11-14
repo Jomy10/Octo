@@ -1,7 +1,7 @@
 extension OctoTypedef {
-  func rubyGenerateFFI(in lib: OctoLibrary, options: GenerationOptions) -> String {
+  func rubyGenerateFFI(in lib: OctoLibrary, options: GenerationOptions) throws -> String {
     guard let refersTo = self.refersTo.rubyTypeDef else {
-      fatalError("[\(self.origin)] ERROR: could not create ruby type for typedef \(self.name) = \(self.refersTo)")
+      throw GenerationError("could not create ruby type for typedef \(self.name) = \(self.refersTo)", .ruby, self.origin)
     }
 
     return """

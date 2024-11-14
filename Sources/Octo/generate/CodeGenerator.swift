@@ -1,10 +1,10 @@
 import Foundation
 
 public struct CodeGenerator {
-  public static func generate(language lang: Language, lib: OctoLibrary, options: GenerationOptions) -> any GeneratedCode {
+  public static func generate(language lang: Language, lib: OctoLibrary, options: GenerationOptions) throws -> any GeneratedCode {
     switch (lang) {
       case .ruby:
-        return lib.rubyGenerate(options: options)
+        return try lib.rubyGenerate(options: options)
       default:
         fatalError("Generation of \(lang) code is not yet implemented")
     }
@@ -29,8 +29,8 @@ public protocol GeneratedCode: CustomStringConvertible {
   func write(to url: URL) throws
 }
 
-func indentCode(indent: String, @StringBuilder _ str: () -> String) -> String {
-  str().split(whereSeparator: \.isNewline)
+func indentCode(indent: String, @StringBuilder _ str: () throws -> String) rethrows -> String {
+  try str().split(whereSeparator: \.isNewline)
     .map { "\(indent)\($0)" }
     .joined(separator: "\n")
 }

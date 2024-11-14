@@ -19,20 +19,20 @@ extension OctoRecord {
     """
   }
 
-  func rubyGenerateModule(in lib: OctoLibrary, options: GenerationOptions, ffiModuleName: String) -> String {
+  func rubyGenerateModule(in lib: OctoLibrary, options: GenerationOptions, ffiModuleName: String) throws -> String {
     if self.initializers.count > 1 {
       fatalError("unimplemented")
     }
 
     let genModCodeForFn = { (fnId: UUID) -> String in
-      lib.getFunction(id: fnId)!.rubyGenerateModule(in: lib, options: options, ffiModuleName: ffiModuleName)
+      try lib.getFunction(id: fnId)!.rubyGenerateModule(in: lib, options: options, ffiModuleName: ffiModuleName)
     }
 
     return """
     class \(self.rubyName)\(self.hasDeinitializer ? " < FFI::ManagedStruct" : "")
-    \(indentCode(indent: options.indent, {
+    \(try indentCode(indent: options.indent, {
       for fnId in self.initializers {
-        genModCodeForFn(fnId)
+        try genModCodeForFn(fnId)
       }
 
       """
@@ -61,15 +61,15 @@ extension OctoRecord {
       }
 
       for fnId in self.methods {
-        genModCodeForFn(fnId)
+        try genModCodeForFn(fnId)
       }
 
       for fnId in self.staticMethods {
-        genModCodeForFn(fnId)
+        try genModCodeForFn(fnId)
       }
 
       if let fnId = self.deinitializer {
-        genModCodeForFn(fnId)
+        try genModCodeForFn(fnId)
       }
     }))
     end

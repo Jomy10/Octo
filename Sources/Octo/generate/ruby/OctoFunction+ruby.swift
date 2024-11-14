@@ -7,19 +7,19 @@ extension OctoFunction {
     """
   }
 
-  func rubyGenerateModule(in lib: OctoLibrary, options: GenerationOptions, ffiModuleName: String) -> String {
+  func rubyGenerateModule(in lib: OctoLibrary, options: GenerationOptions, ffiModuleName: String) throws -> String {
     var aParameters = self.rubyParameterNames(in: lib)
     if self.functionType == .`init` {
       aParameters = (0..<aParameters.count).map { i in "args[\(i)]"}
     }
-    var aInputParameters = self.rubyInputParameters(fromParameterNames: aParameters, ffiModuleName: ffiModuleName, in: lib)
+    var aInputParameters = try self.rubyInputParameters(fromParameterNames: aParameters, ffiModuleName: ffiModuleName, in: lib)
 
     if let selfParameter = self.selfParameter(in: lib) {
       aParameters.remove(at: selfParameter)
       aInputParameters[selfParameter] = "@ptr.\(rubyInnerPtrName)"
     } else {
       if self.functionType == .`deinit` {
-        fatalError("[\(self.origin)] ERROR: Deinitializer should contain a self parameter")
+        throw GenerationError("Deinitializer should contain a self parameter", .ruby, self.origin)
       }
     }
 
@@ -34,7 +34,7 @@ extension OctoFunction {
       case .UserDefined(name: let name):
         guard let userTypeId = lib.getUserType(name: name) else {
           if lib.getTypedef(name: name) == nil {
-            fatalError("[\(self.origin)] ERROR: Cannot find user type \(name)")
+            throw GenerationError("Cannot find user type \(name)", .ruby, self.origin)
           }
           break // it's a regular C type that is typedef'd
         }
@@ -46,7 +46,7 @@ extension OctoFunction {
           //fnCall = "\(enu.bindingName).new(fromRawPtr: \(fnCall))"
         }
       case .ConstantArray:
-        print("[WARNING] unimplemented")
+        log("[WARNING] unimplemented", .warning)
       case .Pointer(to: let type):
         switch (type.kind) {
         case .UserDefined(name: let name):
@@ -59,7 +59,7 @@ extension OctoFunction {
             //fnCall = "\(enu.bindingName).new(fromRawPtr: \(fnCall))"
           }
         case .ConstantArray:
-          print("[WARNING] unimplemented")
+          log("[WARNING] unimplemented", .warning)
         default:
           break
         }
@@ -134,27 +134,27 @@ extension OctoFunction {
     }
   }
 
-  func rubyInputParameters(fromParameterNames parameterNames: [String], ffiModuleName: String, in lib: OctoLibrary) -> [String] {
+  func rubyInputParameters(fromParameterNames parameterNames: [String], ffiModuleName: String, in lib: OctoLibrary) throws -> [String] {
     guard case .Function(callingConv: _, args: let argTypes, result: _) = self.type.kind else {
       fatalError("unreachable")
     }
 
-    return zip(
+    return try zip(
       parameterNames,
       argTypes
     ).map { (parameterName, argType) in
-      return argType.rubyConvertParameterToFFI(ofName: parameterName, ffiModuleName: ffiModuleName, in: lib)
+      return try argType.rubyConvertParameterToFFI(ofName: parameterName, ffiModuleName: ffiModuleName, in: lib)
     }
   }
 }
 
 extension OctoType {
-  func rubyConvertParameterToFFI(ofName parameterName: String, ffiModuleName: String, in lib: OctoLibrary) -> String {
+  func rubyConvertParameterToFFI(ofName parameterName: String, ffiModuleName: String, in lib: OctoLibrary) throws -> String {
     switch (self.kind) {
     case .UserDefined(name: let name):
       guard let userTypeId = lib.getUserType(name: name) else {
         if lib.getTypedef(name: name) == nil {
-          fatalError("ERROR: Cannot find user type \(name)")
+          throw GenerationError("Cannot find user type \(name)", .ruby)
         }
         // it's a regular C type that is typedef'd
         return parameterName
@@ -168,7 +168,7 @@ extension OctoType {
       }
     case .Pointer(to: let pointeeType):
       if case .UserDefined = (pointeeType.kind) {
-        return pointeeType.rubyConvertParameterToFFI(ofName: parameterName, ffiModuleName: ffiModuleName, in: lib)
+        return try pointeeType.rubyConvertParameterToFFI(ofName: parameterName, ffiModuleName: ffiModuleName, in: lib)
       } else {
         return parameterName
       }

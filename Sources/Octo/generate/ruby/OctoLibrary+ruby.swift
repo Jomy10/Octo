@@ -39,7 +39,7 @@ func rubyIdent(ident: String) -> String {
 let rubyInnerPtrName = "__Octo_Ptr"
 
 extension OctoLibrary {
-  func rubyGenerate(options: GenerationOptions) -> RubyCode {
+  func rubyGenerate(options: GenerationOptions) throws -> RubyCode {
     let moduleName = rubyConstantName(of: self.name)
     let ffiModuleName = "\(moduleName)_FFI"
 
@@ -50,13 +50,13 @@ extension OctoLibrary {
       include FFI::Library
       lib_name \(options.libs.map { lib in "'\(lib)'" }.joined(separator: ", "))
 
-    \(indentCode(indent: options.indent, {
+    \(try indentCode(indent: options.indent, {
       for (_, userType) in self.userTypes {
         userType.rubyGenerateFFI(in: self, options: options)
       }
 
       for (_, typedef) in self.typedefs {
-        typedef.rubyGenerateFFI(in: self, options: options)
+        try typedef.rubyGenerateFFI(in: self, options: options)
       }
 
       for (_, function) in self.functions {
@@ -66,9 +66,9 @@ extension OctoLibrary {
     end
 
     module \(moduleName)
-    \(indentCode(indent: options.indent, {
+    \(try indentCode(indent: options.indent, {
       for (_, userType) in self.userTypes {
-        userType.rubyGenerateModule(in: self, options: options, ffiModuleName: ffiModuleName)
+        try userType.rubyGenerateModule(in: self, options: options, ffiModuleName: ffiModuleName)
       }
 
       for (_, typedef) in self.typedefs {
@@ -76,7 +76,7 @@ extension OctoLibrary {
       }
 
       for (_, function) in self.functions.filter({ (fnId: UUID, _) in !self.getFunction(id: fnId)!.isAttached }) {
-        function.rubyGenerateModule(in: self, options: options, ffiModuleName: ffiModuleName)
+        try function.rubyGenerateModule(in: self, options: options, ffiModuleName: ffiModuleName)
       }
     }))
     end

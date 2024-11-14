@@ -49,7 +49,7 @@ extension Octo {
         indent: args.indent,
         libs: self.args.linkLibs
       )
-      let code = CodeGenerator.generate(language: language, lib: library, options: generationOptions)
+      let code = try CodeGenerator.generate(language: language, lib: library, options: generationOptions)
 
       try code.write(to: args.outputLocation)
     }

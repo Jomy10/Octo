@@ -8,10 +8,10 @@ extension OctoUserType {
     }
   }
 
-  func rubyGenerateModule(in lib: OctoLibrary, options: GenerationOptions, ffiModuleName: String) -> String {
+  func rubyGenerateModule(in lib: OctoLibrary, options: GenerationOptions, ffiModuleName: String) throws -> String {
     switch (self.inner) {
       case .record(let record):
-        return record.rubyGenerateModule(in: lib, options: options, ffiModuleName: ffiModuleName)
+        return try record.rubyGenerateModule(in: lib, options: options, ffiModuleName: ffiModuleName)
       case .`enum`(let e):
         return e.rubyGenerateModule(in: lib, options: options, ffiModuleName: ffiModuleName)
     }

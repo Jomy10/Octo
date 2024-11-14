@@ -37,4 +37,17 @@ struct ParseError: Error, CustomStringConvertible {
     }
     return "\(prefix)[ERROR] \(message)"
   }
+
+  static func unhandledKind(_ kind: some CXKind, location: CXSourceLocation? = nil, file: String = #file, function: String = #function, line: Int = #line) -> ParseError {
+    let msg = "Unhandled \(kind.kindName) (\(kind.rawValue)): \(kind.spelling!) @ \(file) \(function):\(line)"
+    if let location = location {
+      return ParseError(msg, location)
+    } else {
+      return ParseError(msg, location)
+    }
+  }
+
+  static func unhandledToken(_ token: CXToken, translationUnit: CXTranslationUnit, file: String = #file, function: String = #function, line: Int = #line) -> ParseError {
+    ParseError("Unhandled token: \(token.spelling(translationUnit: translationUnit)!) @ \(file) \(function):\(line)", token.sourceLocation(translationUnit: translationUnit))
+  }
 }

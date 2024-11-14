@@ -2,19 +2,6 @@ import Foundation
 import Clang
 import OctoIO
 
-internal func unhandledKind(_ kind: some CXKind, location: CXSourceLocation? = nil, file: String = #file, function: String = #function, line: Int = #line) -> ParseError {
-  let msg = "Unhandled \(kind.kindName) (\(kind.rawValue)): \(kind.spelling!) @ \(file) \(function):\(line)"
-  if let location = location {
-    return ParseError(msg, location)
-  } else {
-    return ParseError(msg, location)
-  }
-}
-
-internal func unhandledToken(_ token: CXToken, translationUnit: CXTranslationUnit, file: String = #file, function: String = #function, line: Int = #line) -> ParseError {
-  ParseError("Unhandled token: \(token.spelling(translationUnit: translationUnit)!) @ \(file) \(function):\(line)", token.sourceLocation(translationUnit: translationUnit))
-}
-
 func visitC(
   _ cursor: CXCursor,
   _ parent: CXCursor,
@@ -49,7 +36,7 @@ func visitC(
         return CXChildVisit_Continue
       case CXCursor_UnexposedAttr:
         return try visitUnexposedAttr(cursor, parent: parent, &library.pointee)
-      default: throw unhandledKind(cursor.kind, location: cursor.location)
+      default: throw ParseError.unhandledKind(cursor.kind, location: cursor.location)
     }
   } catch let error {
     log(error.localizedDescription, .error)
@@ -64,7 +51,7 @@ func parseVarDecl(_ cursor: CXCursor) throws -> (
   let cursorType: CXType = cursor.cursorType
 
   guard let varType = try OctoType(cxType: cursorType) else {
-    throw unhandledKind(cursorType.kind, location: cursor.location)
+    throw ParseError.unhandledKind(cursorType.kind, location: cursor.location)
   }
   let varName = cursor.spelling!
 
@@ -75,7 +62,7 @@ func visitStructDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) throws -> CXC
   let cursorType: CXType = cursor.cursorType
 
   if (cursorType.kind != CXType_Record) {
-    throw unhandledKind(cursorType.kind, location: cursor.location)
+    throw ParseError.unhandledKind(cursorType.kind, location: cursor.location)
   }
 
   let recordName = cursor.spelling!
@@ -130,12 +117,12 @@ func visitTypedefDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) throws -> CX
   let cursorType: CXType = cursor.cursorType
 
   if cursorType.kind != CXType_Typedef {
-    throw unhandledKind(cursorType.kind, location: cursor.location)
+    throw ParseError.unhandledKind(cursorType.kind, location: cursor.location)
   }
 
   let typedefType = cursor.typedefDeclUnderlyingType
   guard let type = try OctoType(cxType: typedefType) else {
-    throw unhandledKind(typedefType.kind, location: cursor.location)
+    throw ParseError.unhandledKind(typedefType.kind, location: cursor.location)
   }
 
   let typedefName = cursorType.typedefName!
@@ -152,12 +139,12 @@ func visitEnumDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) throws -> CXChi
   let cursorType: CXType = cursor.cursorType
 
   if cursorType.kind != CXType_Enum {
-    throw unhandledKind(cursorType.kind, location: cursor.location)
+    throw ParseError.unhandledKind(cursorType.kind, location: cursor.location)
   }
 
   let enumName = cursor.spelling!
   guard let enumDeclIntegerType = try OctoType(cxType: cursor.enumDeclIntegerType) else {
-    throw unhandledKind(cursor.enumDeclIntegerType.kind, location: cursor.location)
+    throw ParseError.unhandledKind(cursor.enumDeclIntegerType.kind, location: cursor.location)
   }
 
   log("@EnumDecl.Enum \(enumDeclIntegerType) \(enumName)")
@@ -202,7 +189,7 @@ func visitUnionDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) throws -> CXCh
   let cursorType: CXType = cursor.cursorType
 
   if cursorType.kind != CXType_Record {
-    throw unhandledKind(cursorType.kind, location: cursor.location)
+    throw ParseError.unhandledKind(cursorType.kind, location: cursor.location)
   }
 
   let recordName = cursor.spelling!
@@ -220,7 +207,7 @@ func visitUnionDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) throws -> CXCh
 func visitFunctionDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) throws -> CXChildVisitResult {
   let cursorType: CXType = cursor.cursorType
   guard let type = try OctoType(cxType: cursorType) else {
-    throw unhandledKind(cursorType.kind, location: cursor.location)
+    throw ParseError.unhandledKind(cursorType.kind, location: cursor.location)
   }
 
   let name = cursor.spelling!
@@ -237,7 +224,7 @@ func visitParmDecl(_ cursor: CXCursor, parent: CXCursor, _ lib: inout OctoLibrar
   let cursorType: CXType = cursor.cursorType
 
   guard let type = try OctoType(cxType: cursorType) else {
-    throw unhandledKind(cursorType.kind, location: cursor.location)
+    throw ParseError.unhandledKind(cursorType.kind, location: cursor.location)
   }
 
   var name: String? = cursor.spelling!

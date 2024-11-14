@@ -24,7 +24,7 @@ func parseUnexposedAttribute(
           break TokenIter
         }
       default:
-        throw unhandledToken(token, translationUnit: translationUnit)
+        throw ParseError.unhandledToken(token, translationUnit: translationUnit)
     }
   }
 
@@ -52,7 +52,7 @@ func parseAnnotateAttrParams(
           break TokenIter
         }
       default:
-        throw unhandledToken(token, translationUnit: translationUnit)
+        throw ParseError.unhandledToken(token, translationUnit: translationUnit)
     }
   }
 
