@@ -1,6 +1,5 @@
 import Foundation
 import Octo
-import TOMLKit
 import ArgumentParser
 
 /// Arguments that can be used from the CLI and in the configuration file

@@ -1,7 +1,7 @@
 import Foundation
 import OctoIO
 
-public struct OctoFunction: OctoObject {
+public struct OctoFunction: OctoObject, OctoRenamable {
   public let id = UUID()
 
   var type: OctoType
@@ -34,7 +34,7 @@ public struct OctoFunction: OctoObject {
     }
   }
 
-  var bindingName: String {
+  public var bindingName: String {
     self.customName ?? self.name
   }
 
@@ -111,7 +111,7 @@ public struct OctoFunction: OctoObject {
     self.attachedTo = attachedToId
   }
 
-  mutating func rename(to newName: String) {
+  public mutating func rename(to newName: String) {
     self.customName = newName
   }
 }

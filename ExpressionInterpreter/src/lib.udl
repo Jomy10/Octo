@@ -1,0 +1,33 @@
+namespace ExpressionInterpreter {};
+
+interface ParseError {
+  string to_string();
+};
+
+interface ExecutionError {
+  string to_string();
+};
+
+[Enum]
+interface Value {
+  Bytes(bytes value);
+  List(sequence<Value> value);
+  Int(i64 value);
+  UInt(u64 value);
+  Float(f64 value);
+  String(string value);
+  Bool(boolean value);
+  Null();
+};
+
+interface Program {
+  [Name=compile, Throws=ParseError]
+  constructor([ByRef] string code);
+};
+
+interface Executor {
+  constructor();
+  [Throws=ExecutionError]
+  Value execute([ByRef] Program program);
+  void set_var([ByRef] string name, Value value);
+};

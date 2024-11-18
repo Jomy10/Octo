@@ -150,8 +150,8 @@ public struct OctoLibrary {
             print("[WARNING] Attribute \(attr.name) ignored")
             break // ignore
         }
-      default:
-        fatalError("[\(attr.origin)] ERROR: Attribute type \(String(describing: attr.octoData)) cannot be applied to function (for attribute \(attr))")
+      //default:
+      //  fatalError("[\(attr.origin)] ERROR: Attribute type \(String(describing: attr.octoData)) cannot be applied to function (for attribute \(attr))")
       }
     } else if parentObjectType == OctoParam.self {
       switch (attr.octoData) {
@@ -223,6 +223,34 @@ public struct OctoLibrary {
   }
 
   // Getters
+  public func iterObjects() -> Dictionary<LangId, UUID>.Values {
+    self.cursorMap.values
+  }
+
+  public func getObject(id: UUID) -> (any OctoObject)? {
+    let type = self.objectTypeLookup[id]
+
+    if type == OctoUserType.self {
+      return self.userTypes[id]
+    } else if type == OctoGlobalVariable.self {
+      return self.globalVariables[id]
+    } else if type == OctoFunction.self {
+      return self.functions[id]
+    } else if type == OctoTypedef.self {
+      return self.typedefs[id]
+    } else if type == OctoAttribute.self {
+      return self.attributes[id]
+    } else if type == OctoParam.self {
+      return self.functionParameters[id]
+    } else if type == OctoField.self {
+      return self.recordFields[id]
+    } else if type == OctoEnumCase.self {
+      return self.enumCases[id]
+    } else {
+      fatalError("Unhandled OctoObject type \(String(describing: type))")
+    }
+  }
+
   public func getObject<ID: Into>(lid: ID) -> UUID? where ID.T == LangId {
     self.cursorMap[lid.into()]
   }
@@ -337,6 +365,27 @@ public struct OctoLibrary {
   }
 
   // Setters
+  public mutating func renameObjects(_ rename: (String) throws -> String) rethrows {
+    try self.iterObjects()
+      .map { (objid: UUID) in (self.getObject(id: objid)!, objid) }
+      .filter { (obj: any OctoObject, _: UUID) in obj.isRenamable }
+      //.map { (obj: any (OctoObject & OctoRenamable), objid: UUID) in (obj as! (OctoObject & OctoRenamable), objid) }
+      .forEach { (_obj: any OctoObject, objid: UUID) in
+        var obj = _obj as! (OctoObject & OctoRenamable)
+        let newName = try rename(obj.bindingName)
+        obj.rename(to: newName)
+
+        let type = self.objectTypeLookup[objid]
+        if type == OctoUserType.self {
+          self.userTypes[objid] = (obj as! OctoUserType)
+        } else if type == OctoFunction.self {
+          self.functions[objid] = (obj as! OctoFunction)
+        } else {
+          fatalError("Unhandled OctoObject type \(String(describing: type))")
+        }
+      }
+  }
+
   public mutating func mutateRecord(id: UUID, _ mutate: (inout OctoRecord) throws -> Void) rethrows -> Bool {
     if case .record(var record) = self.userTypes[id]?.inner {
       try mutate(&record)

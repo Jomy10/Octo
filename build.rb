@@ -1,18 +1,69 @@
-flags = `/usr/local/Cellar/llvm/17.0.1/bin/llvm-config --cflags --ldflags --libs --system-libs`.split(" ")
-#umbrella header "clang.h"
+require 'os'
+require 'colorize'
+require_relative './build-utils.rb'
 
+def exec(cmd, context)
+  puts cmd.grey
+  system cmd
+  abort("error while compiling #{context}") unless $?.to_i == 0
+end
 
-flags = flags
-  .map do |flag|
-    if flag[1] == "l" || flag[1] == "L"
-      next "-Xlinker #{flag}"
-    elsif flag[1] == "W"
-      next ""
-    else
-      next "-Xcc #{flag}"
+packages = []
+
+case ARGV[0]
+when "all"
+  packages << :ExpressionInterpreter
+  packages << :Octo
+when "ExpressionInterpreter"
+  packages << :ExpressionInterpreter
+when "Octo"
+  packages << :Octo
+else
+  packages << :ExpressionInterpreter
+  packages << :Octo
+end
+
+mode = ARGV[1] || "debug"
+
+for package in packages
+  puts "Building package #{package}...".blue
+  case package
+  when :Octo
+    # libclang
+    flags = `#{llvm_config} --cflags --ldflags --libs --system-libs`.split(" ")
+
+    flags = flags
+      .map do |flag|
+        if flag[1] == "l" || flag[1] == "L"
+          next "-Xlinker #{flag}"
+        elsif flag[1] == "W"
+          next ""
+        else
+          next "-Xcc #{flag}"
+        end
+      end
+
+    unless OS.mac? # manually link instead of the xcframework
+      flags << "-Xswiftc -LExpressionInterpreter/target/#{mode}"
+      flags << "-Xswiftc -lExpressionInterpreter"
     end
+
+    flags.filter { |v| v == "" }
+
+    exec "swift build -c #{mode} #{flags.join(" ")}", package
+  when :ExpressionInterpreter
+    Dir.chdir("ExpressionInterpreter") do
+      if OS.mac?
+        exec "cargo swift package -n ExpressionInterpreter -p macos #{mode == "release" ? "--release" : ""}", package
+      else
+        exec "cargo build +nightly --#{mode}", package
+        exec "cargo +nightly run --bin uniffi-bindgen generate src/lib.udl --language swift --out-dir generated"
+        exec "mkdir ExpressionInterpreter"
+        exec "mv generated/ExpressionInterpreter.swift ExpressionInterpreter/ExpressionInterpreter.swift"
+        exec "mv generated/ExpressionInterpreterFFI.modulemap generated/module.modulemap"
+      end
+    end
+  else
+    abort "Unknown package #{package}"
   end
-
-system "swift build -c #{ARGV[0] || "debug"} #{flags.join(" ")}"
-
-abort("Error while compiling") unless $?.to_i == 0
+end

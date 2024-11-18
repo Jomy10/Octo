@@ -1,5 +1,6 @@
 import Foundation
 import Clang
+import ExpressionInterpreter
 
 public enum ClangDiagnostic {
   case ignored
@@ -34,6 +35,11 @@ public struct ParseConfiguration {
   public let outputLibraryName: String
   //public let outputLocation: URL
   public let languageSpecificConfig: LanguageSpecificConfiguration
+  public let renameOperations: [Program]
+
+  func rename(name: String) -> String {
+    name
+  }
 
   public struct CConfig {
     public let headerFile: URL
@@ -47,7 +53,8 @@ public struct ParseConfiguration {
       clangFlags: [Substring],
       includeHeaders: [Substring],
       logLevel: ClangDiagnostic = .note,
-      errorLevel: ClangDiagnostic = .error
+      errorLevel: ClangDiagnostic = .error,
+      renameOperations: [Program] = []
     ) {
       self.headerFile = headerFile
       self.clangFlags = clangFlags
@@ -59,10 +66,12 @@ public struct ParseConfiguration {
 
   public init(
     outputLibraryName: some StringProtocol,
+    renameOperations: [Program],
     //outputLocation: URL,
     languageSpecificConfig: LanguageSpecificConfiguration
   ) {
     self.outputLibraryName = String(outputLibraryName)
+    self.renameOperations = renameOperations
     //self.outputLocation = outputLocation
     self.languageSpecificConfig = languageSpecificConfig
   }
@@ -75,8 +84,8 @@ public struct ParseConfiguration {
     switch (self.languageSpecificConfig) {
       case .c(let config):
         return config
-      default:
-        return nil
+      //default:
+      //  return nil
     }
   }
 }

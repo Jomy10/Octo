@@ -1,6 +1,7 @@
 import Foundation
 import Octo
 import TOMLKit
+import ExpressionInterpreter
 
 extension Language: CodingKey {}
 
@@ -17,6 +18,8 @@ struct OctoArgumentsParsed {
 
   // Output (generation) options //
   var outputOptions: [Language:OutputOptions]
+
+  var renameOperations: [Program]
 
   struct OutputOptions: Decodable {
     var outputLocation: URL
@@ -83,6 +86,7 @@ struct OctoArgumentsParsed {
 
     self.link = args.link
     self.outputLibraryName = args.outputLibraryName!
+    self.renameOperations = []
   }
 
   init(decodingTOMLFile fileURL: URL) throws {
@@ -173,6 +177,7 @@ extension OctoArgumentsParsed: Decodable {
     case inputLocation = "location"
     case langInOpt = "options"
     case attributes
+    case renameOperations
   }
 
   init(from decoder: Decoder) throws {
@@ -192,7 +197,24 @@ extension OctoArgumentsParsed: Decodable {
     for key in output.allKeys {
       self.outputOptions[key] = try output.decode(OutputOptions.self, forKey: key)
     }
+
+    self.renameOperations = try input.decode([RenameOperation].self, forKey: .renameOperations)
+      .map { renameOperations in
+        return try Program.compile(code: renameOperations.code)
+      }
   }
+}
+
+//struct RenameOpCompileError: Swift.Error {
+//  let msg: String
+
+//  init(_ msg: String) {
+//    self.msg = msg
+//  }
+//}
+
+struct RenameOperation: Decodable {
+  let code: String
 }
 
 fileprivate func getLangOpts<Key: CodingKey>(for input: KeyedDecodingContainer<Key>, forKey key: Key) throws -> [LanguageOption] {
@@ -213,6 +235,8 @@ fileprivate func getLangOpts<Key: CodingKey>(for input: KeyedDecodingContainer<K
           var optName = opt
           if opt == "flags" {
             optName = "flag"
+          } else if opt == "attributes" {
+            optName = "attribute"
           }
           for str in arr {
             opts.append(LanguageOption(name: optName, value: str[str.startIndex..<str.endIndex]))

@@ -27,6 +27,7 @@ extension Octo {
     }
     let parseConfig = ParseConfiguration(
       outputLibraryName: self.args.outputLibraryName,
+      renameOperations: self.args.renameOperations,
       //outputLocation: self.args.outputLocation,
       languageSpecificConfig: languageSpecificConfig
     )
