@@ -1,0 +1,109 @@
+libName = "cJSON"
+link = ["cJSON"] # If link == libName, this argument can be ommitted
+
+[input]
+language = "c"
+location = "cJSON/cJSON.h"
+# Pass arguments to clang while parsing
+options.flags = ["-IcJSON"]
+# Only include symbols from cJSON.h, not from any headers included in cJSON.h
+options.include = ["cJSON/cJSON.h"]
+attributes = [
+  # cJSON Methods
+  { attribute = "attach", symbol = "cJSON_Parse", arguments = ["cJSON", "type:staticMethod"] },
+  { attribute = "attach", symbol = "cJSON_ParseWithLength", arguments = ["cJSON", "type:staticMethod"] },
+  { attribute = "attach", symbol = "cJSON_ParseWithOpts", arguments = ["cJSON", "type:staticMethod"] },
+  { attribute = "attach", symbol = "cJSON_ParseWithLengthOpts", arguments = ["cJSON", "type:staticMethod"] },
+
+  { attribute = "attach", symbol = "cJSON_CreateNull", arguments = ["cJSON", "type:staticMethod"] },
+  { attribute = "attach", symbol = "cJSON_CreateNumber", arguments = ["cJSON", "type:staticMethod"] },
+  { attribute = "attach", symbol = "cJSON_CreateString", arguments = ["cJSON", "type:staticMethod"] },
+  { attribute = "attach", symbol = "cJSON_CreateBool", arguments = ["cJSON", "type:staticMethod"] },
+  { attribute = "attach", symbol = "cJSON_CreateFalse", arguments = ["cJSON", "type:staticMethod"] },
+  { attribute = "attach", symbol = "cJSON_CreateTrue", arguments = ["cJSON", "type:staticMethod"] },
+  { attribute = "attach", symbol = "cJSON_CreateArray", arguments = ["cJSON", "type:staticMethod"] },
+  { attribute = "attach", symbol = "cJSON_CreateIntArray", arguments = ["cJSON", "type:staticMethod"] },
+  { attribute = "attach", symbol = "cJSON_CreateFloatArray", arguments = ["cJSON", "type:staticMethod"] },
+  { attribute = "attach", symbol = "cJSON_CreateDoubleArray", arguments = ["cJSON", "type:staticMethod"] },
+  { attribute = "attach", symbol = "cJSON_CreateStringArray", arguments = ["cJSON", "type:staticMethod"] },
+  { attribute = "attach", symbol = "cJSON_CreateObject", arguments = ["cJSON", "type:staticMethod"] },
+  { attribute = "attach", symbol = "cJSON_CreateRaw", arguments = ["cJSON", "type:staticMethod"] },
+  { attribute = "attach", symbol = "cJSON_CreateObjectReference", arguments = ["cJSON", "type:staticMethod"] },
+  { attribute = "attach", symbol = "cJSON_CreateStringReference", arguments = ["cJSON", "type:staticMethod"] },
+  { attribute = "attach", symbol = "cJSON_CreateArrayReference", arguments = ["cJSON", "type:staticMethod"] },
+
+  { attribute = "attach", symbol = "cJSON_HasObjectItem", arguments = ["cJSON"] },
+
+  { attribute = "attach", symbol = "cJSON_IsNull", arguments = ["cJSON"] },
+  { attribute = "attach", symbol = "cJSON_IsRaw", arguments = ["cJSON"] },
+  { attribute = "attach", symbol = "cJSON_IsInvalid", arguments = ["cJSON"] },
+  { attribute = "attach", symbol = "cJSON_IsObject", arguments = ["cJSON"] },
+  { attribute = "attach", symbol = "cJSON_IsNumber", arguments = ["cJSON"] },
+  { attribute = "attach", symbol = "cJSON_IsArray", arguments = ["cJSON"] },
+  { attribute = "attach", symbol = "cJSON_IsString", arguments = ["cJSON"] },
+  { attribute = "attach", symbol = "cJSON_IsBool", arguments = ["cJSON"] },
+  { attribute = "attach", symbol = "cJSON_IsTrue", arguments = ["cJSON"] },
+  { attribute = "attach", symbol = "cJSON_IsFalse", arguments = ["cJSON"] },
+
+  { attribute = "attach", symbol = "cJSON_GetObjectItem", arguments = ["cJSON"] },
+  { attribute = "attach", symbol = "cJSON_GetObjectItemCaseSensitive", arguments = ["cJSON"] },
+  { attribute = "attach", symbol = "cJSON_GetNumberValue", arguments = ["cJSON"] },
+  { attribute = "attach", symbol = "cJSON_GetStringValue", arguments = ["cJSON"] },
+  { attribute = "attach", symbol = "cJSON_GetArrayItem", arguments = ["cJSON"] },
+  { attribute = "attach", symbol = "cJSON_GetArraySize", arguments = ["cJSON"] },
+
+  { attribute = "attach", symbol = "cJSON_SetValuestring", arguments = ["cJSON"] },
+  { attribute = "attach", symbol = "cJSON_SetNumberHelper", arguments = ["cJSON"] },
+
+  { attribute = "attach", symbol = "cJSON_AddNullToObject", arguments = ["cJSON"] },
+  { attribute = "attach", symbol = "cJSON_AddRawToObject", arguments = ["cJSON"] },
+  { attribute = "attach", symbol = "cJSON_AddNumberToObject", arguments = ["cJSON"] },
+  { attribute = "attach", symbol = "cJSON_AddStringToObject", arguments = ["cJSON"] },
+  { attribute = "attach", symbol = "cJSON_AddObjectToObject", arguments = ["cJSON"] },
+  { attribute = "attach", symbol = "cJSON_AddItemToObject", arguments = ["cJSON"] },
+  { attribute = "attach", symbol = "cJSON_AddItemToObjectCS", arguments = ["cJSON"] },
+  { attribute = "attach", symbol = "cJSON_AddItemReferenceToObject", arguments = ["cJSON"] },
+  { attribute = "attach", symbol = "cJSON_AddItemReferenceToArray", arguments = ["cJSON"] },
+  { attribute = "attach", symbol = "cJSON_AddItemToArray", arguments = ["cJSON"] },
+  { attribute = "attach", symbol = "cJSON_AddTrueToObject", arguments = ["cJSON"] },
+  { attribute = "attach", symbol = "cJSON_AddArrayToObject", arguments = ["cJSON"] },
+  { attribute = "attach", symbol = "cJSON_AddBoolToObject", arguments = ["cJSON"] },
+  { attribute = "attach", symbol = "cJSON_AddFalseToObject", arguments = ["cJSON"] },
+
+  { attribute = "attach", symbol = "cJSON_ReplaceItemViaPointer", arguments = ["cJSON"] },
+  { attribute = "attach", symbol = "cJSON_ReplaceItemInArray", arguments = ["cJSON"] },
+  { attribute = "attach", symbol = "cJSON_ReplaceItemInObjectCaseSensitive", arguments = ["cJSON"] },
+
+  { attribute = "attach", symbol = "cJSON_InsertItemInArray", arguments = ["cJSON"] },
+
+  { attribute = "attach", symbol = "cJSON_DeleteItemFromObject", arguments = ["cJSON"] },
+  { attribute = "attach", symbol = "cJSON_DeleteItemFromObjectCaseSensitive", arguments = ["cJSON"] },
+  { attribute = "attach", symbol = "cJSON_DeleteItemFromArray", arguments = ["cJSON"] },
+
+  { attribute = "attach", symbol = "cJSON_DetachItemViaPointer", arguments = ["cJSON"] },
+  { attribute = "attach", symbol = "cJSON_DetachItemFromObject", arguments = ["cJSON"] },
+  { attribute = "attach", symbol = "cJSON_DetachItemFromObjectCaseSensitive", arguments = ["cJSON"] },
+  { attribute = "attach", symbol = "cJSON_DetachItemFromArray", arguments = ["cJSON"] },
+
+  { attribute = "attach", symbol = "cJSON_ReplaceItemInObject", arguments = ["cJSON"] },
+
+  { attribute = "attach", symbol = "cJSON_Compare", arguments = ["cJSON"] }, # TODO: type:comparitor
+  { attribute = "attach", symbol = "cJSON_Duplicate", arguments = ["cJSON"] },
+  { attribute = "attach", symbol = "cJSON_Print", arguments = ["cJSON"] },
+  { attribute = "attach", symbol = "cJSON_PrintUnformatted", arguments = ["cJSON"] },
+  { attribute = "attach", symbol = "cJSON_PrintPreallocated", arguments = ["cJSON"] },
+  { attribute = "attach", symbol = "cJSON_PrintBuffered", arguments = ["cJSON"] },
+
+  { attribute = "attach", symbol = "cJSON_Delete", arguments = ["cJSON", "type:deinit"] },
+
+  # cJSON_Hooks
+  { attribute = "attach", symbol = "cJSON_InitHooks", arguments = ["cJSON_Hooks", "type:init"] },
+]
+
+[[input.renameOperations]]
+code = """
+if(matches(name, "cJSON_"), name.leftDiscard(6), name)
+"""
+
+[output.ruby]
+location = "cJSON.rb"
