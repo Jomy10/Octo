@@ -13,7 +13,15 @@ func visitC(
   do {
     switch (cursor.kind) {
       case CXCursor_StructDecl:
-        return try visitStructDecl(cursor, &library.pointee)
+        let parentType = parent.cursorType
+        if parentType.kind == CXType_Invalid {
+          print(cursor)
+          return try visitStructDecl(cursor, &library.pointee)
+        } else if parentType.kind == CXType_Typedef {
+          return try visitStructDefinitionForTypedef(cursor, parent: parent, &library.pointee)
+        } else {
+          fatalError("Unhandled parent type for struct: \(parentType.kind)")
+        }
       case CXCursor_FieldDecl:
         return try visitFieldDecl(cursor, parent: parent, &library.pointee)
       case CXCursor_TypedefDecl:
@@ -133,6 +141,11 @@ func visitTypedefDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) throws -> CX
   )
 
   return CXChildVisit_Recurse
+}
+
+func visitStructDefinitionForTypedef(_ cursor: CXCursor, parent: CXCursor, _ lib: inout OctoLibrary) throws -> CXChildVisitResult {
+  lib.setTypedefUserType(typedefLid: parent, userTypeLid: cursor)
+  return CXChildVisit_Continue
 }
 
 func visitEnumDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) throws -> CXChildVisitResult {

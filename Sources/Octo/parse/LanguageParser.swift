@@ -11,6 +11,7 @@ public struct LanguageParser {
         fatalError("Unimplemented language \(language)")
     }
 
+    // TODO: why are structs generated twice? (once without attached functions, once with)
     try lib.renameObjects { (name: String) throws -> String in
       let newName: String = try config.renameOperations.reduce(into: name, { (currentName: inout String, renameOperation: Program) throws -> () in
         executor.setVar(name: "name", value: .string(value: currentName))

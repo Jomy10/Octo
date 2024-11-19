@@ -63,18 +63,21 @@ public struct OctoFunction: OctoObject, OctoRenamable {
 
     let res: Int? = args.enumerated().first(where: { (i: Int, argType: OctoType) -> Bool in
       let typeName: String
+      let typeLid: OctoLibrary.LangId?
       switch (argType.kind) {
-        case .UserDefined(name: let userTypeName):
+        case .UserDefined(name: let userTypeName, id: let id):
           typeName = userTypeName
+          typeLid = id
         case .Pointer(to: let pointeeTypeName):
-          guard case .UserDefined(name: let userTypeName) = pointeeTypeName.kind else {
+          guard case .UserDefined(name: let userTypeName, id: let id) = pointeeTypeName.kind else {
             return false
           }
           typeName = userTypeName
+          typeLid = id
         default: return false
       }
 
-      let userTypeId = lib.getUserType(name: typeName)!
+      let userTypeId = (typeLid == nil ? nil : lib.getUserType(lid: typeLid!)) ?? lib.getUserType(name: typeName)!
       let userType = lib.getUserType(id: userTypeId)!
       return userType == attachedToType
     }).map { (i, argType) in i }

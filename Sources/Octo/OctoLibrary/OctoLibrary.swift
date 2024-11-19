@@ -29,8 +29,14 @@ public struct OctoLibrary {
 
   // Add objects //
   private mutating func addObject<Obj: OctoObject>(_ obj: Obj, id langId: LangId, name: String?) {
+    if self.cursorMap[langId] != nil {
+      fatalError("Cursor \(langId) already exists, can't add the same object twice (bug)")
+    }
     self.cursorMap[langId] = obj.id
     if let n = name {
+      if self.nameLookup[n] != nil {
+        log("Object with name \(n) already exists, this could lead to undefined behaviour", .warning)
+      }
       self.nameLookup[n] = obj.id
     }
     self.objectTypeLookup[obj.id] = Obj.self
@@ -87,6 +93,24 @@ public struct OctoLibrary {
 
   public mutating func addTypedef<ID: Into>(_ typedef: OctoTypedef, id: ID) where ID.T == LangId {
     self.addObject(typedef, id: id.into(), name: typedef.name)
+  }
+
+  public mutating func setTypedefUserType<ID: Into>(typedefLid: ID, userTypeLid: ID) where ID.T == LangId {
+    guard let typedefID = self.cursorMap[typedefLid.into()] else {
+      fatalError("Invalid typedef id \(typedefLid)")
+    }
+
+    if self.typedefs[typedefID] == nil {
+      fatalError("Invalid typedef for id \(typedefID)")
+    }
+
+    let refersToType = self.typedefs[typedefID]!.refersTo
+    switch (refersToType.kind) {
+      case .UserDefined(name: let name, id: _):
+        self.typedefs[typedefID]!.refersTo = self.typedefs[typedefID]!.refersTo.copy(mutatingKind: .UserDefined(name: name, id: userTypeLid.into()))
+      default:
+        fatalError("Expected UserdDefined type, got \(refersToType.kind)")
+    }
   }
 
   public mutating func addFunction<ID: Into>(_ function: OctoFunction, id: ID) where ID.T == LangId {
@@ -269,8 +293,8 @@ public struct OctoLibrary {
       return objid
     } else if type == OctoTypedef.self {
       let typedef = self.typedefs[objid]!
-      if case .UserDefined(name: let name) = typedef.refersTo.kind {
-        return self.getUserType(name: String(name))
+      if case .UserDefined(name: let name, id: let id) = typedef.refersTo.kind {
+        return (id == nil ? nil : self.getUserType(lid: id!)) ?? self.getUserType(name: String(name))
       } else {
         return nil
       }

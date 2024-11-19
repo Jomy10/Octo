@@ -91,7 +91,7 @@ public enum OctoTypeKind: Equatable {
     result: OctoType
   )
   indirect case ConstantArray(type: OctoType, size: Int64)
-  case UserDefined(name: String)
+  case UserDefined(name: String, id: OctoLibrary.LangId? = nil) // TODO: change lookup of user defined type based on id!
 }
 
 extension OctoTypeKind {

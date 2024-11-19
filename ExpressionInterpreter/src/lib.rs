@@ -140,6 +140,10 @@ mod fns {
             _ => Err(ExecutionError::UnexpectedType { got: format!("{:?}", len), want: String::from("Integer") })
         }
     }
+
+    // TODO:
+    // pub fn lowercase()
+    // TODO: snake case, camel case, etc.
 }
 
 unsafe impl Send for Executor {}

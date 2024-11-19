@@ -31,8 +31,8 @@ extension OctoFunction {
     if self.functionType != .`init` {
       // convert return type to ruby type
       switch (returnType.kind) {
-      case .UserDefined(name: let name):
-        guard let userTypeId = lib.getUserType(name: name) else {
+      case .UserDefined(name: let name, id: let id):
+        guard let userTypeId = (id == nil ? nil : lib.getUserType(lid: id!)) ?? lib.getUserType(name: name) else {
           if lib.getTypedef(name: name) == nil {
             throw GenerationError("Cannot find user type \(name)", .ruby, self.origin)
           }
@@ -49,8 +49,8 @@ extension OctoFunction {
         log("[WARNING] unimplemented", .warning)
       case .Pointer(to: let type):
         switch (type.kind) {
-        case .UserDefined(name: let name):
-          let userTypeId = lib.getUserType(name: name)!
+        case .UserDefined(name: let name, id: let id):
+          let userTypeId = (id == nil ? nil : lib.getUserType(lid: id!)) ?? lib.getUserType(name: name)!
           switch (lib.getUserType(id: userTypeId)!.inner) {
           case .record(let record):
             fnCall = "\(record.bindingName).new(fromRawPtr: \(fnCall))"
@@ -151,8 +151,8 @@ extension OctoFunction {
 extension OctoType {
   func rubyConvertParameterToFFI(ofName parameterName: String, ffiModuleName: String, in lib: OctoLibrary) throws -> String {
     switch (self.kind) {
-    case .UserDefined(name: let name):
-      guard let userTypeId = lib.getUserType(name: name) else {
+    case .UserDefined(name: let name, id: let id):
+      guard let userTypeId = (id == nil ? nil : lib.getUserType(lid: id!)) ?? lib.getUserType(name: name) else {
         if lib.getTypedef(name: name) == nil {
           throw GenerationError("Cannot find user type \(name)", .ruby)
         }
