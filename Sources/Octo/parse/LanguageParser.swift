@@ -1,4 +1,5 @@
 import ExpressionInterpreter
+import OctoIO
 
 public struct LanguageParser {
   public static func parse(language: Language, config: ParseConfiguration) throws -> OctoLibrary {
@@ -8,7 +9,7 @@ public struct LanguageParser {
       case .c:
         lib = try Self.parseC(config: config)
       default:
-        fatalError("Unimplemented language \(language)")
+        octoLogger.fatal("Unimplemented language \(language)")
     }
 
     // TODO: why are structs generated twice? (once without attached functions, once with)

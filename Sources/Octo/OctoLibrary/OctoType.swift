@@ -1,4 +1,5 @@
 import Clang
+import OctoIO
 
 public struct OctoType: CustomStringConvertible, Equatable {
   private let inner: CXType // TODO: language agnostic
@@ -53,7 +54,7 @@ public struct OctoType: CustomStringConvertible, Equatable {
     switch (self.kind) {
       case .Pointer(to: let type):
         return type.containsUserType
-      case .UserDefined(name: _):
+      case .UserDefined(name: _, id: _):
         return true
       case .ConstantArray(type: let type, size: _):
         return type.containsUserType
@@ -216,7 +217,7 @@ public enum OctoCallingConv {
       case CXCallingConv_SwiftAsync: self = .swiftAsync
       case CXCallingConv_Win64: self = .win64
       case CXCallingConv_Invalid: self = .invalid
-      default: fatalError("unimplemented")
+      default: octoLogger.fatal("unimplemented")
     }
   }
 }

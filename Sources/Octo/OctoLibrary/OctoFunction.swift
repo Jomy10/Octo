@@ -21,13 +21,13 @@ public struct OctoFunction: OctoObject, OctoRenamable {
   var canReturnNull: Bool {
     get {
       guard case .Function(callingConv: _, args: _, result: let result) = self.type.kind else {
-        fatalError("unreachable")
+        octoLogger.fatal("unreachable")
       }
       return result.nullable
     }
     set {
       guard case .Function(callingConv: let callingConv, args: let args, result: var result) = self.type.kind else {
-        fatalError("unreachable")
+        octoLogger.fatal("unreachable")
       }
       result.nullable = newValue
       self.type = self.type.copy(mutatingKind: .Function(callingConv: callingConv, args: args, result: result))
@@ -40,7 +40,7 @@ public struct OctoFunction: OctoObject, OctoRenamable {
 
   var returnType: OctoType {
     guard case .Function(callingConv: _, args: _, result: let resultType) = self.type.kind else {
-      fatalError("unreachable")
+      octoLogger.fatal("unreachable")
     }
 
     return resultType
@@ -52,11 +52,11 @@ public struct OctoFunction: OctoObject, OctoRenamable {
     }
 
     guard let attachedToId = self.attachedTo else {
-      fatalError("bug")
+      octoLogger.fatal("bug")
     }
 
     guard case .Function(callingConv: _, args: let args, result: _) = self.type.kind else {
-      fatalError("unreachable")
+      octoLogger.fatal("unreachable")
     }
 
     let attachedToType = lib.getUserType(id: attachedToId)!
@@ -88,7 +88,7 @@ public struct OctoFunction: OctoObject, OctoRenamable {
         case .record(let record): attachedToTypeName = record.name
         case .`enum`(let e): attachedToTypeName = e.name
       }
-      print("[\(origin)] WARNING: Attached function of type \(self.functionType) does not have a `self` parameter of type '\(attachedToTypeName)'")
+      octoLogger.warning("Attached function of type \(self.functionType) does not have a `self` parameter of type '\(attachedToTypeName)'", origin: origin)
       return nil
     }
 
@@ -108,7 +108,7 @@ public struct OctoFunction: OctoObject, OctoRenamable {
 
   mutating func markAttached(type: OctoFunctionType, toType attachedToId: UUID) {
     if self.functionType != .function {
-      print("[WARNING] Function marked as attached multiple times", to: .stderr)
+      octoLogger.warning("Function marked as attached multiple times", origin: self.origin)
     }
     self.functionType = type
     self.attachedTo = attachedToId

@@ -1,6 +1,7 @@
 import Foundation
+import OctoIO
 
-public struct OctoEnum {
+public struct OctoEnum: OctoSubObject {
   let type: OctoType
   let name: String
   var customName: String? = nil
@@ -24,7 +25,7 @@ public struct OctoEnum {
       case .staticMethod:
         self.staticMethods.append(fnId)
       default:
-        fatalError("[\(self.origin)] ERROR: Enums can't have attached functions of type \(type)")
+        octoLogger.fatal("Enums can't have attached functions of type \(type)", origin: self.origin)
     }
   }
 

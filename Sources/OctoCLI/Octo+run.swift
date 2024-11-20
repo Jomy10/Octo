@@ -1,14 +1,78 @@
+import Foundation
 import Octo
+import OctoIO
+import Logging
+import Puppy
+import ColorizeSwift
+
+struct OctoLogFormatter: LogFormattable {
+  public func formatMessage(
+    _ level: LogLevel,
+    message: String,
+    tag: String,
+    function: String,
+    file: String,
+    line: UInt,
+    swiftLogInfo: [String:String],
+    label: String,
+    date: Date,
+    threadID: UInt64
+  ) -> String {
+    //print(level, message, tag, function, file, line, swiftLogInfo, label, date, threadID)
+    // label: "\(label).\(swiftLogInfo["source"])"
+    var levelString = "\(level)"
+    switch (level) {
+    case .verbose: fallthrough
+    case .trace: fallthrough
+    case .debug: fallthrough
+    case .info:
+      break
+    case .notice:
+      levelString = levelString.lightBlue()
+    case .warning:
+      levelString = levelString.yellow()
+    case .error:
+      levelString = levelString.lightRed()
+    case .critical:
+      levelString = levelString.red().bold()
+    }
+
+    var message: String = "[\(levelString)] \(message)"
+    if let origin = swiftLogInfo["metadata"] {
+      message += " @ \(origin)"
+    }
+    return message
+  }
+}
 
 extension Octo {
   mutating func run() throws {
     try self.initArgs()
 
-    if self.verbose {
-      setOctoLogLevel(.info)
-    }
-    if self.veryVerbose {
-      setOctoLogLevel(.debug)
+    //if self.verbose {
+    //  setOctoLogLevel(.info)
+    //}
+    //if self.veryVerbose {
+    //  setOctoLogLevel(.debug)
+    //}
+
+    // Setup logging
+    let logFormat = OctoLogFormatter()
+    let consoleLogger = ConsoleLogger("be.jonaseveraert.Octo", logFormat: logFormat)
+    var puppy = Puppy()
+    puppy.add(consoleLogger)
+
+    let logLevel = self.verboseLevel
+    LoggingSystem.bootstrap {
+      var handler = PuppyLogHandler(label: $0, puppy: puppy)
+      switch (logLevel) {
+        case 0: handler.logLevel = .warning
+        case 1: handler.logLevel = .info
+        case 2: handler.logLevel = .debug
+        default:
+         handler.logLevel = .trace
+      }
+      return handler
     }
 
     // Parse //

@@ -1,4 +1,5 @@
 import Foundation
+import OctoIO
 
 public struct OctoAttribute: OctoObject {
   public let id = UUID()
@@ -61,22 +62,22 @@ public struct OctoAttribute: OctoObject {
           Self.errorParams(origin: origin, params: params, expected: 1...2)
         }
         guard case .string(let to) = params[0] else {
-          fatalError("[\(origin)] ERROR: First parameter to 'octo:attach' should be a string")
+          octoLogger.fatal("First parameter to 'octo:attach' should be a string", origin: origin)
         }
         var type: OctoFunctionType = .method
         if params.count > 1 {
           guard case .string(let string) = params[1] else {
-            fatalError("[\(origin)] ERROR: expected string as second argument t 'octo:attach'")
+            octoLogger.fatal("expected string as second argument t 'octo:attach'", origin: origin)
           }
           if !string.hasPrefix("type:") {
-            fatalError("[\(origin)] ERROR: Exepected named parameter 'type' as second parameter to 'octo:attach'")
+            octoLogger.fatal("Exepected named parameter 'type' as second parameter to 'octo:attach'", origin: origin)
           }
           let functionTypeParts = string.split(separator: ":")
           if functionTypeParts.count != 2 {
-            fatalError("[\(origin)] ERROR: Malformed argument \(string)")
+            octoLogger.fatal("Malformed argument \(string)", origin: origin)
           }
           guard let t = OctoFunctionType(functionTypeParts[1]) else {
-            fatalError("[\(origin)] ERROR: invalid attach type \(functionTypeParts[1])")
+            octoLogger.fatal("invalid attach type \(functionTypeParts[1])", origin: origin)
           }
           type = t
         }
@@ -87,7 +88,7 @@ public struct OctoAttribute: OctoObject {
         }
 
         guard case .string(let to) = params[0] else {
-          fatalError("[\(origin)] ERROR: first parameter to 'octo:rename' attribute should be a string")
+          octoLogger.fatal("first parameter to 'octo:rename' attribute should be a string", origin: origin)
         }
 
         self = .rename(to: String(to))
@@ -103,7 +104,7 @@ public struct OctoAttribute: OctoObject {
     }
 
     static func errorParams(origin: OctoOrigin, params: [Parameter], expected: ClosedRange<Int>) -> Never {
-      fatalError("[\(origin)] ERROR: Expected \(expected.count == 1 ? "\(expected.first!)" : "\(expected)") parameter\(expected.count > 1 ? "s" : "") for 'octo:attach' attribute, found \(params.count)")
+      octoLogger.fatal("Expected \(expected.count == 1 ? "\(expected.first!)" : "\(expected)") parameter\(expected.count > 1 ? "s" : "") for 'octo:attach' attribute, found \(params.count)", origin: origin)
     }
 
     static func errorParams(origin: OctoOrigin, params: [Parameter], expected: Int) -> Never {

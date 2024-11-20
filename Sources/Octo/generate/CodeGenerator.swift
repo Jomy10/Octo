@@ -1,4 +1,5 @@
 import Foundation
+import OctoIO
 
 public struct CodeGenerator {
   public static func generate(language lang: Language, lib: OctoLibrary, options: GenerationOptions) throws -> any GeneratedCode {
@@ -6,7 +7,7 @@ public struct CodeGenerator {
       case .ruby:
         return try lib.rubyGenerate(options: options)
       default:
-        fatalError("Generation of \(lang) code is not yet implemented")
+        octoLogger.fatal("Generation of \(lang) code is not yet implemented")
     }
   }
 }

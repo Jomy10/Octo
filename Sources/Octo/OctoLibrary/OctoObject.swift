@@ -1,4 +1,6 @@
 import Foundation
+import Logging
+import OctoIO
 
 public protocol OctoObject {
   var id: UUID { get }
@@ -16,17 +18,11 @@ extension OctoObject {
   }
 }
 
-//extension OctoObject & OctoRenamable {
-//  var isRenamable: Bool { true }
-//}
-
 public protocol OctoRenamable {
   mutating func rename(to: String)
   var bindingName: String { get }
 }
 
-//public enum OctoObjectType {
-//  case userType
-//  case globalVariable
-//  case function
-//}
+protocol OctoSubObject {
+  var origin: OctoOrigin { get }
+}

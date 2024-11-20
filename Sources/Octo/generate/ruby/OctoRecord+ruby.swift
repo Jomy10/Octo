@@ -1,4 +1,5 @@
 import Foundation
+import OctoIO
 
 extension OctoRecord {
   func rubyGenerateFFI(in lib: OctoLibrary, options: GenerationOptions) -> String {
@@ -21,7 +22,7 @@ extension OctoRecord {
 
   func rubyGenerateModule(in lib: OctoLibrary, options: GenerationOptions, ffiModuleName: String) throws -> String {
     if self.initializers.count > 1 {
-      fatalError("unimplemented")
+      octoLogger.fatal("unimplemented")
     }
 
     let genModCodeForFn = { (fnId: UUID) -> String in

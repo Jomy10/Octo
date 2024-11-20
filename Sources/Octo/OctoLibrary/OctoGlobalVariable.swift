@@ -1,4 +1,5 @@
 import Foundation
+import OctoIO
 
 public struct OctoGlobalVariable: OctoObject {
   public let id = UUID()

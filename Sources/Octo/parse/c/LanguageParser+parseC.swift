@@ -1,3 +1,4 @@
+import Foundation
 import Clang
 import OctoIO
 
@@ -32,7 +33,7 @@ extension LanguageParser {
     }
 
     if highestSeverity.rawValue >= config.cConfig!.errorLevel.cxDiagnosticSeverity.rawValue {
-      fatalError("Error while parsing header file")
+      octoLogger.fatal("Error while parsing header file with clang") // TODO: throw
     }
 
     let cursor = CXCursor(forTranslationUnit: unit)

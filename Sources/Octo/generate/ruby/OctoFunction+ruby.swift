@@ -1,3 +1,5 @@
+import OctoIO
+
 extension OctoFunction {
   func rubyGenerateFFI(in lib: OctoLibrary, options: GenerationOptions) -> String {
     """
@@ -46,7 +48,7 @@ extension OctoFunction {
           //fnCall = "\(enu.bindingName).new(fromRawPtr: \(fnCall))"
         }
       case .ConstantArray:
-        log("[WARNING] unimplemented", .warning)
+        octoLogger.warning("unimplemented")
       case .Pointer(to: let type):
         switch (type.kind) {
         case .UserDefined(name: let name, id: let id):
@@ -59,7 +61,7 @@ extension OctoFunction {
             //fnCall = "\(enu.bindingName).new(fromRawPtr: \(fnCall))"
           }
         case .ConstantArray:
-          log("[WARNING] unimplemented", .warning)
+          octoLogger.warning("unimplemented")
         default:
           break
         }
@@ -96,7 +98,7 @@ extension OctoFunction {
       }
     case .`deinit`:
       if self.params.count != 1 {
-        fatalError("Deinitializer can only contain one parameter")
+        octoLogger.fatal("Deinitializer can only contain one parameter")
       }
       return """
       def self.release ptr
@@ -136,7 +138,7 @@ extension OctoFunction {
 
   func rubyInputParameters(fromParameterNames parameterNames: [String], ffiModuleName: String, in lib: OctoLibrary) throws -> [String] {
     guard case .Function(callingConv: _, args: let argTypes, result: _) = self.type.kind else {
-      fatalError("unreachable")
+      octoLogger.fatal("unreachable")
     }
 
     return try zip(

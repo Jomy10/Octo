@@ -1,5 +1,7 @@
 import Foundation
 import Clang
+import Logging
+import OctoIO
 
 public struct OctoLibrary {
   var name: String
@@ -30,12 +32,12 @@ public struct OctoLibrary {
   // Add objects //
   private mutating func addObject<Obj: OctoObject>(_ obj: Obj, id langId: LangId, name: String?) {
     if self.cursorMap[langId] != nil {
-      fatalError("Cursor \(langId) already exists, can't add the same object twice (bug)")
+      octoLogger.fatal("Cursor \(langId) already exists, can't add the same object twice (bug)", origin: obj.origin)
     }
     self.cursorMap[langId] = obj.id
     if let n = name {
       if self.nameLookup[n] != nil {
-        log("Object with name \(n) already exists, this could lead to undefined behaviour", .warning)
+        octoLogger.warning("Object with name \(n) already exists, this could lead to undefined behaviour", origin: obj.origin)
       }
       self.nameLookup[n] = obj.id
     }
@@ -57,7 +59,7 @@ public struct OctoLibrary {
     } else if obj is OctoEnumCase {
       self.enumCases[obj.id] = (obj as! OctoEnumCase)
     } else {
-      fatalError("Unhandled OctoObject type \(Obj.self)")
+      octoLogger.fatal("Unhandled OctoObject type \(Obj.self)", origin: obj.origin)
     }
   }
 
@@ -74,7 +76,7 @@ public struct OctoLibrary {
     if !(self.mutateRecord(id: recordId) { (record: inout OctoRecord) in
       record.addField(field.id)
     }) {
-      fatalError("Could not mutate record \(recordId)")
+      octoLogger.fatal("Could not mutate record \(recordId)")
     }
   }
 
@@ -83,7 +85,7 @@ public struct OctoLibrary {
     if !(self.mutateEnum(id: enumId) { (v: inout OctoEnum) in
       v.addCase(enumCase.id)
     }) {
-      fatalError("Could not mutate enum \(enumId)")
+      octoLogger.fatal("Could not mutate enum \(enumId)")
     }
   }
 
@@ -97,11 +99,11 @@ public struct OctoLibrary {
 
   public mutating func setTypedefUserType<ID: Into>(typedefLid: ID, userTypeLid: ID) where ID.T == LangId {
     guard let typedefID = self.cursorMap[typedefLid.into()] else {
-      fatalError("Invalid typedef id \(typedefLid)")
+      octoLogger.fatal("Invalid typedef id \(typedefLid)")
     }
 
     if self.typedefs[typedefID] == nil {
-      fatalError("Invalid typedef for id \(typedefID)")
+      octoLogger.fatal("Invalid typedef for id \(typedefID)")
     }
 
     let refersToType = self.typedefs[typedefID]!.refersTo
@@ -109,7 +111,7 @@ public struct OctoLibrary {
       case .UserDefined(name: let name, id: _):
         self.typedefs[typedefID]!.refersTo = self.typedefs[typedefID]!.refersTo.copy(mutatingKind: .UserDefined(name: name, id: userTypeLid.into()))
       default:
-        fatalError("Expected UserdDefined type, got \(refersToType.kind)")
+        octoLogger.fatal("Expected UserdDefined type, got \(refersToType.kind)")
     }
   }
 
@@ -122,7 +124,7 @@ public struct OctoLibrary {
     if !(self.mutateFunction(id: functionId) { (fun: inout OctoFunction) in
       fun.addParam(param.id)
     }) {
-      fatalError("Could not mutate \(functionId)")
+      octoLogger.fatal("Could not mutate \(functionId)")
     }
   }
 
@@ -133,7 +135,7 @@ public struct OctoLibrary {
       switch (attr.octoData) {
       case .attach(to: let userTypeName, type: let functionType):
         guard let userTypeId = self.getUserType(name: userTypeName) else {
-          fatalError("[\(attr.origin)] ERROR: user type \(userTypeName) does not exist")
+          octoLogger.fatal("[\(attr.origin)] ERROR: user type \(userTypeName) does not exist")
         }
 
         // Attach the function
@@ -141,37 +143,37 @@ public struct OctoLibrary {
         case .record(_):
           if !(self.mutateRecord(id: userTypeId) { (record: inout OctoRecord) in
             record.attachFunction(parentId, type: functionType)
-          }) { fatalError("Couldn't mutate \(userTypeId)") }
+          }) { octoLogger.fatal("Couldn't mutate \(userTypeId)") }
         case .`enum`(_):
           if !(self.mutateEnum(id: userTypeId) { (v: inout OctoEnum) in
             v.attachFunction(parentId, type: functionType)
-          }) { fatalError("Couldn't mutate \(userTypeId)") }
+          }) { octoLogger.fatal("Couldn't mutate \(userTypeId)") }
         }
 
         // Mark the function as attached
         if !(self.mutateFunction(id: parentId) { (function: inout OctoFunction) in
           function.markAttached(type: functionType, toType: userTypeId)
-        }) { fatalError("Couldn't mutate \(parentId)") }
+        }) { octoLogger.fatal("Couldn't mutate \(parentId)") }
 
         // End attach function
       case .rename(to: let newName):
         if !(self.mutateFunction(id: parentId) { (function: inout OctoFunction) in
           function.rename(to: newName)
-        }) { fatalError("Couldn't mutate \(parentId)") }
+        }) { octoLogger.fatal("Couldn't mutate \(parentId)") }
         // End Rename
       case .hidden:
         if !(self.mutateFunction(id: parentId) { function in
           function.visible = false
-        }) { fatalError("Couldn't mutate \(parentId)") }
+        }) { octoLogger.fatal("Couldn't mutate \(parentId)") }
       case nil:
         // Not an octo attribute
         switch (attr.name) {
           case "returns_nonnull":
             if !(self.mutateFunction(id: parentId) { function in
               function.canReturnNull = false
-            }) { fatalError("Couldn't mutate \(parentId)") }
+            }) { octoLogger.fatal("Couldn't mutate \(parentId)") }
           default:
-            print("[WARNING] Attribute \(attr.name) ignored")
+            octoLogger.warning("Attribute \(attr.name) ignored")
             break // ignore
         }
       //default:
@@ -189,41 +191,41 @@ public struct OctoLibrary {
         case "nonnull":
           if !(self.mutateParameter(id: parentId) { param in
             param.nullable = false
-          }) { fatalError("Couldn't mutate \(parentId)") }
+          }) { octoLogger.fatal("Couldn't mutate \(parentId)") }
         case "nullable":
           if !(self.mutateParameter(id: parentId) { param in
             param.nullable = true
-          }) { fatalError("Couldn't mutate \(parentId)") }
+          }) { octoLogger.fatal("Couldn't mutate \(parentId)") }
         default:
-          print("[WARNING] Attribute \(attr.name) ignored")
+          octoLogger.warning("Attribute \(attr.name) ignored")
           break // ignore
         }
       default:
-        fatalError("[\(attr.origin)] ERROR: Attribute type \(String(describing: attr.octoData)) cannot be applied to function parameter (for attribute \(attr))")
+        octoLogger.fatal("Attribute type \(String(describing: attr.octoData)) cannot be applied to function parameter (for attribute \(attr))", origin: attr.origin)
       }
     } else if parentObjectType == OctoField.self {
       switch (attr.octoData) {
       case .hidden:
         if !(self.mutateField(id: parentId) { field in
           field.visible = false
-        }) { fatalError("Couldn't mutate \(parentId)") }
+        }) { octoLogger.fatal("Couldn't mutate \(parentId)") }
       case nil:
         // non-octo attribute
         switch (attr.name) {
         case "nonnull":
           if !(self.mutateField(id: parentId) { field in
             field.nullable = false
-          }) { fatalError("Couldn't mutate \(parentId)") }
+          }) { octoLogger.fatal("Couldn't mutate \(parentId)") }
         case "nullable":
           if !(self.mutateField(id: parentId) { field in
             field.nullable = true
-          }) { fatalError("Couldn't mutate \(parentId)") }
+          }) { octoLogger.fatal("Couldn't mutate \(parentId)") }
         default:
-          print("[WARNING] Attribute \(attr.name) ignored")
+          octoLogger.warning("Attribute \(attr.name) ignored")
           break // ignore
         }
         default:
-          fatalError("[\(attr.origin)] Attribute '\(attr.name)' cannot be applied to record field")
+          octoLogger.fatal("Attribute '\(attr.name)' cannot be applied to record field", origin: attr.origin)
       }
     } else if parentObjectType == OctoUserType.self {
       switch (attr.octoData) {
@@ -232,17 +234,17 @@ public struct OctoLibrary {
         case .record(_):
           if !(self.mutateRecord(id: parentId) { record in
             record.rename(to: newName)
-          }) { fatalError("Couldn't mutate \(parentId)") }
+          }) { octoLogger.fatal("Couldn't mutate \(parentId)") }
         case .enum(_):
           if !(self.mutateEnum(id: parentId) { record in
             record.rename(to: newName)
-          }) { fatalError("Couldn't mutate \(parentId)") }
+          }) { octoLogger.fatal("Couldn't mutate \(parentId)") }
         }
       default:
-        fatalError("[\(attr.origin)] Attribute '\(attr.name)' cannot be applied to user type")
+        octoLogger.fatal("Attribute '\(attr.name)' cannot be applied to user type", origin: attr.origin)
       }
     } else { // end function
-      fatalError("Unhandled OctoObject type in `addAttribute`: \(String(describing: parentObjectType))")
+      octoLogger.fatal("Unhandled OctoObject type in `addAttribute`: \(String(describing: parentObjectType))")
     }
   }
 
@@ -271,7 +273,7 @@ public struct OctoLibrary {
     } else if type == OctoEnumCase.self {
       return self.enumCases[id]
     } else {
-      fatalError("Unhandled OctoObject type \(String(describing: type))")
+      octoLogger.fatal("Unhandled OctoObject type \(String(describing: type))")
     }
   }
 
@@ -405,7 +407,7 @@ public struct OctoLibrary {
         } else if type == OctoFunction.self {
           self.functions[objid] = (obj as! OctoFunction)
         } else {
-          fatalError("Unhandled OctoObject type \(String(describing: type))")
+          octoLogger.fatal("Unhandled OctoObject type \(String(describing: type))")
         }
       }
   }

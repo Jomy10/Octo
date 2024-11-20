@@ -36,7 +36,13 @@ extension OctoType {
       case .FLong: return ":long_double"
       case .Pointer(to: let pointeeType):
         switch (pointeeType.kind) {
-          case .UserDefined(name: let name): return "\(name)\(isDefinition ? ".ptr" : "")"
+          case .UserDefined(name: let name, id: _):
+            // TODO: !!
+            //if let id = lid {
+
+            //} else {
+              return "\(name)\(isDefinition ? ".ptr" : "")"
+            //}
           default: return ":pointer"
         }
       case .Function(callingConv: let callingConv, args: _, result: _):
@@ -44,7 +50,7 @@ extension OctoType {
         return ":pointer"
       case .ConstantArray(type: _, size: _):
         return ":pointer"
-      case .UserDefined(name: let name):
+      case .UserDefined(name: let name, id: _): // TODO: use id!
         return "\(name)\(isDefinition ? ".val" : "")"
     }
   }

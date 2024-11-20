@@ -1,6 +1,7 @@
 import Foundation
+import OctoIO
 
-public struct OctoRecord {
+public struct OctoRecord: OctoSubObject {
   let name: String
   var customName: String? = nil
   let origin: OctoOrigin
@@ -34,13 +35,13 @@ public struct OctoRecord {
       case .`init`: self.initializers.append(fnId)
       case .`deinit`:
         if self.deinitializer != nil {
-          fatalError("ERROR: cannot specify multiple deinitializers for \(self.name)")
+          octoLogger.fatal("cannot specify multiple deinitializers for \(self.name)")
         }
         self.deinitializer = fnId
       case .method: self.methods.append(fnId)
       case .staticMethod: self.staticMethods.append(fnId)
       case .function:
-        fatalError("Cannot attach function of type 'function' to record")
+        octoLogger.fatal("Cannot attach function of type 'function' to record")
     }
   }
 

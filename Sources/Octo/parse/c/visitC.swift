@@ -15,12 +15,11 @@ func visitC(
       case CXCursor_StructDecl:
         let parentType = parent.cursorType
         if parentType.kind == CXType_Invalid {
-          print(cursor)
           return try visitStructDecl(cursor, &library.pointee)
         } else if parentType.kind == CXType_Typedef {
           return try visitStructDefinitionForTypedef(cursor, parent: parent, &library.pointee)
         } else {
-          fatalError("Unhandled parent type for struct: \(parentType.kind)")
+          octoLogger.fatal("Unhandled parent type for struct: \(parentType.kind)")
         }
       case CXCursor_FieldDecl:
         return try visitFieldDecl(cursor, parent: parent, &library.pointee)
@@ -47,8 +46,7 @@ func visitC(
       default: throw ParseError.unhandledKind(cursor.kind, location: cursor.location)
     }
   } catch let error {
-    log(error.localizedDescription, .error)
-    exit(1)
+    octoLogger.fatal("\(error.localizedDescription)")
   }
 }
 
@@ -74,7 +72,7 @@ func visitStructDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) throws -> CXC
   }
 
   let recordName = cursor.spelling!
-  log("@StructDecl.Record \(recordName)")
+  octoLogger.debug("@StructDecl.Record \(recordName)")
   lib.addUserType(
     record: OctoRecord(name: recordName, origin: cursor.location.into(), type: .`struct`),
     id: cursor
@@ -90,7 +88,7 @@ func visitFieldDecl(_ cursor: CXCursor, parent: CXCursor, _ lib: inout OctoLibra
   guard let parentId = lib.getUserType(lid: parent) else {
     throw ParseError("\(parentTypeName) is unknown", cursor.location)
   }
-  log("@FieldDecl \(parentTypeName) -> \(decl.type) \(decl.name)")
+  octoLogger.debug("@FieldDecl \(parentTypeName) -> \(decl.type) \(decl.name)")
   lib.addField(
     to: parentId,
     OctoField(type: decl.type, name: decl.name, origin: cursor.location.into()),
@@ -108,11 +106,11 @@ func visitVarDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) throws -> CXChil
   let external = cursor.hasVarDeclExternalStorage
 
   if !global {
-    log("[WARN] Unhandled variable \(decl)", .warning)
+    octoLogger.warning("Unhandled variable \(decl)")
     return CXChildVisit_Continue
   }
 
-  log("@VarDecl \(global ? "global " : "")\(external ? "extern " : "")\(decl.type) \(decl.name)")
+  octoLogger.debug("@VarDecl \(global ? "global " : "")\(external ? "extern " : "")\(decl.type) \(decl.name)")
   lib.addGlobalVariable(
     OctoGlobalVariable(type: decl.type, name: decl.name, external: external, origin: cursor.location.into()),
     id: cursor
@@ -134,7 +132,7 @@ func visitTypedefDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) throws -> CX
   }
 
   let typedefName = cursorType.typedefName!
-  log("@TypedefDecl.typedef \(typedefName) = \(type)")
+  octoLogger.debug("@TypedefDecl.typedef \(typedefName) = \(type)")
   lib.addTypedef(
     OctoTypedef(name: typedefName, refersTo: type, origin: cursor.location.into()),
     id: cursor
@@ -160,7 +158,7 @@ func visitEnumDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) throws -> CXChi
     throw ParseError.unhandledKind(cursor.enumDeclIntegerType.kind, location: cursor.location)
   }
 
-  log("@EnumDecl.Enum \(enumDeclIntegerType) \(enumName)")
+  octoLogger.debug("@EnumDecl.Enum \(enumDeclIntegerType) \(enumName)")
   lib.addUserType(
     enum: OctoEnum(type: enumDeclIntegerType, name: enumName, origin: cursor.location.into()),
     id: cursor
@@ -187,7 +185,7 @@ func visitEnumConstantDecl(_ cursor: CXCursor, parent: CXCursor, _ lib: inout Oc
     value = .unsigned(cursor.enumConstantDeclUnsignedValue)
   }
 
-  log("@EnumConstantDecl \(enumName) -> \(enumCaseName) = \(value)")
+  octoLogger.debug("@EnumConstantDecl \(enumName) -> \(enumCaseName) = \(value)")
 
   lib.addEnumCase(
     to: parentEnumId,
@@ -207,7 +205,7 @@ func visitUnionDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) throws -> CXCh
 
   let recordName = cursor.spelling!
 
-  log("@UnionDecl.Record \(recordName)")
+  octoLogger.debug("@UnionDecl.Record \(recordName)")
 
   lib.addUserType(
     record: OctoRecord(name: recordName, origin: cursor.location.into(), type: .`union`),
@@ -224,7 +222,7 @@ func visitFunctionDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) throws -> C
   }
 
   let name = cursor.spelling!
-  log("@FunctionDecl \(type) \(name)")
+  octoLogger.debug("@FunctionDecl \(type) \(name)")
   lib.addFunction(
     OctoFunction(type: type, name: name, origin: cursor.location.into()),
     id: cursor
@@ -251,11 +249,11 @@ func visitParmDecl(_ cursor: CXCursor, parent: CXCursor, _ lib: inout OctoLibrar
   }
   let objectType = lib.getObjectType(id: objectId)!
   if objectType != OctoFunction.self {
-    log("visiting ParamDecl: \(functionName) is of type \(objectType), not function. This will be unhandled", .debug)
+    octoLogger.trace("visiting ParamDecl: \(functionName) is of type \(objectType), not function. This will be unhandled")
     return CXChildVisit_Continue
   }
 
-  log("@ParmDecl \(functionName) -> \(type) \(name ?? "unnamed")")
+  octoLogger.debug("@ParmDecl \(functionName) -> \(type) \(name ?? "unnamed")")
   guard let functionId = lib.getFunction(lid: parent) else {
     throw ParseError("\(functionName) is unknown", cursor.location)
   }
@@ -300,7 +298,7 @@ func visitAnnotateAttr(_ cursor: CXCursor, parent: CXCursor, _ lib: inout OctoLi
     origin: cursor.location.into()
   )
 
-  log("@AnnotateAttr \(parentName) -> \(name) \(String(describing: params))")
+  octoLogger.debug("@AnnotateAttr \(parentName) -> \(name) \(String(describing: params))")
 
   try addAttribute(cursor: cursor, parent: parent, attr, &lib)
 
@@ -317,7 +315,7 @@ func visitUnexposedAttr(_ cursor: CXCursor, parent: CXCursor, _ lib: inout OctoL
   defer { clang_disposeTokens(cursor.translationUnit, tokens, numTokens) }
   let attr = try parseUnexposedAttribute(origin: cursor.location, translationUnit: cursor.translationUnit, fromTokens: tokens!, numTokens: numTokens)
 
-  log("@UnexposedAttr \(parentName) -> \(attr)")
+  octoLogger.debug("@UnexposedAttr \(parentName) -> \(attr)")
   try addAttribute(cursor: cursor, parent: parent, attr, &lib)
 
   return CXChildVisit_Recurse

@@ -1,4 +1,6 @@
 import Clang
+import Logging
+import OctoIO
 
 public struct OctoOrigin {
   private let inner: OriginData
@@ -50,5 +52,11 @@ extension OctoOrigin: CustomStringConvertible {
 extension OctoOrigin: Equatable {
   public static func ==(lhs: Self, rhs: Self) -> Bool {
     lhs.inner == rhs.inner
+  }
+}
+
+extension OctoOrigin: IntoMetadataValue {
+  public func into() -> Logger.MetadataValue {
+    .string(self.description)
   }
 }
