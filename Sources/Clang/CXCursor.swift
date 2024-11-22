@@ -7,7 +7,7 @@ extension CXCursor {
     self = clang_getTranslationUnitCursor(translationUnit)
   }
 
-  struct VisitChildrenBreak: Swift.Error {}
+  public struct VisitChildrenBreak: Swift.Error {}
 
   public func visitChildren(_ visit: @escaping VisitFn) throws {
     if clang_visitChildren(self, visit, nil) != 0 {
@@ -87,6 +87,14 @@ extension CXCursor {
 
   public var extent: CXSourceRange {
     clang_getCursorExtent(self)
+  }
+
+  public var printingPolicy: ManagedCXPrintingPolicy {
+    clang_getCursorPrintingPolicy(self).managed
+  }
+
+  public func prettyPrint(_ policy: ManagedCXPrintingPolicy? = nil) -> CXString {
+    clang_getCursorPrettyPrinted(self, policy?.ptr)
   }
 }
 

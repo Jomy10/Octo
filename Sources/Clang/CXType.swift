@@ -39,8 +39,8 @@ extension CXType: Equatable {
     clang_isConstQualifiedType(self) != 0
   }
 
-  // TODO: test
-  var typeDeclaration: CXCursor {
+  /// Returns the cursor for an Elaborated type
+  public var typeDeclaration: CXCursor {
     clang_getTypeDeclaration(self)
   }
 
