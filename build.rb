@@ -9,6 +9,7 @@ def exec(cmd, context)
 end
 
 packages = []
+swiftMode = :build
 
 case ARGV[0]
 when "all"
@@ -18,9 +19,14 @@ when "ExpressionInterpreter"
   packages << :ExpressionInterpreter
 when "Octo"
   packages << :Octo
-else
+when "test"
+  packages << :Octo
+  swiftMode = :test
+when nil
   packages << :ExpressionInterpreter
   packages << :Octo
+else
+  raise "Invalid argument #{ARGV[0]}"
 end
 
 mode = ARGV[1] || "debug"
@@ -50,7 +56,14 @@ for package in packages
 
     flags.filter { |v| v == "" }
 
-    exec "swift build -c #{mode} #{flags.join(" ")}", package
+    case swiftMode
+    when :build
+      exec "swift build -c #{mode} #{flags.join(" ")}", package
+    when :test
+      exec "swift test #{flags.join(" ")}", "tests"
+    else
+      raise "Invalid swiftMode #{swiftMode}"
+    end
   when :ExpressionInterpreter
     Dir.chdir("ExpressionInterpreter") do
       if OS.mac?
