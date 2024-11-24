@@ -7,7 +7,7 @@ use std::cell::RefCell;
 //     ParseError(cel_interpreter::ParseError),
 //     ExecutionError(cel_interpreter::ExecutionError),
 // }
-use std::error::Error;
+// use std::error::Error;
 
 pub type ExecutionError = cel_interpreter::ExecutionError;
 // pub type ParseError = cel_interpreter::ParseError;

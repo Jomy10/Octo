@@ -55,13 +55,13 @@ final class OctoIntermediateTests: XCTestCase {
     )
     try library.addObject(myEnum, ref: 1)
 
-    try function.attach(to: myEnum, kind: .initializer)
+    try function.attach(to: myEnum, kind: .staticMethod)
 
     guard let libEnum = library.getObject(forRef: 1) as? OctoEnum else {
       XCTFail("object is not an enum or doesn't exist")
       return
     }
 
-    XCTAssertEqual(libEnum.initializers, [function])
+    XCTAssertEqual(libEnum.staticMethods, [function])
   }
 }
