@@ -1,7 +1,7 @@
 import Foundation
 
 extension ParseConfiguration {
-  public struct CConfig {
+  public struct CConfig: Decodable {
     public let clangFlags: [String]
     /// Which headers to include in parsing
     public let includeHeaders: [String]

@@ -11,4 +11,11 @@ enum IndentType: ExpressibleByArgument, Decodable {
       default: return nil
     }
   }
+
+  var stringValue: String {
+    switch (self) {
+      case .tabs: return "\t"
+      case .spaces: return " "
+    }
+  }
 }

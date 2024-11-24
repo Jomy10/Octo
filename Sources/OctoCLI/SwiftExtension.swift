@@ -6,3 +6,13 @@ extension URL: ExpressibleByArgument {
     self = URL(fileURLWithPath: argument)
   }
 }
+
+extension Array {
+  func get(_ idx: Self.Index) -> Self.Element? {
+    if idx < self.count {
+      return self[idx]
+    } else {
+      return nil
+    }
+  }
+}

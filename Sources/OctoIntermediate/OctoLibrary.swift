@@ -1,6 +1,7 @@
 import Logging
 import OctoIO
 
+// TODO: ~Copyable when migrating too Swift 6
 public struct OctoLibrary: AutoRemovable {
   private var langRefMap: [AnyHashable:Int] = [:]
   private var nameMap: [String:Int] = [:]

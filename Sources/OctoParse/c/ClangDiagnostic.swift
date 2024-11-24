@@ -1,6 +1,6 @@
 import Clang
 
-public enum ClangDiagnostic {
+public enum ClangDiagnostic: Decodable {
   case ignored
   case note
   case warning
