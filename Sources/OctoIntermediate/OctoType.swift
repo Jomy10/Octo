@@ -13,6 +13,19 @@ public struct OctoType: Equatable {
     self.mutable = mutable
   }
 
+  public static func isUserType(_ type: OctoType) -> Bool {
+    switch (type.kind) {
+      case .Pointer(to: let type): return Self.isUserType(type)
+      case .Record(_): return true
+      case .Enum(_): return true
+      default: return false
+    }
+  }
+
+  public var isUserType: Bool {
+    Self.isUserType(self)
+  }
+
   public enum Kind: Equatable {
     case Void
     case Bool
@@ -33,7 +46,7 @@ public struct OctoType: Equatable {
     /// An 8-bit character.
     case Char8
     /// Same as `Char8`, but representing a byte instead of a character
-    case Byte
+    //case Byte
     /// A unicode scalar, maps to a character type in most languages
     /// e.g. `wchar_t`, `char16_t`
     /// - `bitCharSize`
@@ -41,8 +54,9 @@ public struct OctoType: Equatable {
     ///   Can be nil of no explicit size is given
     ///   bitCharSize also specifies UTF-`bitCharSize`
     case UnicodeScalar(bitCharSize: Int? = nil)
+    /// A null-terminated string
     /// e.g. `char*`, `wchar_t*`
-    case String
+    case CString
     indirect case Pointer(to: OctoType)
     indirect case Function(
       callingConv: OctoCallingConv,

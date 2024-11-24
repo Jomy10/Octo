@@ -57,3 +57,11 @@ public final class OctoField: OctoObject {
     self.type.optional = val
   }
 }
+
+// String //
+
+extension OctoRecord: CustomStringConvertible {
+  public var description: String {
+    "Record(name: \(self.bindingName!))"
+  }
+}

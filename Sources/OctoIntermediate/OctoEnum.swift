@@ -46,6 +46,13 @@ public final class OctoEnumCase: OctoObject {
     case int(Int64)
     /// An unsigned integer
     case uint(UInt64)
+
+    public var literalValue: String {
+      switch (self) {
+        case .int(let i): return "\(i)"
+        case .uint(let i): return "\(i)"
+      }
+    }
   }
 
   public init(
@@ -55,5 +62,13 @@ public final class OctoEnumCase: OctoObject {
   ) {
     self.value = value
     super.init(origin: origin, name: name)
+  }
+}
+
+// String //
+
+extension OctoEnum: CustomStringConvertible {
+  public var description: String {
+    "Enum(name: \(self.bindingName!))"
   }
 }

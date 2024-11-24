@@ -53,6 +53,8 @@ public struct OctoParser {
       return newName
     }
 
+    try lib.inner.finalize()
+
     return lib
   }
 }

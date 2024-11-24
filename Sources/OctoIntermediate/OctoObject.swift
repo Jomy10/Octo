@@ -54,4 +54,6 @@ public class OctoObject: Equatable, Hashable {
         try self.setReturnsNonNull(true)
     }
   }
+
+  func finalize() throws {}
 }

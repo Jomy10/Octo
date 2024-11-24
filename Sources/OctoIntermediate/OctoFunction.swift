@@ -1,3 +1,5 @@
+import OctoIO
+
 // Function //
 
 public final class OctoFunction: OctoObject {
@@ -5,6 +7,8 @@ public final class OctoFunction: OctoObject {
   public private(set) var returnType: OctoType
   public private(set) var kind: FunctionType
   public private(set) var attachedTo: (any OctoFunctionAttachable)?
+  /// Should only be accessed after parsing
+  public private(set) var selfArgumentIndex: Int? = nil
 
   public enum FunctionType: Equatable {
     case initializer
@@ -36,7 +40,24 @@ public final class OctoFunction: OctoObject {
     self.arguments = arguments
     self.kind = kind
     self.attachedTo = attachedTo
+    self.selfArgumentIndex = nil
     super.init(origin: origin, name: name)
+  }
+
+  public var selfArgument: OctoArgument? {
+    if let index = self.selfArgumentIndex {
+      return self.arguments[index]
+    } else {
+      return nil
+    }
+  }
+
+  public var hasSelfArgument: Bool {
+    self.selfArgumentIndex != nil
+  }
+
+  public var hasUserTypeArgument: Bool {
+    self.arguments.firstIndex(where: { arg in arg.type.isUserType }) != nil
   }
 
   public func addArgument(_ arg: OctoArgument) {
@@ -50,11 +71,47 @@ public final class OctoFunction: OctoObject {
 
     self.attachedTo = object
     self.kind = kind
+
     try object.attachFunction(self)
   }
 
   public override func setReturnsNonNull(_ val: Bool) throws {
     self.returnType.optional = false
+  }
+
+  override func finalize() throws {
+    guard let object = self.attachedTo else {
+      return
+    }
+
+    let isSelfTypeObject: (OctoType, OctoObject) -> Bool = { (type: OctoType, selfTypeObject: OctoObject) -> Bool in
+      switch (type.kind) {
+        case .Record(let record): return selfTypeObject == record
+        case .Enum(let e): return selfTypeObject == e
+        case .Pointer(let ptype):
+          switch (ptype.kind) {
+            case .Record(let record): return selfTypeObject == record
+            case .Enum(let e): return selfTypeObject == e
+            default: return false //throw FunctionAttachError.initializerTypeMismatch(function: self, attachedTo: object)
+          }
+        default: return false //throw FunctionAttachError.initializerTypeMismatch(function: self, attachedTo: object)
+      }
+    }
+
+    if self.kind == .method || self.kind == .deinitializer {
+      if let selfArgumentIndex = self.arguments.firstIndex(where: { arg in isSelfTypeObject(arg.type, object) }) {
+        self.arguments[selfArgumentIndex].isSelfArgument = true
+        self.selfArgumentIndex = selfArgumentIndex
+      } else {
+        //throw FunctionAttachError.noSelfArgument(function: self)
+        octoLogger.warning("Function \(self.ffiName!) has no `self` parameter of type \(object.ffiName!)")
+        octoLogger.debug("\(self.ffiName!) args: \(self.arguments.count)\n\(self.arguments.map({ arg in "arg: type = \(arg.type)"}).joined(separator: "\n"))")
+      }
+    } else if self.kind == .initializer {
+      if !isSelfTypeObject(self.returnType, object) {
+        throw FunctionAttachError.initializerTypeMismatch(function: self, attachedTo: object)
+      }
+    }
   }
 }
 
@@ -65,14 +122,18 @@ public final class OctoArgument: OctoObject {
   // TODO
   //public let defaultValue: Value?
   public private(set) var namedArgument: Bool
+  public internal(set) var isSelfArgument: Bool
 
   public init(
     origin: OctoOrigin,
     name: String?,
-    type: OctoType
+    type: OctoType,
+    namedArgument: Bool = false,
+    isSelfArgument: Bool = false
   ) {
     self.type = type
-    self.namedArgument = name != nil
+    self.namedArgument = namedArgument
+    self.isSelfArgument = isSelfArgument
     super.init(origin: origin, name: name)
   }
 
@@ -87,6 +148,8 @@ enum FunctionAttachError: Error {
   case deinitializerAlreadyExists(target: any OctoFunctionAttachable)
   case invalidFunctionType(type: OctoFunction.FunctionType)
   case functionAlreadyAttached(function: OctoFunction, attachedTo: any OctoFunctionAttachable)
+  //case noSelfArgument(function: OctoFunction)
+  case initializerTypeMismatch(function: OctoFunction, attachedTo: OctoObject)
 }
 
 extension FunctionAttachError: CustomStringConvertible {
@@ -98,6 +161,10 @@ extension FunctionAttachError: CustomStringConvertible {
         return "Function of type \(type) cannot be attached"
       case .functionAlreadyAttached(function: let function, attachedTo: let object):
         return "Function \(function.ffiName ?? "unnamed") is already attached to \(function.attachedTo!) (while trying to attach to \(object))"
+      //case .noSelfArgument(function: let function):
+      //  return "Found no `self` argument for '\(function.ffiName!)' @ \(function.origin)"
+      case .initializerTypeMismatch(function: let function, attachedTo: let attachedTo):
+        return "Initializer \(function.ffiName!) does not return \(attachedTo.ffiName!)"
     }
   }
 }

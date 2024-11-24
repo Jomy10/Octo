@@ -9,6 +9,10 @@ let package = Package(
     .executable(
       name: "octo",
       targets: ["OctoCLI"]
+    ),
+    .library(
+      name: "Octo",
+      targets: ["OctoParse", "OctoIntermediate", "OctoGenerate"]
     )
   ],
   dependencies: [
@@ -16,7 +20,8 @@ let package = Package(
     .package(url: "https://github.com/LebJe/TOMLKit.git", from: "0.6.0"),
     .package(url: "https://github.com/mtynior/ColorizeSwift.git", from: "1.5.0"),
     .package(url: "https://github.com/apple/swift-log.git", from: "1.0.0"),
-    .package(url: "https://github.com/sushichop/Puppy", from: "0.7.0")
+    .package(url: "https://github.com/sushichop/Puppy", from: "0.7.0"),
+    .package(url: "https://github.com/apple/swift-system", from: "1.2.1"),
     //.package(url: "https://github.com/davbeck/swift-glob.git", from: "0.1.0"),
   ],
   targets: [
@@ -30,10 +35,11 @@ let package = Package(
         .product(name: "Puppy", package: "Puppy")
       ]
     ),
+
     .target(
       name: "OctoIntermediate",
       dependencies: [
-        .product(name: "Logging", package: "swift-log"),
+        "OctoIO",
         "ExpressionInterpreter"
       ]
     ),
@@ -41,7 +47,6 @@ let package = Package(
       name: "OctoParse",
       dependencies: [
         "Clang",
-        .product(name: "Logging", package: "swift-log"),
         "OctoIntermediate",
         "OctoIO"
       ]
@@ -51,20 +56,34 @@ let package = Package(
       dependencies: [
         "OctoIntermediate",
         "OctoIO",
-        .product(name: "Logging", package: "swift-log"),
         "StringBuilder"
       ]
     ),
+
     .target(
       name: "OctoIO",
       dependencies: [
-        "ColorizeSwift"
+        "ColorizeSwift",
+        "Puppy",
+        .product(name: "Logging", package: "swift-log"),
       ]
     ),
+
     .target(name: "StringBuilder"),
+
+    //.target(
+    //  name: "SwiftSystem",
+    //  dependencies: [
+    //    .product(name: "SystemPackage", package: "swift-system"),
+    //  ]
+    //),
+
     .systemLibrary(
       name: "clang_c",
-      providers: [.brew(["llvm"])]
+      providers: [
+        .brew(["llvm"]),
+        .apt(["clang", "llvm-dev"])
+      ]
     ),
     .target(
       name: "Clang",
@@ -79,6 +98,22 @@ let package = Package(
       name: "OctoParseTests",
       dependencies: ["OctoIntermediate", "OctoParse"]
     ),
+    .testTarget(
+      name: "OctoGenerateTests",
+      dependencies: ["OctoIntermediate", "OctoGenerate", "ColorizeSwift"]
+    ),
+    .testTarget(
+      name: "OctoExecutionTests",
+      dependencies: [
+        "OctoParse",
+        "OctoGenerate",
+        "OctoIntermediate",
+        "Puppy",
+        "OctoIO",
+        .product(name: "SystemPackage", package: "swift-system"),
+      ],
+      exclude: ["resources"]
+    )
   ]
 )
 

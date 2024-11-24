@@ -69,7 +69,13 @@ extension OctoType.Kind {
       case CXType_LongDouble: self = .FLong
       case CXType_Pointer:
         let type = try OctoType(cxType: cxType.pointeeType, in: lib)
-        self = .Pointer(to: type)
+        switch (type.kind) {
+          case .UnicodeScalar: fallthrough
+          case .Char8:
+            self = .CString
+          default:
+            self = .Pointer(to: type)
+        }
       case CXType_FunctionProto: fallthrough
       case CXType_FunctionNoProto:
         let resultType = try OctoType(cxType: cxType.resultType, in: lib)
@@ -110,6 +116,7 @@ extension OctoType.Kind {
   var isCPointer: Bool {
     switch (self) {
       case .Pointer: fallthrough
+      case .CString: fallthrough
       case .Function: return true
       default: return false
     }

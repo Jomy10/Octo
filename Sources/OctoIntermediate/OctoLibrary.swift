@@ -22,8 +22,9 @@ public struct OctoLibrary: AutoRemovable {
         if !(obj is OctoTypedef) {
           octoLogger.warning("Object \(obj.ffiName!) already exists, overriding name definition. This might lead to unexpected behaviour")
         }
+      } else {
+        self.nameMap[obj.ffiName!] = self.objects.count
       }
-      self.nameMap[obj.ffiName!] = self.objects.count
     }
     self.langRefMap[ref] = self.objects.count
     self.objects.append(obj)
@@ -48,6 +49,12 @@ public struct OctoLibrary: AutoRemovable {
       if let bindingName = object.bindingName {
         object.rename(to: try renameOp(bindingName))
       }
+    }
+  }
+
+  public func finalize() throws {
+    for obj in self.objects {
+      try obj.finalize()
     }
   }
 }
