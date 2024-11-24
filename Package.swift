@@ -29,10 +29,14 @@ let package = Package(
       name: "OctoCLI",
       dependencies: [
         "OctoIO",
+        "ExpressionInterpreter",
+        "OctoParse",
+        "OctoIntermediate",
+        "OctoGenerate",
         .product(name: "ArgumentParser", package: "swift-argument-parser"),
         .product(name: "TOMLKit", package: "TOMLKit"),
         .product(name: "Logging", package: "swift-log"),
-        .product(name: "Puppy", package: "Puppy")
+        .product(name: "Puppy", package: "Puppy"),
       ]
     ),
 
@@ -40,7 +44,6 @@ let package = Package(
       name: "OctoIntermediate",
       dependencies: [
         "OctoIO",
-        "ExpressionInterpreter"
       ]
     ),
     .target(
@@ -48,7 +51,8 @@ let package = Package(
       dependencies: [
         "Clang",
         "OctoIntermediate",
-        "OctoIO"
+        "ExpressionInterpreter",
+        "OctoIO",
       ]
     ),
     .target(
@@ -56,7 +60,7 @@ let package = Package(
       dependencies: [
         "OctoIntermediate",
         "OctoIO",
-        "StringBuilder"
+        "StringBuilder",
       ]
     ),
 
@@ -71,18 +75,11 @@ let package = Package(
 
     .target(name: "StringBuilder"),
 
-    //.target(
-    //  name: "SwiftSystem",
-    //  dependencies: [
-    //    .product(name: "SystemPackage", package: "swift-system"),
-    //  ]
-    //),
-
     .systemLibrary(
       name: "clang_c",
       providers: [
         .brew(["llvm"]),
-        .apt(["clang", "llvm-dev"])
+        .apt(["clang", "llvm-dev"]),
       ]
     ),
     .target(

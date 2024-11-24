@@ -21,5 +21,5 @@ ruby build.rb test
 ### Examples
 
 Examples can be found in:
-- the [examples](/examples) directory
+- the [examples](/Examples) directory
 - additional examples can be found in the [tests](/Tests/OctoExecutionTests/resources)
