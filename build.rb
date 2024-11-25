@@ -63,7 +63,7 @@ for package in packages
     when :build
       exec "swift build -c #{mode} #{flags.join(" ")}", package
     when :test
-      exec "swift test #{flags.join(" ")} #{ARGV[1] ? "--filter #{ARGV[1]}" : ""}", "tests"
+      exec "swift test #{flags.join(" ")} #{ARGV[1] ? "--filter #{ARGV[1]}" : ""} --xunit-output=.build/tests/xunit.xml", "tests"
     else
       raise "Invalid swiftMode #{swiftMode}"
     end

@@ -12,6 +12,7 @@ struct Tester: Codable {
 
 struct Assertion: Codable {
   let path: String
+  let line: Int
   let success: Bool
   let msgOnError: String
 }

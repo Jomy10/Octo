@@ -11,8 +11,17 @@ fileprivate func checkParameterCount(_ exact: Int, _ name: some StringProtocol, 
 }
 
 public enum OctoAttribute {
+  /// Rename an object
   case rename(to: String)
+  /// Attach a function to an object (record or enum)
   case attach(to: any OctoFunctionAttachable, type: OctoFunction.FunctionType)
+  /// Indicates that a struct is a tagged union
+  case taggedUnion
+  /// Enum prefix to strip/add (dependending on the language)
+  case enumPrefix(prefix: String)
+  /// Applied to a union field to indicate the enum case name corresponding to this value in a tagged union
+  case taggedUnionType(enumCase: String)
+
   case nonnull
   case nullable
   case returnsNonNull
@@ -78,14 +87,29 @@ public enum OctoAttribute {
         }
         self = .rename(to: newName)
       case "nonnull":
-        try checkParameterCount(0, name, params.count, origin: origin)
+        try checkParameterCount(0, name, params.count, isAnnotate: false, origin: origin)
         self = .nonnull
       case "nullable":
-        try checkParameterCount(0, name, params.count, origin: origin)
+        try checkParameterCount(0, name, params.count, isAnnotate: false, origin: origin)
         self = .nullable
       case "returns_nonnull":
-        try checkParameterCount(0, name, params.count, origin: origin)
+        try checkParameterCount(0, name, params.count, isAnnotate: false, origin: origin)
         self = .returnsNonNull
+      case "taggedUnion":
+        try checkParameterCount(0, name, params.count, origin: origin)
+        self = .taggedUnion
+      case "enumPrefix":
+        try checkParameterCount(1, name, params.count, origin: origin)
+        guard case .string(let prefix) = params[0] else {
+          throw AttributeError("Expected first argument of attribute 'enumPrefix' to be a string, got: \(params[0])", origin: origin)
+        }
+        self = .enumPrefix(prefix: prefix)
+      case "taggedUnionType":
+        try checkParameterCount(1, name, params.count, origin: origin)
+        guard case .string(let enumCase) = params[0] else {
+          throw AttributeError("Expected first argument of attribute 'taggedUnionType' to be a string, got: \(params[0])", origin: origin)
+        }
+        self = .taggedUnionType(enumCase: enumCase)
       default:
         return nil
     }

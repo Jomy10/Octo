@@ -1,5 +1,6 @@
 import Foundation
 import XCTest
+import OctoIO
 import OctoParse
 import OctoGenerate
 import SystemPackage
@@ -64,10 +65,13 @@ func execRubyTestCase(
 
   try code.write(to: outFile("\(name).rb"))
 
-  let (stdout, _) = try executeData(Tools.ruby!, [testFile("\(name)/\(name)_main.rb").path], extraLibPath: outFile("").path)
+  let (stdout, stderr) = try executeData(Tools.ruby!, [testFile("\(name)/\(name)_main.rb").path], extraLibPath: outFile("").path)
+  if stderr.count != 0 {
+    print(String(data: stderr, encoding: .utf8)!, to: .stderr)
+  }
   let tester = try Tester(json: stdout)
 
   for assertion in tester.assertions {
-    XCTAssert(assertion.success, assertion.msgOnError + " @ " + assertion.path)
+    XCTAssert(assertion.success, assertion.msgOnError + " @ " + assertion.path + ":" + String(assertion.line))
   }
 }

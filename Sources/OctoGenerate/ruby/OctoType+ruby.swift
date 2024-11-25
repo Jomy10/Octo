@@ -58,20 +58,13 @@ extension OctoType {
 
   /// C to ruby type
   func cToRuby(_ param: String) -> String {
-    let parseRecord = { (record: OctoRecord, param: String) -> String in
-      "\(record.rubyName).new(fromRawPtr: \(param))"
-    }
-    let parseEnum = { (e: OctoEnum, param: String) -> String in
-      "\(e.bindingName!).__cToRuby(\(param))"
-    }
-
     switch (self.kind) {
-      case .Record(let record): return parseRecord(record, param)
-      case .Enum(let e): return parseEnum(e, param)
+      case .Record(let record): return record.cToRuby(param)
+      case .Enum(let e): return e.cToRuby(param)
       case .Pointer(to: let t):
         switch (t.kind) {
-          case .Record(let record): return parseRecord(record, param)
-          case .Enum(let e): return parseEnum(e, param)
+          case .Record(let record): return record.cToRuby(param)
+          case .Enum(let e): return e.cToRuby(param)
           default: return param
         }
       default: return param
@@ -82,8 +75,10 @@ extension OctoType {
   func rubyToC(_ param: String) -> String {
     switch (self.kind) {
       case .Record(let record): return record.rubyToC(param)
+      case .Enum(let e): return e.rubyToC(param)
       case .Pointer(to: let t):
         switch (t.kind) {
+          case .Enum(let e): return e.rubyToC(param)
           case .Record(let record): return record.rubyToC(param)
           default: return param
         }

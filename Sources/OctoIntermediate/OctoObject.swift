@@ -37,7 +37,19 @@ public class OctoObject: Equatable, Hashable {
   }
 
   public func setReturnsNonNull(_ vali: Bool) throws {
-    throw AttributeError("'returnsnonnull' attribute can only be used on functions")
+    throw AttributeError("'returns_nonnull' attribute can only be used on functions")
+  }
+
+  public func setTaggedUnion() throws {
+    throw AttributeError("'taggedUnion' attribute can only be used on structs")
+  }
+
+  public func setEnumPrefix(prefix: String) throws {
+    throw AttributeError("'enumPrefix' attribute can only be used on enums")
+  }
+
+  public func setTaggedUnionType(enumCase: String) throws {
+    throw AttributeError("'taggedUnionType' attribute can only be used on union fields")
   }
 
   public func addAttribute(_ attr: OctoAttribute) throws {
@@ -46,6 +58,12 @@ public class OctoObject: Equatable, Hashable {
         self.rename(to: name)
       case .attach(to: let obj, type: let type):
         try self.attach(to: obj, kind: type)
+      case .taggedUnion:
+        try self.setTaggedUnion()
+      case .enumPrefix(prefix: let prefix):
+        try self.setEnumPrefix(prefix: prefix)
+      case .taggedUnionType(enumCase: let enumCase):
+        try self.setTaggedUnionType(enumCase: enumCase)
       case .nonnull:
         try self.setNullable(false)
       case .nullable:

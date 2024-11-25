@@ -1,12 +1,16 @@
 // Record //
 
 public final class OctoRecord: OctoObject, OctoFunctionAttachable {
-  public let type: RecordType
+  public private(set) var type: RecordType
   public private(set) var fields: [OctoField]
+
+  public private(set) var taggedUnionTagIndex: Int? = nil
+  public var taggedUnionValueIndex: Int? { self.taggedUnionTagIndex == nil ? nil : (self.taggedUnionTagIndex! == 0 ? 1 : 0) }
 
   public enum RecordType: Equatable {
     case `struct`
     case `union`
+    case taggedUnion
   }
 
   // Attached Functions //
@@ -37,12 +41,48 @@ public final class OctoRecord: OctoObject, OctoFunctionAttachable {
   public func addField(_ field: OctoField) {
     self.fields.append(field)
   }
+
+  enum TaggedUnionError: Error {
+    case expected2Fields(found: Int)
+    /// Expected a field with an enum
+    case noTagField
+    /// Expected a field with a union
+    case noValueField
+    /// Only structs can be marked as a tagged union
+    case notStruct
+  }
+
+  public override func setTaggedUnion() throws {
+    if self.type != .`struct` {
+      throw TaggedUnionError.notStruct
+    }
+    self.type = .taggedUnion
+  }
+
+  override func finalize() throws {
+    if self.type == .taggedUnion {
+      if self.fields.count != 2 {
+        throw TaggedUnionError.expected2Fields(found: self.fields.count)
+      }
+      if let tagIndex = fields.firstIndex(where: { field in if case .Enum(_) = field.type.kind { return true } else { return false } }) {
+        self.taggedUnionTagIndex = tagIndex
+        if case .Record(let record) = self.fields[self.taggedUnionValueIndex!].type.kind {
+          if record.type != .union { throw TaggedUnionError.noValueField }
+        } else {
+          throw TaggedUnionError.noValueField
+        }
+      } else {
+        throw TaggedUnionError.noTagField
+      }
+    }
+  }
 }
 
 // Field //
 
 public final class OctoField: OctoObject {
   public private(set) var type: OctoType
+  private var _taggedUnionCaseName: String? = nil
 
   public init(
     origin: OctoOrigin,
@@ -53,8 +93,20 @@ public final class OctoField: OctoObject {
     super.init(origin: origin, name: name)
   }
 
+  /// Find the enum case corresponding to this tagged union value field
+  public func taggedUnionCase(in lib: OctoLibrary, enumType: OctoEnum) -> OctoEnumCase? {
+    enumType.cases.first(where: { enumCase in
+      (enumCase.ffiName! == (self._taggedUnionCaseName ?? self.ffiName!))
+        || (enumCase.ffiName!.uppercased() == self.ffiName!.uppercased())
+    })
+  }
+
   public override func setNullable(_ val: Bool) throws {
     self.type.optional = val
+  }
+
+  public override func setTaggedUnionType(enumCase: String) throws {
+    self._taggedUnionCaseName = enumCase
   }
 }
 

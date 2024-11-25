@@ -1,9 +1,12 @@
+import OctoIO
+
 // Enum //
 
 public final class OctoEnum: OctoObject, OctoFunctionAttachable {
   /// Usually an integer type, but can be any other type, depending oon the language
   public let type: OctoType
   public var cases: [OctoEnumCase]
+  var enumPrefix: String? = nil
 
   // Attached Functions //
   public var initializers: [OctoFunction]
@@ -33,6 +36,25 @@ public final class OctoEnum: OctoObject, OctoFunctionAttachable {
   public func addCase(_ ec: OctoEnumCase) {
     self.cases.append(ec)
   }
+
+  public override func setEnumPrefix(prefix: String) throws {
+    self.enumPrefix = prefix
+  }
+
+  override func finalize() throws {
+    self.cases.forEach { enumCase in
+      if let prefix = self.enumPrefix {
+        if enumCase.ffiName!.hasPrefix(prefix) {
+          enumCase.strippedName = String(enumCase.ffiName!.dropFirst(prefix.count))
+        } else {
+          octoLogger.warning("Enum Case '\(enumCase.ffiName!)' of enum \(self.ffiName!) has no prefix \(prefix)")
+          enumCase.strippedName = enumCase.ffiName
+        }
+      } else {
+        enumCase.strippedName = enumCase.ffiName
+      }
+    }
+  }
 }
 
 // Enum Case //
@@ -40,6 +62,8 @@ public final class OctoEnum: OctoObject, OctoFunctionAttachable {
 public final class OctoEnumCase: OctoObject {
   /// Depends on the type of the OctoEnum
   public let value: Value?
+  /// This enum's case name without the enumPrefix
+  public var strippedName: String? = nil
 
   public enum Value: Equatable {
     /// A signed integer
@@ -63,6 +87,19 @@ public final class OctoEnumCase: OctoObject {
     self.value = value
     super.init(origin: origin, name: name)
   }
+
+  //public func nonPrefixedFfiName(parent: OctoEnum) -> String {
+  //  if let prefix = parent.enumPrefix {
+  //    let name = self.ffiName!
+  //    if name.hasPrefix(prefix) {
+  //      return String(name.dropFirst(prefix.count))
+  //    } else {
+  //      return name
+  //    }
+  //  } else {
+  //    return self.ffiName!
+  //  }
+  //}
 }
 
 // String //

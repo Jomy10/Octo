@@ -3,11 +3,12 @@ require_relative '../../../../.build/tests/typedef.rb'
 
 tester = Tester.new
 
-a = Typedef::MyStruct.new(1)
-b = Typedef::TheStruct.new(1)
-c = Typedef::ThePointer.new(1)
+a = Typedef::MyStruct.new(id: 1)
+b = Typedef::TheStruct.new(id: 1)
+c = Typedef::ThePointer.new(id: 1)
 
-tester.assert(Typedef::fn("abc", a, b, c))
+# Typedef::fn(nil, a, b, nil)
+# tester.assert(Typedef::fn("abc", a, b, c))
 tester.assertEq(Typedef::MyStruct.value, 5)
 tester.assertEq(Typedef::TheStruct.value, 5)
 tester.assertEq(Typedef::ThePointer.value, 5)

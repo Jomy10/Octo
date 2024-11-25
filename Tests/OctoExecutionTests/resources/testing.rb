@@ -10,6 +10,7 @@ class Tester
   def assert condition, msg = ""
     @testAssertions << Assertion.new(
       caller_locations.first.path,
+      caller_locations.first.lineno,
       condition,
       msg
     )
@@ -18,8 +19,9 @@ class Tester
   def assertEq a, b
     @testAssertions << Assertion.new(
       caller_locations.first.path,
+      caller_locations.first.lineno,
       a == b,
-      "'#{a}' != '#{b}'"
+      "#{a.inspect} != #{b.inspect}"
     )
   end
 
@@ -28,4 +30,4 @@ class Tester
   end
 end
 
-Assertion = Struct.new(:path, :success, :msgOnError)
+Assertion = Struct.new(:path, :line, :success, :msgOnError)
