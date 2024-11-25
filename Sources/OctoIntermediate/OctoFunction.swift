@@ -9,12 +9,12 @@ public final class OctoFunction: OctoObject {
   public private(set) var attachedTo: (any OctoFunctionAttachable)?
   /// Should only be accessed after parsing
   public private(set) var selfArgumentIndex: Int? = nil
-  public private(set) var initializerType = .none
+  public private(set) var initializerType: InitializerType = .none
 
-  public enum initializerType {
+  public enum InitializerType {
     // void init(Self*);
     case selfArgument
-    /// Self* init();
+    /// Self* init(); or Self init();
     case returnsSelf
     case none
   }
@@ -118,12 +118,14 @@ public final class OctoFunction: OctoObject {
       }
     } else if self.kind == .initializer {
       if !isSelfTypeObject(self.returnType, object) {
-        if let selfArgumentIndex = self.arguments.firstIndex(where: { arg in isSelfTypeObject(arg, object) }) {
+      // TODO: first get pointeeType, then pass t isSelfTypeObject
+        if let selfArgumentIndex = self.arguments.firstIndex(where: { arg in isSelfTypeObject(arg.type, object) }) {
           self.arguments[selfArgumentIndex].isSelfArgument = true
           self.selfArgumentIndex = selfArgumentIndex
           self.initializerType = .selfArgument
+        } else {
+          throw FunctionAttachError.initializerTypeMismatch(function: self, attachedTo: object)
         }
-        throw FunctionAttachError.initializerTypeMismatch(function: self, attachedTo: object)
       } else {
         self.initializerType = .returnsSelf
       }

@@ -100,7 +100,7 @@ attributes = [
   { attribute = "attach", symbol = "cJSON_InitHooks", arguments = ["cJSON_Hooks", "type:init"] },
 ]
 
-[[input.renameOperations]]
+[[renames]]
 code = """
 if(matches(name, "cJSON_"), name.leftDiscard(6), name)
 """

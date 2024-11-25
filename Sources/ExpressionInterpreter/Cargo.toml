@@ -1,0 +1,19 @@
+[package]
+name = "ExpressionInterpreter"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["staticlib", "lib"]
+name = "ExpressionInterpreter"
+
+[[bin]]
+name = "uniffi-bindgen"
+path = "uniffi-bindgen.rs"
+
+[dependencies]
+uniffi = { version = "0.28", features = ["cli"] }
+cel-interpreter = { version = "0.9", features = ["regex"] }
+
+[build-dependencies]
+uniffi = { version = "0.28", features = ["build"] }

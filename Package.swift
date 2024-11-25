@@ -117,18 +117,18 @@ let package = Package(
 // XCFramework on macOS, manually static linking on other platforms
 #if os(macOS)
 package.dependencies.append(
-  .package(path: "ExpressionInterpreter/ExpressionInterpreter")
+  .package(path: "Sources/ExpressionInterpreter/ExpressionInterpreter")
 )
 #else
 package.targets.append(contentsOf: [
   .systemLibrary(
     name: "ExpressionInterpreterFFI",
-    path: "ExpressionInterpreter/generated"
+    path: "Sources/ExpressionInterpreter/generated"
   ),
   .target(
     name: "ExpressionInterpreter",
     dependencies: ["ExpressionInterpreterFFI"],
-    path: "ExpressionInterpreter/ExpressionInterpreter"
+    path: "Sources/ExpressionInterpreter/ExpressionInterpreter"
   ),
 ])
 #endif

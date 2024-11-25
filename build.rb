@@ -2,6 +2,9 @@ require 'os'
 require 'colorize'
 require_relative './build-utils.rb'
 
+# Package paths
+EXPRESSION_INTERPRETER_PKG = "Sources/ExpressionInterpreter"
+
 def exec(cmd, context)
   puts cmd.grey
   system cmd
@@ -50,11 +53,11 @@ for package in packages
       end
 
     unless OS.mac? # manually link instead of the xcframework
-      flags << "-Xswiftc -LExpressionInterpreter/target/#{mode}"
+      flags << "-Xswiftc -#{EXPRESSION_INTERPRETER_PKG}/target/#{mode}"
       flags << "-Xswiftc -lExpressionInterpreter"
     end
 
-    flags.filter { |v| v == "" }
+    flags = flags.filter { |v| v == "" }
 
     case swiftMode
     when :build
@@ -65,7 +68,7 @@ for package in packages
       raise "Invalid swiftMode #{swiftMode}"
     end
   when :ExpressionInterpreter
-    Dir.chdir("ExpressionInterpreter") do
+    Dir.chdir(EXPRESSION_INTERPRETER_PKG) do
       if OS.mac?
         exec "cargo swift package -n ExpressionInterpreter -p macos #{mode == "release" ? "--release" : ""}", package
       else

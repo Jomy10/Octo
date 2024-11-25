@@ -93,7 +93,7 @@ final class OctoGenerateTests: XCTestCase {
       ), ref: UUID()
     )
 
-    let code = try OctoGenerator.generate(language: .ruby, lib: lib, options: generationOptions)
+    let code = try OctoGenerator.generate(language: .ruby, lib: &lib, options: generationOptions)
     let outPath = "./.build/tests/parseRecordTest.rb"
     try code.write(to: URL(filePath: outPath))
 

@@ -1,4 +1,4 @@
-import SwiftSystem
+import SystemPackage
 
 #if canImport(Darwin)
 import Darwin

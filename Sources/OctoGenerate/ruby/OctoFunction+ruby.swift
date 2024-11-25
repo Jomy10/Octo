@@ -1,6 +1,32 @@
 import OctoIntermediate
 
 extension OctoFunction: RubyCodeGenerator {
+  /// Part of the function body of an initializer: sets the @ptr instance variable
+  func generateRubyInitializerSetPtr(selfType: OctoRecord, ffiModuleName: String) throws -> String {
+    assert(self.kind == .initializer)
+    switch (self.initializerType) {
+      case .selfArgument:
+      var passedArgs: Array<String> = Array()
+      passedArgs.reserveCapacity(self.arguments.count)
+      var id = 0
+      for i in 0..<self.arguments.count {
+        if i == self.selfArgumentIndex! {
+          passedArgs.append("@ptr")
+        } else {
+          passedArgs.append("args[\(id)]")
+          id += 1
+        }
+      }
+      return """
+      @ptr = \(ffiModuleName)::\(selfType.rubyFFIName).new
+      \(ffiModuleName).\(self.rubyFFIName)(\(passedArgs.joined(separator: ", ")))
+      """
+      case .returnsSelf:
+        return "@ptr = \(ffiModuleName).\(self.rubyFFIName)(\((0..<self.arguments.count).map { "args[\($0)]" }.joined(separator: ", ")))"
+      case .none: throw GenerationError("Unexpected error: found 'none' initializer type for initializer \(self.ffiName!)", .ruby, origin: self.origin)
+    }
+  }
+
   static func generateRubyBindingInitializersCode(
     for selfType: OctoRecord,
     //_ initializers: [OctoFunction],
@@ -14,10 +40,11 @@ extension OctoFunction: RubyCodeGenerator {
     if initializers.count == 1 || initializers.count == 0 {
       let constructNew: String
       if initializers.count == 1 {
-        constructNew = "\(ffiModuleName).\(initializers[0].ffiName!)(\((0..<initializers[0].arguments.count).map { "args[\($0)]" }.joined(separator: ", ")))"
+        //constructNew = "\(ffiModuleName).\(initializers[0].ffiName!)(\((0..<initializers[0].arguments.count).map { "args[\($0)]" }.joined(separator: ", ")))"
+        constructNew = try initializers[0].generateRubyInitializerSetPtr(selfType: selfType, ffiModuleName: ffiModuleName)
       } else {
         constructNew = """
-        \(ffiModuleName)::\(selfType.ffiName!).new
+        @ptr = \(ffiModuleName)::\(selfType.rubyFFIName).new
         if args.count != 0
         \(selfType.fields.enumerated().map { (i, field) in
           "\(options.indent)@ptr[:\(field.ffiName!)] = args[\(i)]"
@@ -39,7 +66,7 @@ extension OctoFunction: RubyCodeGenerator {
         }))
         else
         \(indentCode(indent: options.indent, {
-          "@ptr = \(constructNew)"
+          "\(constructNew)"
         }))
         end
         """
@@ -60,7 +87,7 @@ extension OctoFunction: RubyCodeGenerator {
 
     return """
     def initialize *args
-    \(indentCode(indent: options.indent, {
+    \(try indentCode(indent: options.indent, {
       if hasDeinit {
         defDeinit
       }
@@ -69,9 +96,10 @@ extension OctoFunction: RubyCodeGenerator {
       \(indentCode(indent: options.indent, {
         "@ptr = args[:fromRawPtr]"
       }))
-      \(initializers.map { fn in
-        let fnName = "\(ffiModuleName).\(fn.ffiName!)"
-        let fnCall = "\(fnName)\((0..<fn.arguments.count).map { "args[\($0)]" }.joined(separator: ", "))"
+      \(try initializers.map { fn in
+        //let fnName = "\(ffiModuleName).\(fn.ffiName!)"
+        //let fnCall = "\(fnName)\((0..<fn.arguments.count).map { "args[\($0)]" }.joined(separator: ", "))"
+        let fnCall = try fn.generateRubyInitializerSetPtr(selfType: selfType, ffiModuleName: ffiModuleName)
         return """
         else if args.size == \(fn.arguments.count)
         \(options.indent)\(fnCall)
@@ -102,7 +130,7 @@ extension OctoFunction: RubyCodeGenerator {
     _ ffiModuleName: String,
     parseSelfParameter: Bool = true
   ) -> (String, [String], [String]) {
-    let fnName = "\(ffiModuleName).\(self.ffiName!)"
+    let fnName = "\(ffiModuleName).\(self.rubyFFIName)"
 
     var argNames = self.arguments.enumerated().map { (i, arg) in arg.bindingName ?? "_arg_\(i)" }
     if parseSelfParameter {
@@ -205,6 +233,10 @@ extension OctoFunction: RubyCodeGenerator {
 
   var rubyName: String {
     self.bindingName!
+  }
+
+  var rubyFFIName: String {
+    self.ffiName!
   }
 }
 

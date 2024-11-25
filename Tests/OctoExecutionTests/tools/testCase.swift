@@ -2,7 +2,7 @@ import Foundation
 import XCTest
 import OctoParse
 import OctoGenerate
-import SwiftSystem
+import SystemPackage
 
 func setup(name: String) throws {
   // Tests output directory
@@ -35,7 +35,6 @@ func execRubyTestCase(
   try XCTSkipIf(Tools.ruby == nil, "Ruby not found")
 
   let config = ParseConfiguration(
-    outputLibraryName: libname,
     languageSpecificConfig: .c(ParseConfiguration.CConfig(
       clangFlags: [],
       includeHeaders: [],
@@ -59,7 +58,7 @@ func execRubyTestCase(
 
   let code = try OctoGenerator.generate(
     language: .ruby,
-    lib: lib.inner,
+    lib: &lib.inner,
     options: rubyGenOptions
   )
 

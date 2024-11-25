@@ -4,7 +4,6 @@ import OctoIntermediate
 
 final class OctoParseTests_Clang: XCTestCase {
   let config = ParseConfiguration(
-    outputLibraryName: "ParseTest",
     languageSpecificConfig: .c(ParseConfiguration.CConfig(
       clangFlags: [],
       includeHeaders: [],
