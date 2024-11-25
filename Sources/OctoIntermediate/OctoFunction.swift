@@ -9,6 +9,15 @@ public final class OctoFunction: OctoObject {
   public private(set) var attachedTo: (any OctoFunctionAttachable)?
   /// Should only be accessed after parsing
   public private(set) var selfArgumentIndex: Int? = nil
+  public private(set) var initializerType = .none
+
+  public enum initializerType {
+    // void init(Self*);
+    case selfArgument
+    /// Self* init();
+    case returnsSelf
+    case none
+  }
 
   public enum FunctionType: Equatable {
     case initializer
@@ -109,7 +118,14 @@ public final class OctoFunction: OctoObject {
       }
     } else if self.kind == .initializer {
       if !isSelfTypeObject(self.returnType, object) {
+        if let selfArgumentIndex = self.arguments.firstIndex(where: { arg in isSelfTypeObject(arg, object) }) {
+          self.arguments[selfArgumentIndex].isSelfArgument = true
+          self.selfArgumentIndex = selfArgumentIndex
+          self.initializerType = .selfArgument
+        }
         throw FunctionAttachError.initializerTypeMismatch(function: self, attachedTo: object)
+      } else {
+        self.initializerType = .returnsSelf
       }
     }
   }
@@ -154,7 +170,8 @@ enum FunctionAttachError: Error {
 
 extension FunctionAttachError: CustomStringConvertible {
   var description: String {
-    switch (self) {
+    """
+    FunctionAttachError: \({switch (self) {
       case .deinitializerAlreadyExists(target: let target):
         return "Deinitializer specified twice on target \(target)"
       case .invalidFunctionType(type: let type):
@@ -165,7 +182,8 @@ extension FunctionAttachError: CustomStringConvertible {
       //  return "Found no `self` argument for '\(function.ffiName!)' @ \(function.origin)"
       case .initializerTypeMismatch(function: let function, attachedTo: let attachedTo):
         return "Initializer \(function.ffiName!) does not return \(attachedTo.ffiName!)"
-    }
+    }}())
+    """
   }
 }
 

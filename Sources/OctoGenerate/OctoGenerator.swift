@@ -3,7 +3,8 @@ import OctoIntermediate
 import StringBuilder
 
 public struct OctoGenerator {
-  public static func generate(language: Language, lib: OctoLibrary, options: GenerationOptions) throws -> any GeneratedCode {
+  public static func generate(language: Language, lib: inout OctoLibrary, options: GenerationOptions) throws -> any GeneratedCode {
+    try lib.finalize()
     switch (language) {
       case .ruby:
         return try lib.rubyGenerate(options: options)

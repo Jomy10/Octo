@@ -7,6 +7,7 @@ public struct OctoLibrary: AutoRemovable {
   private var nameMap: [String:Int] = [:]
   public private(set) var objects: [OctoObject] = []
   public var destroy: () -> Void = {}
+  private var hasFinalized = false
 
   public init() {}
 
@@ -53,9 +54,11 @@ public struct OctoLibrary: AutoRemovable {
     }
   }
 
-  public func finalize() throws {
+  public mutating func finalize() throws {
+    if self.hasFinalized { return }
     for obj in self.objects {
       try obj.finalize()
     }
+    self.hasFinalized = true
   }
 }

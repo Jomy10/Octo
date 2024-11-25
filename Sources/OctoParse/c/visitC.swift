@@ -25,12 +25,12 @@ func visitC(
         return try visitStructDecl(cursor, &library.pointee)
       case CXCursor_FieldDecl:
         if parentType.kind != CXType_Record {
-          throw ParseError("Field decl on non-record type \(parentType.kind)")
+          throw ParseError("Field decl on non-record type \(parentType.kind)", origin: .c(cursor.location))
         }
         return try visitFieldDecl(cursor, parent: parent, &library.pointee)
       case CXCursor_TypedefDecl:
         if parentType.kind != CXType_Invalid {
-          throw ParseError("Invalid typedef parent \(parentType.kind)")
+          throw ParseError("Invalid typedef parent \(parentType.kind)", origin: .c(cursor.location))
         }
         return try visitTypedefDecl(cursor, &library.pointee)
       case CXCursor_VarDecl:
@@ -42,28 +42,31 @@ func visitC(
       case CXCursor_EnumDecl:
         if (parentType.kind == CXType_Typedef) { return CXChildVisit_Continue }
         if (parentType.kind != CXType_Invalid) {
-          throw ParseError("Invalid enum declaration parent \(parentType.kind)")
+          throw ParseError("Invalid enum declaration parent \(parentType.kind)", origin: .c(cursor.location))
         }
         return try visitEnumDecl(cursor, &library.pointee)
       case CXCursor_EnumConstantDecl:
         if parentType.kind != CXType_Enum {
-          throw ParseError("Enum constant decl on non-enum type \(parentType.kind)")
+          throw ParseError("Enum constant decl on non-enum type \(parentType.kind)", origin: .c(cursor.location))
         }
         return try visitEnumConstantDecl(cursor, parent: parent, &library.pointee)
       case CXCursor_UnionDecl:
         if (parentType.kind == CXType_Typedef) { return CXChildVisit_Continue }
         if (parentType.kind != CXType_Invalid) {
-          throw ParseError("Invalid enum declaration parent \(parentType.kind)")
+          throw ParseError("Invalid enum declaration parent \(parentType.kind)", origin: .c(cursor.location))
         }
         return try visitUnionDecl(cursor, &library.pointee)
       case CXCursor_FunctionDecl:
         if parentType.kind != CXType_Invalid {
-          throw ParseError("Invalid function declaration parent \(parentType.kind)")
+          throw ParseError("Invalid function declaration parent \(parentType.kind)", origin: .c(cursor.location))
         }
         return try visitFunctionDecl(cursor, &library.pointee)
       case CXCursor_ParmDecl:
-        if parentType.kind != CXType_FunctionProto {
-          throw ParseError("Invalid parameter declaration parent \(parentType.kind)")
+        switch (parentType.kind) {
+          case CXType_FunctionProto: break // parameter on regular function definition
+          case CXType_Pointer: return CXChildVisit_Continue // parameter on a function pointer (e.g. used as variable or function paramter)
+          default:
+            throw ParseError("Invalid parameter declaration parent \(parentType.kind)", origin: .c(cursor.location))
         }
         return try visitParmDecl(cursor, parent: parent, &library.pointee)
       case CXCursor_AnnotateAttr:

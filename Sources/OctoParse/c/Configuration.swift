@@ -21,6 +21,22 @@ extension ParseConfiguration {
       self.logLevel = logLevel
       self.errorLevel = errorLevel
     }
+
+    enum CodingKeys: String, CodingKey {
+      case clangFlags = "flags"
+      case includeHeaders = "include"
+      case logLevel
+      case errorLevel
+    }
+
+    public init(from decoder: Decoder) throws {
+      let container = try decoder.container(keyedBy: CodingKeys.self)
+      self.clangFlags = try container.decodeIfPresent([String].self, forKey: .clangFlags) ?? []
+      self.includeHeaders = try container.decodeIfPresent([String].self, forKey: .includeHeaders) ?? []
+      self.logLevel = try container.decodeIfPresent(ClangDiagnostic.self, forKey: .logLevel) ?? .warning
+      self.errorLevel = try container.decodeIfPresent(ClangDiagnostic.self, forKey: .errorLevel) ?? .error
+    }
+
   }
 
   var cConfig: CConfig? {

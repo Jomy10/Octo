@@ -52,6 +52,15 @@ extension Octo {
       input: config.inputLocation
     )
 
+    // Add attributes
+    for attribute in config.attributes {
+      let octoAttribute = try attribute.toOctoAttribute(in: lib.inner)
+      guard let object = lib.inner.getObject(byName: attribute.symbolName) else {
+        throw Attribute.AttributeError("Symbol \(attribute.symbolName) not found in library")
+      }
+      try object.addAttribute(octoAttribute)
+    }
+
     // Generate
     for (lang, oconfig) in config.outputOptions {
       // TODO: oconffig.renameOperations
@@ -62,7 +71,7 @@ extension Octo {
       )
       let code = try OctoGenerator.generate(
         language: lang,
-        lib: lib.inner,
+        lib: &lib.inner,
         options: genOptions
       )
       try code.write(to: oconfig.outputLocation)
