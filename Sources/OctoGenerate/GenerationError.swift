@@ -2,9 +2,9 @@ import Foundation
 import OctoIntermediate
 
 struct GenerationError: Error {
-  let origin: OctoOrigin?
   let message: String
   let language: Language
+  let origin: OctoOrigin?
 
   init(
     _ message: String,
@@ -14,6 +14,16 @@ struct GenerationError: Error {
     self.message = message
     self.language = language
     self.origin = origin
+  }
+}
+
+extension GenerationError: CustomStringConvertible {
+  public var description: String {
+    var msg = "Error generating \(self.language) code: \(self.message)"
+    if let origin = self.origin {
+      msg += " at \(origin)"
+    }
+    return msg
   }
 }
 
