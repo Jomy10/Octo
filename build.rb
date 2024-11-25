@@ -53,11 +53,11 @@ for package in packages
       end
 
     unless OS.mac? # manually link instead of the xcframework
-      flags << "-Xswiftc -#{EXPRESSION_INTERPRETER_PKG}/target/#{mode}"
+      flags << "-Xswiftc -L#{EXPRESSION_INTERPRETER_PKG}/target/#{mode}"
       flags << "-Xswiftc -lExpressionInterpreter"
     end
 
-    flags = flags.filter { |v| v == "" }
+    flags = flags.filter { |v| v != "" }
 
     case swiftMode
     when :build

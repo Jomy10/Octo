@@ -77,6 +77,7 @@ let package = Package(
 
     .systemLibrary(
       name: "clang_c",
+      path: "Sources/Clang/clang_c",
       providers: [
         .brew(["llvm"]),
         .apt(["clang", "llvm-dev"]),
@@ -84,7 +85,8 @@ let package = Package(
     ),
     .target(
       name: "Clang",
-      dependencies: ["clang_c"]
+      dependencies: ["clang_c"],
+      path: "Sources/Clang/Clang"
     ),
 
     .testTarget(
