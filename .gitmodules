@@ -1,3 +1,4 @@
-[submodule "examples/cJSON/cJSON"]
-	path = examples/cJSON/cJSON
+[submodule "Examples/cJSON/cJSON"]
+	path = Examples/cJSON/cJSON
 	url = https://github.com/DaveGamble/cJSON
+    ignore = dirty
