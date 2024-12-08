@@ -1,6 +1,62 @@
 import Foundation
 import ExpressionInterpreter
 import OctoIntermediate
+import OctoParseTypes
+import OctoMemory
+import PluginManager
+
+public struct OctoParser {
+  public static func parse(
+    language: Language,
+    config: ParseConfiguration,
+    input inputURL: URL
+  ) throws -> AutoRemoveReference<OctoLibrary> {
+    if !(try inputURL.checkResourceIsReachable()) {
+      throw InputError.doesntExistOrUnreachable(url: inputURL)
+    }
+
+    let parserPlugin = try PluginManager.default.getParserPlugin(languageName: language.description)
+
+    let expectsFile = parserPlugin.parser_expectsFile.function() == 1
+    var oisDir: ObjCBool = false
+    assert(FileManager.default.fileExists(atPath: inputURL.path, isDirectory: &oisDir))
+    let isDir: Bool = oisDir.boolValue
+    if expectsFile && isDir {
+      throw InputError.isDir(url: inputURL)
+    } else if !expectsFile && !isDir {
+      throw InputError.isFile(url: inputURL)
+    }
+
+    var libPtr: UnsafeMutableRawPointer? = nil
+    let error = withUnsafePointer(to: inputURL) { inputURLPtr in
+      parserPlugin.parse.function(inputURLPtr, config.languageSpecificConfig, &libPtr)
+      //parseC(input: inputURLPtr, config: config.languageSpecificConfig!, &libPtr)
+    }
+    if let error = error {
+      let rcerror: Rc<OctoParseTypes.ParseError> = Unmanaged.fromOpaque(error).takeRetainedValue()
+      throw rcerror.takeInner()
+    }
+
+    let unmanagedLib: Unmanaged<AutoRemoveReference<OctoLibrary>> = Unmanaged.fromOpaque(libPtr!)
+    var lib: AutoRemoveReference<OctoLibrary> = unmanagedLib.takeRetainedValue()
+
+    let executor = Executor()
+    try lib.inner.renameObjects { objName in
+      let newName: String = try config.renameOperations.reduce(into: objName, { (currentName: inout String, renameOperation: Program) throws -> () in
+        executor.setVar(name: "name", value: .string(value: currentName))
+        let newNameValue = try executor.execute(program: renameOperation)
+        if case .string(value: let newName) = newNameValue {
+          currentName = newName
+        } else {
+          throw ParseError("while executing rename operation \"\(renameOperation)\": rename operation program doesn't return 'String' (got: \(newNameValue))")
+        }
+      })
+      return newName
+    }
+
+    return lib
+  }
+}
 
 public enum InputError: Error {
   case isDir(url: URL)
@@ -18,43 +74,5 @@ extension InputError: CustomStringConvertible {
       case .doesntExistOrUnreachable(url: let url):
         return "InputError: \"\(url.absoluteString)\" doesn't exist or is unreachable"
     }
-  }
-}
-
-public struct OctoParser {
-  public static func parse(
-    language: Language,
-    config: ParseConfiguration,
-    input inputURL: URL
-  ) throws -> AutoRemoveReference<OctoLibrary> {
-    if !(try inputURL.checkResourceIsReachable()) {
-      throw InputError.doesntExistOrUnreachable(url: inputURL)
-    }
-
-    let executor = Executor()
-    var lib: AutoRemoveReference<OctoLibrary>
-    switch (language) {
-      case .c:
-        lib = try Self.parseC(input: inputURL, config: config)
-      default:
-        throw ParseError("Unimplemented language \(language)")
-    }
-
-    try lib.inner.renameObjects { objName in
-      let newName: String = try config.renameOperations.reduce(into: objName, { (currentName: inout String, renameOperation: Program) throws -> () in
-        executor.setVar(name: "name", value: .string(value: currentName))
-        let newNameValue = try executor.execute(program: renameOperation)
-        if case .string(value: let newName) = newNameValue {
-          currentName = newName
-        } else {
-          throw ParseError("while executing rename operation \"\(renameOperation)\": rename operation program doesn't return 'String' (got: \(newNameValue))")
-        }
-      })
-      return newName
-    }
-
-    //try lib.inner.finalize()
-
-    return lib
   }
 }

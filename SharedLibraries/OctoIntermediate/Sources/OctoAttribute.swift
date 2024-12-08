@@ -151,3 +151,16 @@ public struct AttributeError: Error {
     )
   }
 }
+
+extension AttributeError: CustomStringConvertible {
+  public var description: String {
+    var msg = "AttributeError: \(self.message)"
+    if let origin = self.origin {
+      msg += " @ \(origin)"
+    }
+    #if DEBUG || OCTO_DEBUGINFO
+    msg += " (originated at \(self.thrownAt))"
+    #endif
+    return msg
+  }
+}

@@ -10,6 +10,15 @@
       }
     },
     {
+      "identity" : "plugins",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Jomy10/Plugins.git",
+      "state" : {
+        "branch" : "master",
+        "revision" : "cdec309a77786b88c18bdfb97c7b0963496c2d21"
+      }
+    },
+    {
       "identity" : "puppy",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/sushichop/Puppy",

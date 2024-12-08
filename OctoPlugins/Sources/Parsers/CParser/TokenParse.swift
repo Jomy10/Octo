@@ -1,6 +1,6 @@
 import Clang
 import OctoIntermediate
-import OctoIO
+import OctoParseTypes
 
 // Attributes //
 
@@ -15,7 +15,7 @@ extension OctoAttribute.Parameter {
     } else if let d = Double(param) {
       self = .double(d)
     } else {
-      octoLogger.critical("Couldn't parse parameter '\(param)' to a string, integer or double (bug)")
+      clogger.critical("Couldn't parse parameter '\(param)' to a string, integer or double (bug)")
       return nil
     }
   }
@@ -108,35 +108,3 @@ func getClangQualifiers(cursor: CXCursor) -> ClangTypeQualifiers {
     return (const: false, volatile: false, restrict: false)
   }
 }
-
-//func getClangQualifiers(cursor: CXCursor) -> ClangTypeQualifiers {
-  //let usrString = clang_getCursorUSR(cursor).managed
-  //return getClangQualifiers(translationUnit: cursor.translationUnit, usrString: usrString)
-//}
-
-//func getClangQualifiers(
-//  translationUnit: CXTranslationUnit,
-//  usrString: ManagedCXString
-//) -> ClangTypeQualifiers {
-//  let str = usrString.str!
-//  print("usrString: \(str)")
-
-//  guard let bangLocation = str.firstIndex(of: "#") else {
-//    return (const: false, volatile: false, restrict: false)
-//  }
-//  if bangLocation == str.endIndex {
-//    return (const: false, volatile: false, restrict: false)
-//  }
-//  let qualifierLocation = str.index(after: bangLocation)
-
-//  let char = str[qualifierLocation]
-//  let x = char.asciiValue ?? {
-//    var n = String(char)
-//    return n.withUTF8({ $0[0] })
-//  }()
-//  return (
-//    const: (x & 0x1) != 0,
-//    volatile: (x & 0x4) != 0,
-//    restrict: (x & 0x2) != 0
-//  )
-//}

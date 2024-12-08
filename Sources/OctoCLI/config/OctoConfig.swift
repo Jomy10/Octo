@@ -22,7 +22,7 @@ struct OctoConfig {
   /// Location of the file or directory to parse
   let inputLocation: URL
   /// Language-specific input options
-  let langInOpts: (any LanguageInputOptionSet)?
+  let langInOpts: UnsafeMutableRawPointer
   /// Extra octo attributes not defined in the source(s) (attach, rename, ...)
   let attributes: [Attribute]
 

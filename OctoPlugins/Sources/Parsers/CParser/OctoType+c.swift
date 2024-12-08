@@ -1,6 +1,6 @@
 import OctoIntermediate
-import OctoIO
 import Clang
+import OctoParseTypes
 
 // TODO: https://clang.llvm.org/doxygen/group__CINDEX__TYPES.html#ga8adac28955bf2f3a5ab1fd316a498334
 //  -> clang_getUnqualifiedType() gets the type of a typedef

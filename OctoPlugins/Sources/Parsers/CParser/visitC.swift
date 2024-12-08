@@ -3,6 +3,7 @@ import Clang
 import Logging
 import OctoIO
 import OctoIntermediate
+import OctoParseTypes
 
 var C_PARSING_ERROR: (any Error)? = nil
 

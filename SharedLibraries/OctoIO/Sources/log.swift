@@ -1,4 +1,5 @@
 import Foundation
+// TODO: export Logging from this package?
 import Logging
 //import ColorizeSwift
 
@@ -74,6 +75,7 @@ extension Logger {
   }
 }
 
+@available(*, deprecated, message: "Create a new logger for each package instead")
 public let octoLogger: Logger = Logger(label: "be.jonaseveraert.Octo")
 
 //public enum LogLevel: UInt8 {

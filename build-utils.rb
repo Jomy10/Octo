@@ -1,6 +1,12 @@
 require 'colorize'
 require 'sem_version'
 
+def exec(cmd, context)
+  puts cmd.grey
+  system cmd
+  abort("error while compiling #{context}") unless $?.to_i == 0
+end
+
 # Cross-platform way of finding an executable in the $PATH.
 #
 #   which('ruby') #=> /usr/bin/ruby

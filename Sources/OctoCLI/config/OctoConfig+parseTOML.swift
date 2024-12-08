@@ -2,6 +2,7 @@ import Foundation
 import TOMLKit
 import OctoIntermediate
 import ExpressionInterpreter
+import OctoConfigKeys
 
 extension OctoConfig: Decodable {
   init(decodingTOMLFile fileURL: URL) throws {
@@ -16,13 +17,6 @@ extension OctoConfig: Decodable {
     case input
     case output
     case renames
-  }
-
-  enum InputCodingKeys: String, CodingKey {
-    case inputLanguage = "language"
-    case inputLocation = "location"
-    case langInOpts = "options"
-    case attributes
   }
 
   enum RenamesCodingKeys: String, CodingKey {

@@ -6,7 +6,7 @@ public struct ParseError: Error {
 
   let thrownAt: (file: String, function: String, line: UInt, column: UInt)
 
-  init(
+  public init(
     _ message: String,
     origin: OctoOrigin? = nil,
     file: String = #file,
@@ -23,5 +23,18 @@ public struct ParseError: Error {
       line: line,
       column: column
     )
+  }
+}
+
+extension ParseError: CustomStringConvertible {
+  public var description: String {
+    var msg = "ParseError: \(self.message)"
+    if let origin = origin {
+      msg += " @ \(origin)"
+    }
+    #if DEBUG || OCTO_DEBUGINFO
+    msg += " (originated at \(self.thrownAt))"
+    #endif
+    return msg
   }
 }

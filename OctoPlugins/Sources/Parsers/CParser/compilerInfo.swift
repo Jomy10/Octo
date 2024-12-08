@@ -1,6 +1,7 @@
 import Foundation
 
 struct CompilerInfo {
+  /// The standard search paths for the installed clang compiler
   let searchPaths: [SearchPath]
 }
 
@@ -50,7 +51,7 @@ fileprivate func execCommand(_ cmd: String, outputFrom: CommandOutput = .stdout)
 }
 
 fileprivate func execClang(code: String, arguments: String = "", outputFrom: CommandOutput = .stdout) throws -> String {
-  // TODO: realpath of clang
+  // TODO: optionally pass clang path to Octo
   try execCommand("echo '\(code.replacingOccurrences(of: "'", with: "\'"))' | clang \(arguments)", outputFrom: outputFrom)
 }
 
@@ -78,17 +79,3 @@ func clangInfo(language: String = "c") throws -> CompilerInfo {
     }
   )
 }
-
-//func clangWcharSize() throws -> Int {
-//  return Int(try execClang(
-//    code: """
-//    #include <wchar.h>
-//    #include <stdio.h>
-
-//    int main(void) {
-//      printf("%lu\n", sizeof(wchar_t));
-//      return 0;
-//    }
-//    """
-//  ))!
-//}

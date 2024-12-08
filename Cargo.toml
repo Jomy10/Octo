@@ -1,0 +1,11 @@
+[workspace]
+resolver = "2"
+members = [
+  "Sources/ExpressionInterpreter",
+]
+
+[workspace.package]
+authors = ["Jonas Everaert"]
+
+[workspace.dependencies]
+uniffi = "0.28"

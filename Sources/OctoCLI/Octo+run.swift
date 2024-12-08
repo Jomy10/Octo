@@ -36,14 +36,14 @@ extension Octo {
     }
 
     // Parse
-    let parseLangConfig: ParseConfiguration.LanguageSpecificConfiguration
-    switch (config.inputLanguage) {
-      case .c: parseLangConfig = .c(config.langInOpts as! LanguageInputOptions.C)
-      default:
-        throw ValidationError("Unimplemented input language \(config.inputLanguage)")
-    }
+    //let parseLangConfig: ParseConfiguration.LanguageSpecificConfiguration
+    //switch (config.inputLanguage) {
+    //  case .c: parseLangConfig = .c(config.langInOpts as! LanguageInputOptions.C)
+    //  default:
+    //    throw ValidationError("Unimplemented input language \(config.inputLanguage)")
+    //}
     let parseConfig = ParseConfiguration(
-      languageSpecificConfig: parseLangConfig,
+      languageSpecificConfig: config.langInOpts,
       renameOperations: config.renameOperations
     )
     let lib = try OctoParser.parse(

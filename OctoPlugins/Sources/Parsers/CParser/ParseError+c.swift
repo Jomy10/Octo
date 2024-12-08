@@ -1,4 +1,5 @@
 import Clang
+import OctoParseTypes
 
 extension ParseError {
   static func unhandledKind(_ kind: some CXKind, location: CXSourceLocation? = nil, file: String = #file, function: String = #function, line: Int = #line) -> ParseError {

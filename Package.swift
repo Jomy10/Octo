@@ -10,10 +10,11 @@ let package = Package(
       name: "octo",
       targets: ["OctoCLI"]
     ),
-    .library(
-      name: "Octo",
-      targets: ["OctoParse", "OctoIntermediate", "OctoGenerate"]
-    )
+    //.library(
+    //  name: "Octo",
+    //  targets: ["OctoParse", "OctoIntermediate", "OctoGenerate"]
+    //),
+
   ],
   dependencies: [
     .package(url: "https://github.com/apple/swift-argument-parser", branch: "main"),
@@ -22,17 +23,25 @@ let package = Package(
     .package(url: "https://github.com/apple/swift-log.git", from: "1.0.0"),
     .package(url: "https://github.com/sushichop/Puppy", from: "0.7.0"),
     .package(url: "https://github.com/apple/swift-system", from: "1.2.1"),
+    .package(url: "https://github.com/Jomy10/Plugins.git", branch: "master"),
+    .package(path: "SharedLibraries/OctoIntermediate"),
+    .package(path: "SharedLibraries/OctoParseTypes"),
+    .package(path: "SharedLibraries/OctoConfigKeys"),
+    .package(path: "SharedLibraries/OctoMemory"),
+    .package(path: "SharedLibraries/OctoIO"),
     //.package(url: "https://github.com/davbeck/swift-glob.git", from: "0.1.0"),
   ],
   targets: [
     .executableTarget(
       name: "OctoCLI",
       dependencies: [
-        "OctoIO",
+        .product(name: "OctoIO", package: "OctoIo"),
         "ExpressionInterpreter",
         "OctoParse",
-        "OctoIntermediate",
+        .product(name: "OctoIntermediate", package: "OctoIntermediate"),
         "OctoGenerate",
+        "PluginManager",
+        .product(name: "OctoConfigKeys", package: "OctoConfigKeys"),
         .product(name: "ArgumentParser", package: "swift-argument-parser"),
         .product(name: "TOMLKit", package: "TOMLKit"),
         .product(name: "Logging", package: "swift-log"),
@@ -41,74 +50,58 @@ let package = Package(
     ),
 
     .target(
-      name: "OctoIntermediate",
-      dependencies: [
-        "OctoIO",
-      ]
-    ),
-    .target(
       name: "OctoParse",
       dependencies: [
-        "Clang",
-        "OctoIntermediate",
+        .product(name: "OctoIntermediate", package: "OctoIntermediate"),
         "ExpressionInterpreter",
-        "OctoIO",
-      ]
-    ),
-    .target(
-      name: "OctoGenerate",
-      dependencies: [
-        "OctoIntermediate",
-        "OctoIO",
-        "StringBuilder",
+        .product(name: "OctoIO", package: "OctoIO"),
+        .product(name: "OctoParseTypes", package: "OctoParseTypes"),
+        .product(name: "OctoMemory", package: "OctoMemory")
       ]
     ),
 
     .target(
-      name: "OctoIO",
+      name: "OctoGenerate",
       dependencies: [
-        "ColorizeSwift",
-        "Puppy",
-        .product(name: "Logging", package: "swift-log"),
+        .product(name: "OctoIntermediate", package: "OctoIntermediate"),
+        .product(name: "OctoIO", package: "OctoIO"),
+        "StringBuilder",
+      ],
+      exclude: ["__c"]
+    ),
+
+    .target(
+      name: "PluginManager",
+      dependencies: [
+        .product(name: "Plugins", package: "Plugins")
       ]
     ),
 
     .target(name: "StringBuilder"),
 
-    .systemLibrary(
-      name: "clang_c",
-      path: "Sources/Clang/clang_c",
-      providers: [
-        .brew(["llvm"]),
-        .apt(["clang", "llvm-dev"]),
-      ]
-    ),
-    .target(
-      name: "Clang",
-      dependencies: ["clang_c"],
-      path: "Sources/Clang/Clang"
-    ),
-
-    .testTarget(
-      name: "OctoIntermediateTests",
-      dependencies: ["OctoIntermediate"]
-    ),
     .testTarget(
       name: "OctoParseTests",
-      dependencies: ["OctoIntermediate", "OctoParse"]
+      dependencies: [
+        .product(name: "OctoIntermediate", package: "OctoIntermediate"),
+        "OctoParse"
+      ]
     ),
     .testTarget(
       name: "OctoGenerateTests",
-      dependencies: ["OctoIntermediate", "OctoGenerate", "ColorizeSwift"]
+      dependencies: [
+        .product(name: "OctoIntermediate", package: "OctoIntermediate"),
+        "OctoGenerate",
+        "ColorizeSwift"
+      ]
     ),
     .testTarget(
       name: "OctoExecutionTests",
       dependencies: [
         "OctoParse",
         "OctoGenerate",
-        "OctoIntermediate",
+        .product(name: "OctoIntermediate", package: "OctoIntermediate"),
         "Puppy",
-        "OctoIO",
+        .product(name: "OctoIO", package: "OctoIO"),
         .product(name: "SystemPackage", package: "swift-system"),
       ],
       exclude: ["resources"]

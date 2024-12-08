@@ -4,6 +4,8 @@ public struct ParseConfiguration {
   public let languageSpecificConfig: LanguageSpecificConfiguration
   public let renameOperations: [Program]
 
+  public typealias LanguageSpecificConfiguration = UnsafeMutableRawPointer
+
   public init(
     languageSpecificConfig: LanguageSpecificConfiguration,
     renameOperations: [Program]
@@ -12,7 +14,7 @@ public struct ParseConfiguration {
     self.renameOperations = renameOperations
   }
 
-  public enum LanguageSpecificConfiguration {
-    case c(CConfig)
-  }
+  //public enum LanguageSpecificConfiguration {
+  //  case c(CConfig)
+  //}
 }
