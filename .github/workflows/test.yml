@@ -1,0 +1,36 @@
+name: Test
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        # TODO: arch
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: swift-actions/setup-swift@v2
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+      # TODO: sem_version
+      - name: Install gems
+        run: gem install colorize os sem_version
+      - uses: KyleMayes/install-llvm-action@v2
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          version: "15" # TODO: platform dependent (https://github.com/KyleMayes/install-llvm-action/blob/master/assets.json)
+      - if: matrix.os == "macos-latest"
+        name: Install cargo-swift
+        run: cargo install cargo-swift
+      - name: build
+        run: ruby build.rb all debug
+      - name: test
+        run: ruby build.rb test debug
