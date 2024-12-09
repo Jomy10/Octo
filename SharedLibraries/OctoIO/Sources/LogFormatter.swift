@@ -1,6 +1,6 @@
 import Foundation
 import Puppy
-import ColorizeSwift
+@_exported import ColorizeSwift
 
 public struct OctoLogFormatter: LogFormattable {
   public func formatMessage(

@@ -20,7 +20,7 @@ let package = Package(
     .package(url: "https://github.com/LebJe/TOMLKit.git", from: "0.6.0"),
     .package(url: "https://github.com/mtynior/ColorizeSwift.git", from: "1.5.0"),
     .package(url: "https://github.com/apple/swift-system", from: "1.2.1"),
-    .package(url: "https://github.com/Jomy10/Plugins.git", from: "1.0.1"),
+    .package(url: "https://github.com/Jomy10/Plugins.git", branch: "master"),
     .package(path: "SharedLibraries/OctoIntermediate"),
     .package(path: "SharedLibraries/OctoParseTypes"),
     .package(path: "SharedLibraries/OctoConfigKeys"),

@@ -36,7 +36,7 @@ fileprivate extension ValidationError {
   }
 }
 
-extension Octo {
+extension OctoGenerate {
   mutating func validate() throws {
     let args = self.configArgs
     if self.configFileArg.configFile != nil {

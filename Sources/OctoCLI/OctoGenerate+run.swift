@@ -4,7 +4,7 @@ import OctoGenerate
 import OctoGenerateShared
 import ArgumentParser
 
-extension Octo {
+extension OctoGenerate {
   func parseConfig() throws -> OctoConfig {
     if let configFile = self.configFileArg.configFile {
       return try OctoConfig(decodingTOMLFile: configFile)
