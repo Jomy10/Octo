@@ -2,6 +2,10 @@
 
 A polyglot binding generator
 
+> [!WARNING]
+> This program is currently in early development. Not all features are currently
+> functional. Unexpected things may happen.
+
 ## Use case
 
 Octo lets you generate bindings from any language to any other language.
