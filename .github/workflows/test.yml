@@ -9,6 +9,7 @@ on:
 jobs:
   test:
     strategy:
+      fail-fast: false
       matrix:
         # TODO: arch
         os: [ubuntu-latest, macos-latest, windows-latest]
