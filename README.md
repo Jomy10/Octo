@@ -30,7 +30,7 @@ You could use Octo to generate bindings to C. It can then be used like so:
 #include "adder.h"
 #include <stdio.h>
 
-Adder adder = Adder_new(1, 2);
+Adder adder = Adder_create(1, 2);
 printf("%i\n", Adder_add(&adder)); // prints: 3
 ```
 
@@ -91,3 +91,19 @@ ruby test-report.rb
 Examples can be found in:
 - the [examples](/Examples) directory
 - additional examples can be found in the [tests](/Tests/OctoExecutionTests/resources)
+
+### Plugins
+
+Octo works with plugins. There are 2 types of plugins: Parser plugins and Generator plugins.
+- Parser plugins convert a source language to the intermediate Octo representation
+- Generator plugins generate bindings to a target language from the intermediate Octo representation
+
+#### Official plugins
+
+Currently, the following language are implemented:
+
+**Parsers**
+- C
+
+**Generators**
+- Ruby
