@@ -8,11 +8,12 @@ public struct GenerationOptions {
   public init(
     moduleName: String,
     indent: String,
-    libs: [String]
+    libs: [String],
+    languageSpecificOptions: UnsafeMutableRawPointer?
   ) {
     self.moduleName = moduleName
     self.indent = indent
     self.libs = libs
-    self.languageSpecficOptions = nil // TODO
+    self.languageSpecficOptions = languageSpecificOptions
   }
 }

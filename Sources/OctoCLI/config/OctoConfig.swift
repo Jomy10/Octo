@@ -37,7 +37,7 @@ struct OctoConfig {
     /// The output file or directory
     let outputLocation: URL
     /// Language-specific output options
-    let langOutOpts: (any LanguageOutputOptionSet)?
+    let langOutOpts: UnsafeMutableRawPointer?
     let indentCount: Int
     let indentType: IndentType
     /// Language-specific rename operations

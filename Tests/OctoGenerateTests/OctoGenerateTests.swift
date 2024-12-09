@@ -57,7 +57,8 @@ final class OctoGenerateTests: XCTestCase {
   let generationOptions = GenerationOptions(
     moduleName: "MyLib",
     indent: "  ",
-    libs: ["mylib"]
+    libs: ["mylib"],
+    languageSpecificOptions: try! OctoGenerator.languageOptions(language: .ruby, [] as [[String]])
   )
 
   func testParseRecord() throws {

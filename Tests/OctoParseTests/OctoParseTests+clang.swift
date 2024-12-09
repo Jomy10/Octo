@@ -24,7 +24,7 @@ final class OctoParseTests_Clang: XCTestCase {
     ]
 
     var langConfig: UnsafeMutableRawPointer? = nil
-    let errorMessage = plugin.parser_parseConfigForArguments(intoSubstringArray(args), &langConfig)
+    let errorMessage = plugin.parseConfigForArguments(intoSubstringArray(args), &langConfig)
     //let error = withUnsafePointer(to: intoSubstringArray(args)) { argsPtr in
     //  plugin.parser_parseConfigForArguments.function(UnsafeRawPointer(argsPtr), &langConfig)
     //}

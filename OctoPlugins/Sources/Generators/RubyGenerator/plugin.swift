@@ -30,3 +30,13 @@ public func generate(
 
   return nil
 }
+
+@_cdecl("parseConfigForTOML")
+public func parseConfigForTOML(_ containerRawPtr: UnsafeRawPointer, _ output: UnsafeMutablePointer<UnsafeMutableRawPointer?>) -> UnsafeMutableRawPointer? {
+  return nil
+}
+
+@_cdecl("parseConfigForArguments")
+public func parseConfigForArguments(_ argsPtr: UnsafeRawPointer, out: UnsafeMutablePointer<UnsafeRawPointer?>) -> UnsafeMutableRawPointer? {
+  return nil
+}

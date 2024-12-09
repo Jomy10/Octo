@@ -111,3 +111,10 @@ Currently, the following languages are implemented:
 
 **Generators**
 - Ruby
+
+## Goals
+
+The goals of this project are the following:
+
+- Support most major programming languages
+- Support most major operating systems. This is checked by running the test suite in all languages

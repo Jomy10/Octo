@@ -60,14 +60,6 @@ struct RenameValue: Decodable {
 }
 
 extension OctoConfig.OutputOptions: Decodable {
-  enum OutputCodingKeys: String, CodingKey {
-    case outputLocation = "location"
-    case langOutOpts = "options"
-    case indentCount
-    case indentType
-    case renameOperations
-  }
-
   init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: OutputCodingKeys.self)
     let lang = try Language(fromString: container.codingPath.last!.stringValue)

@@ -64,8 +64,7 @@ let package = Package(
         .product(name: "OctoIO", package: "OctoIO"),
         .product(name: "OctoGenerateShared", package: "OctoGenerateShared"),
         "PluginManager"
-      ],
-      exclude: ["__c"]
+      ]
     ),
 
     .target(

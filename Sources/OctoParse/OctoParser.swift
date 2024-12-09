@@ -17,7 +17,7 @@ public struct OctoParser {
 
     let parserPlugin = try PluginManager.default.getParserPlugin(languageName: language.description)
 
-    let expectsFile = parserPlugin.parser_expectsFile.function() == 1
+    let expectsFile = parserPlugin.parserExpectsFile
     var oisDir: ObjCBool = false
     assert(FileManager.default.fileExists(atPath: inputURL.path, isDirectory: &oisDir))
     let isDir: Bool = oisDir.boolValue

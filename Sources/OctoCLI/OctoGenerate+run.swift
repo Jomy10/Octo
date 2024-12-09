@@ -34,13 +34,6 @@ extension OctoGenerate {
       return handler
     }
 
-    // Parse
-    //let parseLangConfig: ParseConfiguration.LanguageSpecificConfiguration
-    //switch (config.inputLanguage) {
-    //  case .c: parseLangConfig = .c(config.langInOpts as! LanguageInputOptions.C)
-    //  default:
-    //    throw ValidationError("Unimplemented input language \(config.inputLanguage)")
-    //}
     let parseConfig = ParseConfiguration(
       languageSpecificConfig: config.langInOpts,
       renameOperations: config.renameOperations
@@ -66,7 +59,8 @@ extension OctoGenerate {
       let genOptions = GenerationOptions(
         moduleName: config.outputLibraryName,
         indent: String(repeating: oconfig.indentType.stringValue, count: oconfig.indentCount),
-        libs: config.link
+        libs: config.link,
+        languageSpecificOptions: nil
       )
       let code = try OctoGenerator.generate(
         language: lang,

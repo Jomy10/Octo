@@ -1,41 +1,43 @@
 import OctoIntermediate
-
-protocol LanguageOutputOptionSet {}
+import PluginManager
+import OctoConfigKeys
+import OctoMemory
+import ArgumentParser
 
 struct LanguageOutputOptions {
   static func decode(
-    _ container: KeyedDecodingContainer<OctoConfig.OutputOptions.OutputCodingKeys>,
+    _ container: KeyedDecodingContainer<OutputCodingKeys>,
     language: Language
-  ) throws -> (any LanguageOutputOptionSet)? {
-    switch (language) {
-      case .c: return try container.decodeIfPresent(Self.C.self, forKey: .langOutOpts)
-      case .ruby: return try container.decodeIfPresent(Self.Ruby.self, forKey: .langOutOpts)
-      default: throw ConfigError("Unimplemented output language \(language)")
+  ) throws -> UnsafeMutableRawPointer? {
+    let plugin = try PluginManager.default.getGeneratorPlugin(languageName: language.description)
+    var config: UnsafeMutableRawPointer? = nil
+    let error = withUnsafePointer(to: container) { containerPtr in
+      return plugin.parseConfigForTOML(containerPtr, &config)
     }
+
+    if let error = error {
+      throw ValidationError(error)
+    }
+
+    return config
   }
 
   static func parse(
     arguments args: [String],
     language: Language
-  ) throws -> (any LanguageOutputOptionSet)? {
+  ) throws -> UnsafeMutableRawPointer? {
     let args = args.map { arg in
       arg.split(separator: "=")
     }
 
-    switch (language) {
-      case .c: return try Self.C(fromArguments: args)
-      case .ruby: return try Self.Ruby(fromArguments: args)
-      default: throw ConfigError("Unimplemented input language \(language)")
-    }
-  }
+    let plugin = try PluginManager.default.getGeneratorPlugin(languageName: language.description)
+    var config: UnsafeMutableRawPointer? = nil
+    let errorMessage = plugin.parseConfigForArguments(args, &config)
 
-  struct C: Decodable, LanguageOutputOptionSet {
-    init(fromArguments args: [[Substring]]) throws {
+    if let errorMessage = errorMessage {
+      throw ValidationError(errorMessage)
     }
-  }
 
-  struct Ruby: Decodable, LanguageOutputOptionSet {
-    init(fromArguments args: [[Substring]]) throws {
-    }
+    return config
   }
 }

@@ -122,7 +122,7 @@ for package in packages
         end
         exec "cargo swift package -n ExpressionInterpreter -p macos #{mode == "release" ? "--release" : ""} #{extra_flags.join(" ")}", package
       else
-        exec "cargo +nightly build --#{mode}", package
+        exec "cargo +nightly build #{mode == "release" ? "--release" : ""}", package
         exec "cargo +nightly run --bin uniffi-bindgen generate src/lib.udl --language swift --out-dir generated"
         exec "mkdir ExpressionInterpreter"
         exec "mv generated/ExpressionInterpreter.swift ExpressionInterpreter/ExpressionInterpreter.swift"

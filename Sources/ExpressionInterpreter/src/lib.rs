@@ -1,18 +1,12 @@
+#![allow(non_snake_case)]
+
 uniffi::include_scaffolding!("lib");
 
 use std::sync::{Arc, RwLock};
 use std::cell::RefCell;
 
-// pub enum Error {
-//     ParseError(cel_interpreter::ParseError),
-//     ExecutionError(cel_interpreter::ExecutionError),
-// }
-// use std::error::Error;
-
 pub type ExecutionError = cel_interpreter::ExecutionError;
-// pub type ParseError = cel_interpreter::ParseError;
 pub type ParseError = cel_interpreter::ParseError;
-// pub type Value = cel_interpreter::Value;
 pub type Program = cel_interpreter::Program;
 
 pub struct Executor {
@@ -165,23 +159,10 @@ impl Executor {
         program.execute(&self.context.borrow().read().unwrap()).map(|v| v.into())
     }
 
-    // pub fn set_string_var(&mut self, variable_name: &str, value: &str) -> Result<(), Box<dyn Error>> {
-    //     self.context.write().unwrap().add_variable(variable_name, value)
-    // }
-
     pub fn set_var(&self, variable_name: &str, value: Value) {
         self.context
             .borrow_mut()
             .write().unwrap()
             .add_variable(variable_name, Into::<cel_interpreter::Value>::into(value)).unwrap()
     }
-
-    // pub fn execute(&self, code: &str) -> Result<Value, Error> {
-    //     let program = match cel_interpreter::Program::compile(code) {
-    //         Ok(prog) => prog,
-    //         Err(err) => return Err(Error::ParseError(err)),
-    //     };
-
-    //     return self.execute_program(program);
-    // }
 }

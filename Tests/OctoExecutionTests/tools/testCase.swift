@@ -50,7 +50,7 @@ fileprivate func loadCParseConfig() throws -> ParseConfiguration {
   ]
 
   var langConfig: UnsafeMutableRawPointer? = nil
-  let errorMessage = plugin.parser_parseConfigForArguments(intoSubstringArray(args), &langConfig)
+  let errorMessage = plugin.parseConfigForArguments(intoSubstringArray(args), &langConfig)
   if let errorMessage = errorMessage {
     throw TestError(message: errorMessage)
   }
@@ -83,7 +83,8 @@ func execRubyTestCase(
   let rubyGenOptions = GenerationOptions(
     moduleName: libname,
     indent: "  ",
-    libs: [name]
+    libs: [name],
+    languageSpecificOptions: try OctoGenerator.languageOptions(language: .ruby, [] as [[String]])
   )
 
   let lib = try OctoParser.parse(
