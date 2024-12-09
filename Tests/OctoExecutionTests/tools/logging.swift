@@ -1,6 +1,6 @@
 import OctoIO
 import Puppy
-import Logging
+//import Logging
 
 func setupTestLogger(_ ctx: String) {
   let logFormat = OctoLogFormatter()

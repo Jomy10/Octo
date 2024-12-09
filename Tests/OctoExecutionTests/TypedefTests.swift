@@ -8,7 +8,7 @@ final class TypedefTests: XCTestCase {
     try! setup(name: "typedef")
   }
 
-  func testRubyEnums() throws {
+  func testRubyTypedef() throws {
     try execRubyTestCase(
       libname: "Typedef",
       name: "typedef"

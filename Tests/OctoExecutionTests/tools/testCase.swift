@@ -4,6 +4,7 @@ import OctoIO
 import OctoParse
 import OctoGenerate
 import SystemPackage
+import PluginManager
 
 func setup(name: String) throws {
   // Tests output directory
@@ -28,6 +29,38 @@ func setup(name: String) throws {
   }
 }
 
+struct TestError: Error {
+  let message: String
+}
+
+fileprivate func intoSubstringArray(_ arr: [[String]]) -> [[Substring]] {
+  arr.map { innerArr in
+    innerArr.map { inner in
+      inner[inner.startIndex..<inner.endIndex]
+    }
+  }
+}
+
+fileprivate func loadCParseConfig() throws -> ParseConfiguration {
+  let plugin = try PluginManager.default.getParserPlugin(languageName: "C")
+  let args = [
+    ["logLevel", "ignored"],
+    ["errorLevel", "warning"]
+  ]
+
+  var langConfig: UnsafeMutableRawPointer? = nil
+  let errorMessage = plugin.parser_parseConfigForArguments(intoSubstringArray(args), &langConfig)
+  if let errorMessage = errorMessage {
+    throw TestError(message: errorMessage)
+  }
+
+  return ParseConfiguration(
+    languageSpecificConfig: langConfig!,
+    renameOperations: []
+  )
+}
+
+/// C -> Ruby
 func execRubyTestCase(
   libname: String,
   name: String
@@ -35,15 +68,16 @@ func execRubyTestCase(
   try XCTSkipIf(Tools.clang == nil, "C compiler not found")
   try XCTSkipIf(Tools.ruby == nil, "Ruby not found")
 
-  let config = ParseConfiguration(
-    languageSpecificConfig: .c(ParseConfiguration.CConfig(
-      clangFlags: [],
-      includeHeaders: [],
-      logLevel: .note,
-      errorLevel: .warning
-    )),
-    renameOperations: []
-  )
+  let config = try loadCParseConfig()
+  //let config = ParseConfiguration(
+  //  languageSpecificConfig: .c(ParseConfiguration.CConfig(
+  //    clangFlags: [],
+  //    includeHeaders: [],
+  //    logLevel: .note,
+  //    errorLevel: .warning
+  //  )),
+  //  renameOperations: []
+  //)
 
   let rubyGenOptions = GenerationOptions(
     moduleName: libname,

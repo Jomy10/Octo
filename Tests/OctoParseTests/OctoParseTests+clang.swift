@@ -1,19 +1,54 @@
 import XCTest
 @testable import OctoParse
 import OctoIntermediate
+import PluginManager
+
+func intoSubstringArray(_ arr: [[String]]) -> [[Substring]] {
+  arr.map { innerArr in
+    innerArr.map { inner in
+      inner[inner.startIndex..<inner.endIndex]
+    }
+  }
+}
+
+struct TestError: Error {
+  let message: String
+}
 
 final class OctoParseTests_Clang: XCTestCase {
-  let config = ParseConfiguration(
-    languageSpecificConfig: .c(ParseConfiguration.CConfig(
-      clangFlags: [],
-      includeHeaders: [],
-      logLevel: .ignored,
-      errorLevel: .warning
-    )),
-    renameOperations: []
-  )
+  func loadConfig() throws -> ParseConfiguration {
+    let plugin = try PluginManager.default.getParserPlugin(languageName: "C")
+    let args = [
+      ["logLevel", "ignored"],
+      ["errorLevel", "warning"]
+    ]
+
+    var langConfig: UnsafeMutableRawPointer? = nil
+    let errorMessage = plugin.parser_parseConfigForArguments(intoSubstringArray(args), &langConfig)
+    //let error = withUnsafePointer(to: intoSubstringArray(args)) { argsPtr in
+    //  plugin.parser_parseConfigForArguments.function(UnsafeRawPointer(argsPtr), &langConfig)
+    //}
+    if let errorMessage = errorMessage {
+      throw TestError(message: errorMessage)
+    }
+
+    return ParseConfiguration(
+      languageSpecificConfig: langConfig!,
+      renameOperations: []
+    )
+  }
+  //let config = ParseConfiguration(
+  //  languageSpecificConfig: .c(ParseConfiguration.CConfig(
+  //    clangFlags: [],
+  //    includeHeaders: [],
+  //    logLevel: .ignored,
+  //    errorLevel: .warning
+  //  )),
+  //  renameOperations: []
+  //)
 
   func testParseRecord() throws {
+    let config = try self.loadConfig()
     let lib = try OctoParser.parse(language: .c, config: config, input: URL(filePath: "./Tests/OctoParseTests/testParseRecord.h", directoryHint: .notDirectory, relativeTo: URL.currentDirectory()))
 
     for obj in lib.inner.objects {
@@ -93,6 +128,7 @@ final class OctoParseTests_Clang: XCTestCase {
   }
 
   func testParseEnum() throws {
+    let config = try self.loadConfig()
     let lib = try OctoParser.parse(language: .c, config: config, input: URL(filePath: "./Tests/OctoParseTests/testParseEnum.h", directoryHint: .notDirectory, relativeTo: URL.currentDirectory()))
 
     if !(lib.inner.objects.contains(where: {$0 is OctoEnum})) {

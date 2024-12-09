@@ -8,7 +8,7 @@ final class TaggedUnionTests: XCTestCase {
     try! setup(name: "TaggedUnion")
   }
 
-  func testRubyEnums() throws {
+  func testRubyTaggedUnion() throws {
     try execRubyTestCase(
       libname: "TaggedUnion",
       name: "taggedUnion"

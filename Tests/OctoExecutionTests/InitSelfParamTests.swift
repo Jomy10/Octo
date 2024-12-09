@@ -9,7 +9,7 @@ final class InitSelfParamTests: XCTestCase {
     try! setup(name: "initSelfParam")
   }
 
-  func testRubyEnums() throws {
+  func testRubyInitSelfParam() throws {
     try execRubyTestCase(
       libname: "InitSelfParam",
       name: "initSelfParam"
