@@ -104,7 +104,7 @@ Octo works with plugins. There are 2 types of plugins: Parser plugins and Genera
 
 ### Official plugins
 
-Currently, the following language are implemented:
+Currently, the following languages are implemented:
 
 **Parsers**
 - C

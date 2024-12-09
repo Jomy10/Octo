@@ -25,9 +25,11 @@ jobs:
       - name: Install gems
         run: gem install colorize os sem_version xcpretty
       - uses: KyleMayes/install-llvm-action@v2
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           version: "15" # TODO: platform dependent (https://github.com/KyleMayes/install-llvm-action/blob/master/assets.json)
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: nightly
       - name: Install cargo-swift
         if: matrix.os == 'macos-latest'
         run: cargo install cargo-swift
