@@ -90,19 +90,19 @@ ruby build.rb test
 ruby test-report.rb
 ```
 
-### Examples
+## Examples
 
 Examples can be found in:
 - the [examples](/Examples) directory
 - additional examples can be found in the [tests](/Tests/OctoExecutionTests/resources)
 
-### Plugins
+## Plugins
 
 Octo works with plugins. There are 2 types of plugins: Parser plugins and Generator plugins.
 - Parser plugins convert a source language to the intermediate Octo representation
 - Generator plugins generate bindings to a target language from the intermediate Octo representation
 
-#### Official plugins
+### Official plugins
 
 Currently, the following language are implemented:
 

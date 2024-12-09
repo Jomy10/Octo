@@ -27,7 +27,7 @@ jobs:
       - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           version: "15" # TODO: platform dependent (https://github.com/KyleMayes/install-llvm-action/blob/master/assets.json)
-      - if: matrix.os == "macos-latest"
+      - if: matrix.os == macos-latest
         name: Install cargo-swift
         run: cargo install cargo-swift
       - name: build
