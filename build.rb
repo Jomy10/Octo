@@ -36,7 +36,6 @@ when "clean"
   exec "swift package clean", "cleaning swift package"
 else
   packages << ARGV[0].to_sym
-  # raise "Invalid argument #{ARGV[0]}"
 end
 
 mode = ARGV[1] || "debug"
@@ -72,13 +71,6 @@ let PLUGIN_PATH = URL(filePath: "#{plugin_path}").resolvingSymlinksInPath()
     File.open("Sources/PluginManager/PluginPath.swift", "w") { |f|
       f.write(plugin_path_file)
     }
-
-    # flags << "-Xlinker -L#{File.realpath ".build/#{mode}"}"
-
-    # case package
-    # when :OctoParseTypes
-    #   flags << "-Xlinker -l"
-    # end
 
     product = package.to_s
     case swiftMode

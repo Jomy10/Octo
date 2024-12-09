@@ -53,7 +53,8 @@ let package = Package(
         "ExpressionInterpreter",
         .product(name: "OctoIO", package: "OctoIO"),
         .product(name: "OctoParseTypes", package: "OctoParseTypes"),
-        .product(name: "OctoMemory", package: "OctoMemory")
+        .product(name: "OctoMemory", package: "OctoMemory"),
+        "PluginManager",
       ]
     ),
 
@@ -63,7 +64,7 @@ let package = Package(
         .product(name: "OctoIntermediate", package: "OctoIntermediate"),
         .product(name: "OctoIO", package: "OctoIO"),
         .product(name: "OctoGenerateShared", package: "OctoGenerateShared"),
-        "PluginManager"
+        "PluginManager",
       ]
     ),
 
