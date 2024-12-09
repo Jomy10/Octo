@@ -116,9 +116,13 @@ for package in packages
   when :ExpressionInterpreter
     Dir.chdir(EXPRESSION_INTERPRETER_PKG) do
       if OS.mac?
-        exec "cargo swift package -n ExpressionInterpreter -p macos #{mode == "release" ? "--release" : ""}", package
+        extra_flags = []
+        if ENV["NO_PROMPTS"] == "1"
+          extra_flags << "-y"
+        end
+        exec "cargo swift package -n ExpressionInterpreter -p macos #{mode == "release" ? "--release" : ""} #{extra_flags.join(" ")}", package
       else
-        exec "cargo build +nightly --#{mode}", package
+        exec "cargo +nightly build --#{mode}", package
         exec "cargo +nightly run --bin uniffi-bindgen generate src/lib.udl --language swift --out-dir generated"
         exec "mkdir ExpressionInterpreter"
         exec "mv generated/ExpressionInterpreter.swift ExpressionInterpreter/ExpressionInterpreter.swift"
