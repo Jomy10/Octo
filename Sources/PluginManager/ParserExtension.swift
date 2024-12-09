@@ -1,7 +1,10 @@
 import Plugins
+import OctoMemory
 
 // This describes the interface a ParserPlugin should have
 extension Plugin {
+  // TODO: pluginAPIVersion -> determine if Plugin is compatible with current Octo version
+
   public typealias ParseFunction = @convention(c) (
     UnsafeRawPointer, // input (URL)
     UnsafeRawPointer, // config (Rc<LangConfig?>)
@@ -31,11 +34,28 @@ extension Plugin {
     self.loadFunction(name: "parseConfigForTOML")!
   }
 
-  public var parser_parseConfigForArguments: PluginFunction<ConfigParseArgumentsFunction> {
+  public var parser_parseConfigForArgumentsFn: PluginFunction<ConfigParseArgumentsFunction> {
     self.loadFunction(name: "parseConfigForArguments")!
   }
 
   public var parser_expectsFile: PluginFunction<ParserExpectsFileFunction> {
     self.loadFunction(name: "expectsFile")!
+  }
+
+  // TODO: binding
+
+  public var parser_parseConfigForArguments: ([[Substring]], UnsafeMutablePointer<UnsafeMutableRawPointer?>) -> String? {
+    return { (args, out) in
+      let fn = self.parser_parseConfigForArgumentsFn
+      let error = withUnsafePointer(to: args) { argsPtr in
+        fn.function(argsPtr, out)
+      }
+      if let error = error {
+        let errorMessage: Rc<String> = Unmanaged.fromOpaque(error).takeRetainedValue()
+        return errorMessage.takeInner()
+      } else {
+        return nil
+      }
+    }
   }
 }

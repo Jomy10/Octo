@@ -14,8 +14,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Jomy10/Plugins.git",
       "state" : {
-        "branch" : "master",
-        "revision" : "cdec309a77786b88c18bdfb97c7b0963496c2d21"
+        "revision" : "dd93faaf1685d9fd4916c859f975fca69f44b7ff",
+        "version" : "1.0.1"
       }
     },
     {

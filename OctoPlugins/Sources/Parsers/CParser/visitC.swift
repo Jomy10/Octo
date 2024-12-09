@@ -1,6 +1,5 @@
 import Foundation
 import Clang
-import Logging
 import OctoIO
 import OctoIntermediate
 import OctoParseTypes
@@ -116,7 +115,7 @@ fileprivate func visitStructDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) t
   }
 
   let recordName = cursor.spelling!
-  octoLogger.trace("@StructDecl.Record \(recordName)")
+  clogger.trace("@StructDecl.Record \(recordName)")
   try lib.addObject(
     OctoRecord(
       origin: .c(cursor.location),
@@ -137,7 +136,7 @@ fileprivate func visitUnionDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) th
 
   let recordName = cursor.spelling!
 
-  octoLogger.trace("@UnionDecl.Record \(recordName)")
+  clogger.trace("@UnionDecl.Record \(recordName)")
 
   try lib.addObject(
     OctoRecord(
@@ -157,7 +156,7 @@ fileprivate func visitFieldDecl(_ cursor: CXCursor, parent: CXCursor, _ lib: ino
   guard let parent = lib.getObject(forRef: parent) as? OctoRecord else {
     throw ParseError("Record \(parentTypeName) doesn't exist", origin: .c(cursor.location))
   }
-  octoLogger.trace("@FieldDecl \(parentTypeName) -> \(decl.type) \(decl.name!)")
+  clogger.trace("@FieldDecl \(parentTypeName) -> \(decl.type) \(decl.name!)")
 
   let field = OctoField(
     origin: .c(cursor.location),
@@ -179,11 +178,11 @@ fileprivate func visitFieldDecl(_ cursor: CXCursor, parent: CXCursor, _ lib: ino
 //  let external = cursor.hasVarDeclExternalStorage
 
 //  if !global {
-//    octoLogger.warning("Unhandled non-global variable \(decl)")
+//    clogger.warning("Unhandled non-global variable \(decl)")
 //    return CXChildVisit_Continue
 //  }
 
-//  octoLogger.debug("@VarDecl \(global ? "global " : "")\(external ? "extern " : "")\(decl.type) \(decl.name)")
+//  clogger.debug("@VarDecl \(global ? "global " : "")\(external ? "extern " : "")\(decl.type) \(decl.name)")
 //  lib.addGlobalVariable(
 //    OctoGlobalVariable(type: decl.type, name: decl.name, external: external, origin: cursor.location.into()),
 //    id: cursor
@@ -203,7 +202,7 @@ fileprivate func visitTypedefDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) 
   let type = try OctoType(cxType: typedefType, in: lib)
 
   let typedefName = cursorType.typedefName!
-  octoLogger.trace("@TypedefDecl.typedef \(typedefName) = \(type)")
+  clogger.trace("@TypedefDecl.typedef \(typedefName) = \(type)")
   try lib.addObject(
     OctoTypedef(
       origin: .c(cursor.location),
@@ -226,7 +225,7 @@ fileprivate func visitEnumDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) thr
   var enumDeclIntegerType = try OctoType(cxType: cursor.enumDeclIntegerType, in: lib)
   enumDeclIntegerType.mutable = false
 
-  octoLogger.trace("@EnumDecl.Enum \(enumDeclIntegerType) \(enumName)")
+  clogger.trace("@EnumDecl.Enum \(enumDeclIntegerType) \(enumName)")
   try lib.addObject(
     OctoEnum(
       origin: .c(cursor.location),
@@ -253,7 +252,7 @@ fileprivate func visitEnumConstantDecl(_ cursor: CXCursor, parent: CXCursor, _ l
     value = .uint(cursor.enumConstantDeclUnsignedValue)
   }
 
-  octoLogger.trace("@EnumConstantDecl \(enumName) -> \(enumCaseName) = \(value)")
+  clogger.trace("@EnumConstantDecl \(enumName) -> \(enumCaseName) = \(value)")
 
   let ec = OctoEnumCase(
     origin: .c(cursor.location),
@@ -273,7 +272,7 @@ fileprivate func visitFunctionDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary)
   }
 
   let name = cursor.spelling!
-  octoLogger.trace("@FunctionDecl \(name) -> \(resultType)")
+  clogger.trace("@FunctionDecl \(name) -> \(resultType)")
   try lib.addObject(
     OctoFunction(
       origin: .c(cursor.location),
@@ -294,7 +293,7 @@ fileprivate func visitParmDecl(_ cursor: CXCursor, parent: CXCursor, _ lib: inou
     throw ParseError("Function \(functionName) not defined", origin: .c(cursor.location))
   }
 
-  octoLogger.trace("@ParmDecl \(functionName) -> \(type) \(name ?? "unnamed")")
+  clogger.trace("@ParmDecl \(functionName) -> \(type) \(name ?? "unnamed")")
   let arg = OctoArgument(
     origin: .c(cursor.location),
     name: name,
@@ -330,10 +329,10 @@ fileprivate func visitAnnotateAttr(_ cursor: CXCursor, parent: CXCursor, _ lib: 
   defer { clang_disposeTokens(cursor.translationUnit, tokens, numTokens) }
   let params = try parseAnnotateAttrParams(translationUnit: cursor.translationUnit, fromTokens: tokens!, numTokens: numTokens)
 
-  octoLogger.trace("@AnnotateAttr \(parentName) -> \(name) \(String(describing: params))")
+  clogger.trace("@AnnotateAttr \(parentName) -> \(name) \(String(describing: params))")
 
   guard let attr = try OctoAttribute(name: name, params: params, in: lib, origin: OctoOrigin.c(cursor.location)) else {
-    octoLogger.warning("Ignored annotate attribute \(name)")
+    clogger.warning("Ignored annotate attribute \(name)")
     return CXChildVisit_Continue
   }
 
@@ -352,11 +351,11 @@ fileprivate func visitUnexposedAttr(_ cursor: CXCursor, parent: CXCursor, _ lib:
   defer { clang_disposeTokens(cursor.translationUnit, tokens, numTokens) }
   var name: String = ""
   guard let attr = try parseUnexposedAttribute(origin: cursor.location, translationUnit: cursor.translationUnit, fromTokens: tokens!, numTokens: numTokens, in: lib, nameIfNil: &name) else {
-    octoLogger.warning("Ignored attribute '\(name)' at \(cursor.location)")
+    clogger.warning("Ignored attribute '\(name)' at \(cursor.location)")
     return CXChildVisit_Continue
   }
 
-  octoLogger.trace("@UnexposedAttr \(parentName) -> \(attr)")
+  clogger.trace("@UnexposedAttr \(parentName) -> \(attr)")
   try addAttribute(cursor: cursor, parent: parent, attr, &lib)
 
   return CXChildVisit_Recurse

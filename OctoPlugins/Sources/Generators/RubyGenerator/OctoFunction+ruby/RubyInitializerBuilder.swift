@@ -1,4 +1,5 @@
 import OctoIntermediate
+import OctoGenerateShared
 
 struct RubyInitializerBuilder {
   static func build(

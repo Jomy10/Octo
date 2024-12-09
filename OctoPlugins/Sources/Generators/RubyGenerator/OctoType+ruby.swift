@@ -1,4 +1,5 @@
 import OctoIntermediate
+import OctoGenerateShared
 
 extension OctoType {
   /// Ruby type definition

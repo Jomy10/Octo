@@ -1,10 +1,24 @@
 require 'colorize'
 require 'sem_version'
 
-def exec(cmd, context)
+def exec(cmd, context, exitOnError: true)
   puts cmd.grey
   system cmd
-  abort("error while compiling #{context}") unless $?.to_i == 0
+  if exitOnError
+    abort("error while compiling #{context}") unless $?.to_i == 0
+  else
+    puts("error while compiling #{context}") unless $?.to_i == 0
+  end
+end
+
+def test_ext(testName)
+  xcpretty = which("xcpretty")
+
+  if ENV["TEST_REPORT"] == "1"
+    return "| #{xcpretty} --report junit --output .build/tests/#{testName}.xml"
+  else
+    return "" # TODO: if xcpretty exists, use that to prett
+  end
 end
 
 # Cross-platform way of finding an executable in the $PATH.

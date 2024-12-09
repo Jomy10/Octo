@@ -14,6 +14,7 @@ def allProducts
   products << :OctoConfigKeys
   products << :OctoIntermediate
   products << :OctoParseTypes
+  products << :OctoGenerateShared
   return products
 end
 
@@ -34,5 +35,5 @@ for arg in (ARGV[2..] || [])
 end
 
 for product in products
-  exec "swift #{swiftMode} -c #{mode} --package-path #{product} --cache-path ../.build/checkouts/ --scratch-path ../.build", product
+  exec "swift #{swiftMode} -c #{mode} --package-path #{product} --scratch-path ../.build/SharedLibs/#{product}", product, exitOnError: swiftMode != "test"
 end

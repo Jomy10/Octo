@@ -1,4 +1,5 @@
 import OctoIntermediate
+import OctoGenerateShared
 
 func rubyConstantName(of name: some StringProtocol) -> String {
   if name.first!.isLetter {

@@ -3,6 +3,7 @@ public struct GenerationOptions {
   public let indent: String
   /// Libraries to link against
   public let libs: [String]
+  public let languageSpecficOptions: UnsafeMutableRawPointer?
 
   public init(
     moduleName: String,
@@ -12,5 +13,6 @@ public struct GenerationOptions {
     self.moduleName = moduleName
     self.indent = indent
     self.libs = libs
+    self.languageSpecficOptions = nil // TODO
   }
 }

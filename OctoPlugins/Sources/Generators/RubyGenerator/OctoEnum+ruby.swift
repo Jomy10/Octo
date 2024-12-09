@@ -1,5 +1,6 @@
 import OctoIntermediate
 import OctoIO
+import OctoGenerateShared
 
 extension OctoEnum: RubyCodeGenerator {
   func generateRubyFFICode(options: GenerationOptions, in lib: OctoLibrary) throws -> String {
@@ -16,6 +17,7 @@ extension OctoEnum: RubyCodeGenerator {
 
   func generateRubyBindingCode(options: GenerationOptions, in lib: OctoLibrary, ffiModuleName: String) throws -> String {
     if self.deinitializer != nil {
+      // TODO: replace logger
       octoLogger.warning("Automatic deinitializers on enums are not currently supported for ruby. A static method will be generated which has to be called manually")
     }
 

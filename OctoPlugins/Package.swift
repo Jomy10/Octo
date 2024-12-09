@@ -6,10 +6,18 @@ let package = Package(
   name: "OctoPlugins",
   platforms: [.macOS(.v13)],
   products: [
+    // Parsers //
     .library(
       name: "CParser",
       type: .dynamic,
       targets: ["CParser"]
+    ),
+
+    // Generators //
+    .library(
+      name: "RubyGenerator",
+      type: .dynamic,
+      targets: ["RubyGenerator"]
     )
   ],
   dependencies: [
@@ -18,9 +26,10 @@ let package = Package(
     .package(path: "../SharedLibraries/OctoConfigKeys"),
     .package(path: "../SharedLibraries/OctoMemory"),
     .package(path: "../SharedLibraries/OctoIO"),
-    .package(url: "https://github.com/apple/swift-log.git", from: "1.0.0"),
+    .package(path: "../SharedLibraries/OctoGenerateShared"),
   ],
   targets: [
+    // Parsers //
     .target(
       name: "CParser",
       dependencies: [
@@ -29,8 +38,7 @@ let package = Package(
         .product(name: "OctoConfigKeys", package: "OctoConfigKeys"),
         .product(name: "OctoMemory", package: "OctoMemory"),
         .product(name: "OctoIO", package: "OctoIO"),
-        .product(name: "Logging", package: "swift-log"),
-        "Clang"
+        "Clang",
       ],
       path: "Sources/Parsers/CParser"
     ),
@@ -47,5 +55,18 @@ let package = Package(
       dependencies: ["clang_c"],
       path: "Sources/Clang/Clang"
     ),
+
+    // Generator //
+    .target(
+      name: "RubyGenerator",
+      dependencies: [
+        .product(name: "OctoIntermediate", package: "OctoIntermediate"),
+        .product(name: "OctoConfigKeys", package: "OctoConfigKeys"),
+        .product(name: "OctoMemory", package: "OctoMemory"),
+        .product(name: "OctoIO", package: "OctoIO"),
+        .product(name: "OctoGenerateShared", package: "OctoGenerateShared"),
+      ],
+      path: "Sources/Generators/RubyGenerator"
+    )
   ]
 )

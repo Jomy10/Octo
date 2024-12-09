@@ -164,7 +164,7 @@ for testSuite in testSuiteGroup[:testSuites]
   end
 end
 
-puts "\nUnsupported features per target lanugage:".yellow
+puts "\nUnsupported features per target language:".yellow
 for language, features in language_support
   unsupported_features = features.find_all { |feature| !feature[:support] }
   msg = ""

@@ -9,4 +9,5 @@ DerivedData/
 .netrc
 
 target
-
+# generated
+Sources/PluginManager/PluginPath.swift

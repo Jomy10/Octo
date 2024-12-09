@@ -1,5 +1,6 @@
 import Foundation
 import OctoIntermediate
+import OctoGenerateShared
 
 struct RubyCode: GeneratedCode {
   let code: String

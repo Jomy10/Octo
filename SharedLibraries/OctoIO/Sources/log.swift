@@ -1,7 +1,6 @@
 import Foundation
-// TODO: export Logging from this package?
-import Logging
-//import ColorizeSwift
+@_exported import Logging
+@_exported import Puppy
 
 public protocol IntoMetadataValue {
   func into() -> Logger.MetadataValue

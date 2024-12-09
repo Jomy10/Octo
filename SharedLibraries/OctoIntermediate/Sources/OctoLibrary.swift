@@ -1,8 +1,10 @@
-import Logging
+//import Logging
 import OctoIO
 
 // TODO: ~Copyable when migrating too Swift 6
 public struct OctoLibrary: AutoRemovable {
+  static let logger = Logger(label: "be.jonaseveraert.Octo.OctoIntermediate")
+
   private var langRefMap: [AnyHashable:Int] = [:]
   private var nameMap: [String:Int] = [:]
   public private(set) var objects: [OctoObject] = []
@@ -22,7 +24,7 @@ public struct OctoLibrary: AutoRemovable {
     if obj is OctoRecord || obj is OctoEnum || obj is OctoFunction || obj is OctoTypedef {
       if self.nameMap[obj.ffiName!] != nil {
         if !(obj is OctoTypedef) {
-          octoLogger.warning("Object \(obj.ffiName!) already exists, overriding name definition. This might lead to unexpected behaviour")
+          OctoLibrary.logger.warning("Object \(obj.ffiName!) already exists, overriding name definition. This might lead to unexpected behaviour")
         }
       } else {
         self.nameMap[obj.ffiName!] = self.objects.count

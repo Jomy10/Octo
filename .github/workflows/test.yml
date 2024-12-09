@@ -22,7 +22,7 @@ jobs:
           bundler-cache: true
       # TODO: sem_version
       - name: Install gems
-        run: gem install colorize os sem_version
+        run: gem install colorize os sem_version xcpretty
       - uses: KyleMayes/install-llvm-action@v2
       - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
@@ -33,4 +33,4 @@ jobs:
       - name: build
         run: ruby build.rb all debug
       - name: test
-        run: ruby build.rb test debug
+        run: ruby test-report.rb

@@ -47,7 +47,7 @@ public final class OctoEnum: OctoObject, OctoFunctionAttachable {
         if enumCase.ffiName!.hasPrefix(prefix) {
           enumCase.strippedName = String(enumCase.ffiName!.dropFirst(prefix.count))
         } else {
-          octoLogger.warning("Enum Case '\(enumCase.ffiName!)' of enum \(self.ffiName!) has no prefix \(prefix)")
+          OctoLibrary.logger.warning("Enum Case '\(enumCase.ffiName!)' of enum \(self.ffiName!) has no prefix \(prefix)")
           enumCase.strippedName = enumCase.ffiName
         }
       } else {

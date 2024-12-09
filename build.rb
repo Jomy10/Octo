@@ -5,6 +5,8 @@ require_relative './build-utils.rb'
 # Package paths
 EXPRESSION_INTERPRETER_PKG = File.realpath("Sources/ExpressionInterpreter")
 
+# TODO: support testing in release mode
+
 packages = []
 swiftMode = :build
 
@@ -18,6 +20,9 @@ when "Octo"
   packages << :ExpressionInterpreter
   packages << :SharedLibraries
   packages << :octo
+when "Plugins"
+  packages << :CParser
+  packages << :RubyGenerator
 when "SharedLibraries"
   packages << :SharedLibraries
 when "CLI"
@@ -42,7 +47,7 @@ for package in packages
   when :octo
     flags = []
     unless OS.mac? # manually link instead of the xcframework
-      flags << "-Xswiftc -L#{EXPRESSION_INTERPRETER_PKG}/target/#{mode}"
+      flags << "-Xswiftc -Ltarget/#{mode}"
       flags << "-Xswiftc -lExpressionInterpreter"
     end
 
@@ -62,9 +67,9 @@ for package in packages
     product = package.to_s
     case swiftMode
     when :build
-      exec "swift build -c #{mode} #{flags.join(" ")} --product #{product} --cache-path .build/checkouts/", package
+      exec "SWIFTPLUGINS_NO_LOGGING=1 swift build -c #{mode} #{flags.join(" ")} --product #{product} --scratch-path .build/Octo", package
     when :test
-      exec "swift test #{flags.join(" ")} #{ARGV[1] ? "--filter #{ARGV[1]}" : ""} --xunit-output=.build/tests/xunit.xml --cache-path .build/checkouts/", "tests"
+      exec "SWIFTPLUGINS_NO_LOGGING=1 swift test #{flags.join(" ")} #{ARGV[1] ? "--filter #{ARGV[1]}" : ""} --xunit-output=.build/tests/xunit.xml --scratch-path .build/Octo #{test_ext("Octo")}", "tests", exitOnError: false
     else
       raise "Invalid swiftMode #{swiftMode}"
     end
@@ -78,35 +83,36 @@ for package in packages
 
     case swiftMode
     when :build
-      exec "ruby SharedLibraries/build.rb #{product} #{mode} #{extra_args.join(" ")}", product
+      exec "SWIFTPLUGINS_NO_LOGGING=1 ruby SharedLibraries/build.rb #{product} #{mode} #{extra_args.join(" ")}", product
       # exec "swift build -c #{mode} #{flags.join(" ")} #{product == nil ? "" : "--product #{product}"} --package-path SharedLibraries --cache-path .build/checkouts/ --scratch-path .build", package
     when :test
-      exec "ruby SharedLibraries/build.rb test #{mode} #{extra_args.join(" ")}", "test"
+      exec "SWIFTPLUGINS_NO_LOGGING=1 ruby SharedLibraries/build.rb test #{mode} #{extra_args.join(" ")} #{test_ext("SharedLibraries")}", "test", exitOnError: false
       # exec "swift test #{flags.join(" ")} #{ARGV[1] ? "--filter #{ARGV[1]}" : ""} --xunit-output=../.build/tests/xunitSharedLibraries.xml -package-path SharedLibraries --cache-path .build/checkouts/ --scratch-path .build", "tests"
     end
-  when :CParser
+  when :CParser, :RubyGenerator
     # libclang
-    flags = `#{llvm_config} --cflags --ldflags --libs --system-libs`.split(" ")
-
-    flags = flags
-      .map do |flag|
-        if flag[1] == "l" || flag[1] == "L"
-          next "-Xlinker #{flag}"
-        elsif flag[1] == "W"
-          next ""
-        else
-          next "-Xcc #{flag}"
+    flags = []
+    if package == :CParser
+      flags = `#{llvm_config} --cflags --ldflags --libs --system-libs`.split(" ")
+      flags = flags
+        .map do |flag|
+          if flag[1] == "l" || flag[1] == "L"
+            next "-Xlinker #{flag}"
+          elsif flag[1] == "W"
+            next ""
+          else
+            next "-Xcc #{flag}"
+          end
         end
-      end
-
-    flags = flags.filter { |v| v != "" }
+      flags = flags.filter { |v| v != "" }
+    end
 
     for arg in (ARGV[2..] || [])
       flags << arg
     end
 
     product = package.to_s
-    exec "swift build -c #{mode} #{flags.join(" ")} --product #{product} --package-path OctoPlugins --cache-path .build/checkouts/ --scratch-path .build", package
+    exec "swift build -c #{mode} #{flags.join(" ")} --product #{product} --package-path OctoPlugins --scratch-path .build/Plugins", package
   when :ExpressionInterpreter
     Dir.chdir(EXPRESSION_INTERPRETER_PKG) do
       if OS.mac?

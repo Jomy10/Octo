@@ -113,8 +113,8 @@ public final class OctoFunction: OctoObject {
         self.selfArgumentIndex = selfArgumentIndex
       } else {
         //throw FunctionAttachError.noSelfArgument(function: self)
-        octoLogger.warning("Function \(self.ffiName!) has no `self` parameter of type \(object.ffiName!)")
-        octoLogger.debug("\(self.ffiName!) args: \(self.arguments.count)\n\(self.arguments.map({ arg in "arg: type = \(arg.type)"}).joined(separator: "\n"))")
+        OctoLibrary.logger.warning("Function \(self.ffiName!) has no `self` parameter of type \(object.ffiName!)")
+        OctoLibrary.logger.debug("\(self.ffiName!) args: \(self.arguments.count)\n\(self.arguments.map({ arg in "arg: type = \(arg.type)"}).joined(separator: "\n"))")
       }
     } else if self.kind == .initializer {
       if !isSelfTypeObject(self.returnType, object) {

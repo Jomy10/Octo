@@ -3,6 +3,7 @@ import XCTest
 import OctoIO
 import OctoParse
 import OctoGenerate
+import OctoGenerateShared
 import SystemPackage
 import PluginManager
 

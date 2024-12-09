@@ -1,11 +1,11 @@
 import Plugins
 import Foundation
 
-#if DEBUG
-let PLUGIN_PATH = Bundle.main.resourceURL! //URL(filePath: ".build/debug")
-#else
-#error("unimplemented")
-#endif
+//#if DEBUG
+//let PLUGIN_PATH = Bundle.main.resourceURL! //URL(filePath: ".build/debug")
+//#else
+//#error("unimplemented")
+//#endif
 
 public struct PluginManager {
   public static var `default` = PluginManager(pluginPath: PLUGIN_PATH)
@@ -35,6 +35,10 @@ public struct PluginManager {
   }
 
   public mutating func getParserPlugin(languageName: String) throws -> Plugin {
-    return try ((try? self.getPlugin(named: "\(languageName)Parser")) ?? (try self.getPlugin(named: "Octo\(languageName)Parser")))
+    return try ((try? self.getPlugin(named: "Octo\(languageName)Parser")) ?? (try self.getPlugin(named: "\(languageName)Parser")))
+  }
+
+  public mutating func getGeneratorPlugin(languageName: String) throws -> Plugin {
+    return try ((try? self.getPlugin(named: "Octo\(languageName)Generator")) ?? (try self.getPlugin(named: "\(languageName)Generator")))
   }
 }

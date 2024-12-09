@@ -14,38 +14,35 @@ let package = Package(
     //  name: "Octo",
     //  targets: ["OctoParse", "OctoIntermediate", "OctoGenerate"]
     //),
-
   ],
   dependencies: [
     .package(url: "https://github.com/apple/swift-argument-parser", branch: "main"),
     .package(url: "https://github.com/LebJe/TOMLKit.git", from: "0.6.0"),
     .package(url: "https://github.com/mtynior/ColorizeSwift.git", from: "1.5.0"),
-    .package(url: "https://github.com/apple/swift-log.git", from: "1.0.0"),
-    .package(url: "https://github.com/sushichop/Puppy", from: "0.7.0"),
     .package(url: "https://github.com/apple/swift-system", from: "1.2.1"),
-    .package(url: "https://github.com/Jomy10/Plugins.git", branch: "master"),
+    .package(url: "https://github.com/Jomy10/Plugins.git", from: "1.0.1"),
     .package(path: "SharedLibraries/OctoIntermediate"),
     .package(path: "SharedLibraries/OctoParseTypes"),
     .package(path: "SharedLibraries/OctoConfigKeys"),
     .package(path: "SharedLibraries/OctoMemory"),
     .package(path: "SharedLibraries/OctoIO"),
+    .package(path: "SharedLibraries/OctoGenerateShared"),
     //.package(url: "https://github.com/davbeck/swift-glob.git", from: "0.1.0"),
   ],
   targets: [
     .executableTarget(
       name: "OctoCLI",
       dependencies: [
-        .product(name: "OctoIO", package: "OctoIo"),
+        .product(name: "OctoIO", package: "OctoIO"),
         "ExpressionInterpreter",
         "OctoParse",
         .product(name: "OctoIntermediate", package: "OctoIntermediate"),
         "OctoGenerate",
+        .product(name: "OctoGenerateShared", package: "OctoGenerateShared"),
         "PluginManager",
         .product(name: "OctoConfigKeys", package: "OctoConfigKeys"),
         .product(name: "ArgumentParser", package: "swift-argument-parser"),
         .product(name: "TOMLKit", package: "TOMLKit"),
-        .product(name: "Logging", package: "swift-log"),
-        .product(name: "Puppy", package: "Puppy"),
       ]
     ),
 
@@ -65,7 +62,8 @@ let package = Package(
       dependencies: [
         .product(name: "OctoIntermediate", package: "OctoIntermediate"),
         .product(name: "OctoIO", package: "OctoIO"),
-        "StringBuilder",
+        .product(name: "OctoGenerateShared", package: "OctoGenerateShared"),
+        "PluginManager"
       ],
       exclude: ["__c"]
     ),
@@ -73,23 +71,26 @@ let package = Package(
     .target(
       name: "PluginManager",
       dependencies: [
-        .product(name: "Plugins", package: "Plugins")
+        .product(name: "Plugins", package: "Plugins"),
+        .product(name: "OctoMemory", package: "OctoMemory"),
+        .product(name: "OctoGenerateShared", package: "OctoGenerateShared"),
+        .product(name: "OctoIntermediate", package: "OctoIntermediate"),
       ]
     ),
-
-    .target(name: "StringBuilder"),
 
     .testTarget(
       name: "OctoParseTests",
       dependencies: [
         .product(name: "OctoIntermediate", package: "OctoIntermediate"),
-        "OctoParse"
+        "OctoParse",
+        "PluginManager",
       ]
     ),
     .testTarget(
       name: "OctoGenerateTests",
       dependencies: [
         .product(name: "OctoIntermediate", package: "OctoIntermediate"),
+        .product(name: "OctoGenerateShared", package: "OctoGenerateShared"),
         "OctoGenerate",
         "ColorizeSwift"
       ]
@@ -99,10 +100,11 @@ let package = Package(
       dependencies: [
         "OctoParse",
         "OctoGenerate",
+        .product(name: "OctoGenerateShared", package: "OctoGenerateShared"),
         .product(name: "OctoIntermediate", package: "OctoIntermediate"),
-        "Puppy",
         .product(name: "OctoIO", package: "OctoIO"),
         .product(name: "SystemPackage", package: "swift-system"),
+        "PluginManager"
       ],
       exclude: ["resources"]
     )

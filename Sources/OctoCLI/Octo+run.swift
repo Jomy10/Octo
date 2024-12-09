@@ -1,9 +1,8 @@
 import OctoIO
 import OctoParse
 import OctoGenerate
+import OctoGenerateShared
 import ArgumentParser
-import Puppy
-import Logging
 
 extension Octo {
   func parseConfig() throws -> OctoConfig {

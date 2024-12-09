@@ -40,13 +40,14 @@ struct LanguageInputOptions {
 
     let plugin = try PluginManager.default.getParserPlugin(languageName: language.description)
     var config: UnsafeMutableRawPointer? = nil
-    let error = withUnsafePointer(to: args) { argsPtr in
-      return plugin.parser_parseConfigForArguments.function(UnsafeRawPointer(argsPtr), &config)
-    }
+    let errorMessage = plugin.parser_parseConfigForArguments(args, &config)
+    //let error = withUnsafePointer(to: args) { argsPtr in
+    //  return plugin.parser_parseConfigForArguments.function(UnsafeRawPointer(argsPtr), &config)
+    //}
 
-    if let error = error {
-      let errorMessage: Rc<String> = Unmanaged.fromOpaque(error).takeRetainedValue()
-      throw ValidationError("\(errorMessage.takeInner())")
+    if let errorMessage = errorMessage {
+      //let errorMessage: Rc<String> = Unmanaged.fromOpaque(error).takeRetainedValue()
+      throw ValidationError(errorMessage)
     }
 
     return config!

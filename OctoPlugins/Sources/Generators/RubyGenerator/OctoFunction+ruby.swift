@@ -1,4 +1,5 @@
 import OctoIntermediate
+import OctoGenerateShared
 
 extension OctoFunction: RubyCodeGenerator {
   ///// Part of the function body of an initializer: sets the @ptr instance variable

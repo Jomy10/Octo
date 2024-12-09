@@ -1,6 +1,5 @@
 import Foundation
 import OctoIntermediate
-import Logging
 import OctoMemory
 import OctoParseTypes
 import Clang

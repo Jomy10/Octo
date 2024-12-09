@@ -38,7 +38,7 @@ public struct OctoParser {
     }
 
     let unmanagedLib: Unmanaged<AutoRemoveReference<OctoLibrary>> = Unmanaged.fromOpaque(libPtr!)
-    var lib: AutoRemoveReference<OctoLibrary> = unmanagedLib.takeRetainedValue()
+    let lib: AutoRemoveReference<OctoLibrary> = unmanagedLib.takeRetainedValue()
 
     let executor = Executor()
     try lib.inner.renameObjects { objName in

@@ -48,7 +48,7 @@ generators can be easily installed as dynamic libraries.
 - Swift compiler
 - Rust compiler (nightly toolchain installed)
 - Ruby
-- Colorize and OS gems: `gem install colorize os`
+- Colorize, OS and sem_version gems: `gem install colorize os sem_version`
 - *on macOS*: cargo-swift `cargo install cargo-swift`
 
 **Optional**: Depending on supported languages
@@ -80,7 +80,10 @@ ruby build.rb RubyGenerator release
 
 ```sh
 ruby build.rb all
+
 ruby build.rb test
+# OR, for clearer output:
+ruby test-report.rb
 ```
 
 ### Examples

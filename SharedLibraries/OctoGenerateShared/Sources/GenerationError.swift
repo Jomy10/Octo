@@ -1,12 +1,12 @@
 import Foundation
 import OctoIntermediate
 
-struct GenerationError: Error {
+public struct GenerationError: Error {
   let message: String
   let language: Language
   let origin: OctoOrigin?
 
-  init(
+  public init(
     _ message: String,
     _ language: Language,
     origin: OctoOrigin? = nil
@@ -30,6 +30,11 @@ extension GenerationError: CustomStringConvertible {
 /// Thrown when an OctoType cannot be represented in the target language
 public struct UnsupportedType: Error {
   /// The target language
-  let language: Language
-  let type: OctoType
+  public let language: Language
+  public let type: OctoType
+
+  public init(language: Language, type: OctoType) {
+    self.language = language
+    self.type = type
+  }
 }

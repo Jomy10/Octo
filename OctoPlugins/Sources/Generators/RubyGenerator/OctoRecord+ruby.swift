@@ -1,4 +1,5 @@
 import OctoIntermediate
+import OctoGenerateShared
 
 extension OctoRecord: RubyCodeGenerator {
   func generateRubyFFICode(options: GenerationOptions, in lib: OctoLibrary) throws -> String {

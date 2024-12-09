@@ -3,6 +3,7 @@ import XCTest
 import OctoIntermediate
 import Foundation
 import ColorizeSwift
+import OctoGenerateShared
 
 func formatCode(_ code: String) -> String {
   code.unicodeScalars.map {
