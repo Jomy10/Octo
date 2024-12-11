@@ -7,6 +7,16 @@ public final class OctoRecord: OctoObject, OctoFunctionAttachable {
   public private(set) var taggedUnionTagIndex: Int? = nil
   public var taggedUnionValueIndex: Int? { self.taggedUnionTagIndex == nil ? nil : (self.taggedUnionTagIndex! == 0 ? 1 : 0) }
 
+  public var taggedUnionEnumType: OctoType? {
+    guard let idx = self.taggedUnionTagIndex else { return nil }
+    return self.fields[idx].type
+  }
+
+  public var taggedUnionValueType: OctoType? {
+    guard let idx = self.taggedUnionTagIndex else { return nil }
+    return self.fields[idx].type
+  }
+
   public enum RecordType: Equatable {
     case `struct`
     case `union`

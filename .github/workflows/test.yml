@@ -17,6 +17,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: swift-actions/setup-swift@v2
+        with:
+            swift-version: "5.7"
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.3'

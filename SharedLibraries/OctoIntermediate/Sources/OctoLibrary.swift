@@ -5,6 +5,7 @@ import OctoIO
 public struct OctoLibrary: AutoRemovable {
   static let logger = Logger(label: "be.jonaseveraert.Octo.OctoIntermediate")
 
+  public var ffiLanguage: Language = .c
   private var langRefMap: [AnyHashable:Int] = [:]
   private var nameMap: [String:Int] = [:]
   public private(set) var objects: [OctoObject] = []

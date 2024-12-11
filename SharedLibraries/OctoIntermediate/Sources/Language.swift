@@ -4,6 +4,7 @@ public enum Language {
   case swift
   case rust
   case ruby
+  case other(String)
 }
 
 extension Language: CustomStringConvertible {
@@ -14,6 +15,7 @@ extension Language: CustomStringConvertible {
       case .swift: return "Swift"
       case .rust: return "Rust"
       case .ruby: return "Ruby"
+      case .other(let name): return name
     }
   }
 }
