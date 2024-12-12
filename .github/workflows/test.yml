@@ -35,6 +35,9 @@ jobs:
       - name: Install cargo-swift
         if: matrix.os == 'macos-latest'
         run: cargo install cargo-swift
+      - name: Set environment variable on Windows
+        if: matrix.os == 'windows-latest'
+        run: echo "NO_PROMPTS=1" | Out-File -FilePath $env:GITHUB_ENV -Append
       - name: build
         run: NO_PROMPTS=1 ruby build.rb all debug
       - name: test
