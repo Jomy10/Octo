@@ -100,7 +100,7 @@ let PLUGIN_PATH = URL(filePath: "#{plugin_path}").resolvingSymlinksInPath()
       exec "SWIFTPLUGINS_NO_LOGGING=1 ruby SharedLibraries/build.rb test #{mode} #{extra_args.join(" ")} #{test_ext("SharedLibraries")}", "test", exitOnError: false
       # exec "swift test #{flags.join(" ")} #{ARGV[1] ? "--filter #{ARGV[1]}" : ""} --xunit-output=../.build/tests/xunitSharedLibraries.xml -package-path SharedLibraries --cache-path .build/checkouts/ --scratch-path .build", "tests"
     end
-  when :Plugins, :CParser, :CGenerator, :RubyGenerator
+  when :CParser, :CGenerator, :RubyGenerator
     # libclang
     flags = []
     if package == :CParser

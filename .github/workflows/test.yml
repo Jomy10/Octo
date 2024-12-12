@@ -25,7 +25,9 @@ jobs:
           bundler-cache: true
       # TODO: sem_version
       - name: Install gems
-        run: gem install colorize os sem_version xcpretty
+        run: gem install colorize os sem_version
+      - name: Install gem xcpretty
+        run: gem install xcpretty -v 0.3
       - uses: KyleMayes/install-llvm-action@v2
         with:
           version: "15" # TODO: platform dependent (https://github.com/KyleMayes/install-llvm-action/blob/master/assets.json)
@@ -35,10 +37,14 @@ jobs:
       - name: Install cargo-swift
         if: matrix.os == 'macos-latest'
         run: cargo install cargo-swift
+      - name: build
+        if: matrix.os == 'macos-latest' || matrix.os == 'linux-latest'
+        run: NO_PROMPTS=1 ruby build.rb all debug
       - name: Set environment variable on Windows
         if: matrix.os == 'windows-latest'
         run: echo "NO_PROMPTS=1" | Out-File -FilePath $env:GITHUB_ENV -Append
-      - name: build
-        run: NO_PROMPTS=1 ruby build.rb all debug
+      - name: build Windows
+        if: matrix.os == 'windows-latest'
+        run: ruby build.rb all debug
       - name: test
         run: ruby test-report.rb
