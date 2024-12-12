@@ -62,7 +62,7 @@ struct RenameValue: Decodable {
 extension OctoConfig.OutputOptions: Decodable {
   init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: OutputCodingKeys.self)
-    let lang = try Language(fromString: container.codingPath.last!.stringValue)
+    let lang = Language(fromString: container.codingPath.last!.stringValue)
 
     if let loc = (try? container.decode(URL.self, forKey: .outputLocation)) {
       self.outputLocation = loc

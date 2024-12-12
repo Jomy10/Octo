@@ -7,14 +7,22 @@ fileprivate extension ValidationError {
     "Value for \(argName) shouldn't be specified when `--config` argument is used"
   }
 
-  static func shouldntExist<T>(_ exists: [T], _ argName: String) throws {
-    if exists.count != 0 {
+  static func exists<T>(_ exists: [T]) -> Bool {
+    exists.count != 0
+  }
+
+  static func exists<T>(_ exists: T?) -> Bool {
+    exists != nil
+  }
+
+  static func shouldntExist<T>(_ val: [T], _ argName: String) throws {
+    if exists(val) {
       throw Self(Self.formatShouldntExist(argName))
     }
   }
 
-  static func shouldntExist<T>(_ exists: T?, _ argName: String) throws {
-    if exists != nil {
+  static func shouldntExist<T>(_ val: T?, _ argName: String) throws {
+    if exists(val) {
       throw Self(Self.formatShouldntExist(argName))
     }
   }
@@ -23,14 +31,14 @@ fileprivate extension ValidationError {
     "expected argument \(argName) to be specified or a config file to be specified"
   }
 
-  static func shouldExist<T>(_ exists: [T], _ argName: String) throws {
-    if exists.count == 0 {
+  static func shouldExist<T>(_ val: [T], _ argName: String) throws {
+    if !exists(val) {
       throw Self(Self.formatShouldExist(argName))
     }
   }
 
-  static func shouldExist<T>(_ exists: T?, _ argName: String) throws {
-    if exists == nil {
+  static func shouldExist<T>(_ val: T?, _ argName: String) throws {
+    if !exists(val) {
       throw Self(Self.formatShouldExist(argName))
     }
   }
@@ -39,7 +47,15 @@ fileprivate extension ValidationError {
 extension OctoGenerate {
   mutating func validate() throws {
     let args = self.configArgs
-    if self.configFileArg.configFile != nil {
+    if self.configFileArg.configFile == nil && [
+      ValidationError.exists(args.inputLanguage),
+      ValidationError.exists(args.inputLocation),
+      ValidationError.exists(args.outputLanguage),
+      ValidationError.exists(args.outputLocation),
+      ValidationError.exists(args.outputLibraryName)
+    ].allSatisfy({ !$0 }) {
+      throw CleanExit.helpRequest(Self.self)
+    } else if self.configFileArg.configFile != nil {
       try ValidationError.shouldntExist(args.inputLanguage, "from")
       try ValidationError.shouldntExist(args.inputLocation, "input-location")
       try ValidationError.shouldntExist(args.langInOpts, "lang-in-opt")
@@ -52,9 +68,9 @@ extension OctoGenerate {
       try ValidationError.shouldntExist(args.indentType, "indent-type")
       try ValidationError.shouldntExist(args.indentCount, "indent-count")
     } else {
-      try ValidationError.shouldExist(args.inputLanguage, "input-language")
+      try ValidationError.shouldExist(args.inputLanguage, "from")
       try ValidationError.shouldExist(args.inputLocation, "input-location")
-      try ValidationError.shouldExist(args.outputLanguage, "output-language")
+      try ValidationError.shouldExist(args.outputLanguage, "to")
       try ValidationError.shouldExist(args.outputLocation, "output-location")
       try ValidationError.shouldExist(args.outputLibraryName, "lib-name")
     }
