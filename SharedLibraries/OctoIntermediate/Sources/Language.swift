@@ -1,10 +1,24 @@
-public enum Language {
+public enum Language: Equatable, Hashable {
   case c
   case cxx
   case swift
   case rust
   case ruby
   case other(String)
+
+  public init(fromString stringValue: String) {
+    switch (stringValue.lowercased()) {
+      case "c": self = .c
+      case "cxx": fallthrough
+      case "c++": fallthrough
+      case "cpp": self = .cxx
+      case "swift": self = .swift
+      case "rust": self = .rust
+      case "rb": fallthrough
+      case "ruby": self = .ruby
+      default: self = .other(stringValue)
+    }
+  }
 }
 
 extension Language: CustomStringConvertible {

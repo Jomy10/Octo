@@ -31,6 +31,7 @@ extension Swift.DecodingError: CustomStringConvertible {
         """
       case .keyNotFound(let key, let ctx):
         var msg = "Error paring TOML: key not found '\(key.stringValue)'"
+        msg += "\n"
         msg += self.formatCtx(ctx)
         return msg
       case .typeMismatch(let type, let ctx): fallthrough

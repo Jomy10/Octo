@@ -17,7 +17,7 @@ extension Language: Decodable, CodingKey, ExpressibleByArgument {
   }
 
   public var stringValue: String {
-    self.description
+    self.description.lowercased()
   }
 
   public init?(intValue: Int) { nil }

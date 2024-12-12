@@ -92,7 +92,7 @@ public final class OctoRecord: OctoObject, OctoFunctionAttachable {
 
 public final class OctoField: OctoObject {
   public private(set) var type: OctoType
-  private var _taggedUnionCaseName: String? = nil
+  public private(set) var taggedUnionCaseName: String? = nil
 
   public init(
     origin: OctoOrigin,
@@ -106,7 +106,7 @@ public final class OctoField: OctoObject {
   /// Find the enum case corresponding to this tagged union value field
   public func taggedUnionCase(in lib: OctoLibrary, enumType: OctoEnum) -> OctoEnumCase? {
     enumType.cases.first(where: { enumCase in
-      (enumCase.ffiName! == (self._taggedUnionCaseName ?? self.ffiName!))
+      (enumCase.ffiName! == (self.taggedUnionCaseName ?? self.ffiName!))
         || (enumCase.ffiName!.uppercased() == self.ffiName!.uppercased())
     })
   }
@@ -116,7 +116,7 @@ public final class OctoField: OctoObject {
   }
 
   public override func setTaggedUnionType(enumCase: String) throws {
-    self._taggedUnionCaseName = enumCase
+    self.taggedUnionCaseName = enumCase
   }
 }
 

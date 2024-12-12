@@ -6,7 +6,7 @@ public final class OctoEnum: OctoObject, OctoFunctionAttachable {
   /// Usually an integer type, but can be any other type, depending oon the language
   public let type: OctoType
   public var cases: [OctoEnumCase]
-  var enumPrefix: String? = nil
+  public var enumPrefix: String? = nil
 
   // Attached Functions //
   public var initializers: [OctoFunction]

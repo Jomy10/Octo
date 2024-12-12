@@ -55,12 +55,12 @@ extension OctoGenerate {
 
     // Generate
     for (lang, oconfig) in config.outputOptions {
-      // TODO: oconffig.renameOperations
+
       let genOptions = GenerationOptions(
         moduleName: config.outputLibraryName,
         indent: String(repeating: oconfig.indentType.stringValue, count: oconfig.indentCount),
         libs: config.link,
-        languageSpecificOptions: nil
+        languageSpecificOptions: oconfig.langOutOpts
       )
       let code = try OctoGenerator.generate(
         language: lang,

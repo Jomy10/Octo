@@ -15,6 +15,11 @@ let package = Package(
 
     // Generators //
     .library(
+      name: "CGenerator",
+      type: .dynamic,
+      targets: ["CGenerator"]
+    ),
+    .library(
       name: "RubyGenerator",
       type: .dynamic,
       targets: ["RubyGenerator"]
@@ -56,7 +61,18 @@ let package = Package(
       path: "Sources/Clang/Clang"
     ),
 
-    // Generator //
+    // Generators //A
+    .target(
+      name: "CGenerator",
+      dependencies: [
+        .product(name: "OctoIntermediate", package: "OctoIntermediate"),
+        .product(name: "OctoConfigKeys", package: "OctoConfigKeys"),
+        .product(name: "OctoMemory", package: "OctoMemory"),
+        .product(name: "OctoIO", package: "OctoIO"),
+        .product(name: "OctoGenerateShared", package: "OctoGenerateShared"),
+      ],
+      path: "Sources/Generators/CGenerator"
+    ),
     .target(
       name: "RubyGenerator",
       dependencies: [

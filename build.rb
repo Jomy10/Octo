@@ -14,14 +14,15 @@ case ARGV[0]
 when "all", nil
   packages << :ExpressionInterpreter
   packages << :SharedLibraries
+  packages << :Plugins
   packages << :octo
-  packages << :CParser
 when "Octo"
   packages << :ExpressionInterpreter
   packages << :SharedLibraries
   packages << :octo
 when "Plugins"
   packages << :CParser
+  packages << :CGenerator
   packages << :RubyGenerator
 when "SharedLibraries"
   packages << :SharedLibraries
@@ -97,7 +98,7 @@ let PLUGIN_PATH = URL(filePath: "#{plugin_path}").resolvingSymlinksInPath()
       exec "SWIFTPLUGINS_NO_LOGGING=1 ruby SharedLibraries/build.rb test #{mode} #{extra_args.join(" ")} #{test_ext("SharedLibraries")}", "test", exitOnError: false
       # exec "swift test #{flags.join(" ")} #{ARGV[1] ? "--filter #{ARGV[1]}" : ""} --xunit-output=../.build/tests/xunitSharedLibraries.xml -package-path SharedLibraries --cache-path .build/checkouts/ --scratch-path .build", "tests"
     end
-  when :CParser, :RubyGenerator
+  when :CParser, :CGenerator, :RubyGenerator
     # libclang
     flags = []
     if package == :CParser
@@ -131,10 +132,10 @@ let PLUGIN_PATH = URL(filePath: "#{plugin_path}").resolvingSymlinksInPath()
         exec "cargo swift package -n ExpressionInterpreter -p macos #{mode == "release" ? "--release" : ""} #{extra_flags.join(" ")}", package
       else
         exec "cargo +nightly build #{mode == "release" ? "--release" : ""}", package
-        exec "cargo +nightly run --bin uniffi-bindgen generate src/lib.udl --language swift --out-dir generated"
-        exec "mkdir ExpressionInterpreter"
-        exec "mv generated/ExpressionInterpreter.swift ExpressionInterpreter/ExpressionInterpreter.swift"
-        exec "mv generated/ExpressionInterpreterFFI.modulemap generated/module.modulemap"
+        exec "cargo +nightly run --bin uniffi-bindgen generate src/lib.udl --language swift --out-dir generated", package
+        exec "mkdir ExpressionInterpreter", package
+        exec "mv generated/ExpressionInterpreter.swift ExpressionInterpreter/ExpressionInterpreter.swift", package
+        exec "mv generated/ExpressionInterpreterFFI.modulemap generated/module.modulemap", package
       end
     end
   else

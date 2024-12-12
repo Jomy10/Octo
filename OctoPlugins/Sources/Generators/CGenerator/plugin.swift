@@ -15,28 +15,21 @@ public func generate(
 ) -> UnsafeMutableRawPointer? {
   let lib = _lib.assumingMemoryBound(to: OctoLibrary.self)
   let options = _options.assumingMemoryBound(to: GenerationOptions.self)
+  let cOpts = Unmanaged<Rc<CConfig>>.fromOpaque(options.pointee.languageSpecificOptions!).takeRetainedValue() // ensure cleanup at end of this function
 
   do {
     if lib.pointee.ffiLanguage != .c {
       throw UnsupportedFfiLanguage(lib.pointee.ffiLanguage, supported: [.c])
     }
-    let code = try lib.pointee.rubyGenerate(options: options.pointee)
+    let code = try lib.pointee.cGenerate(options: options.pointee)
     let rccode: Rc<any GeneratedCode> = Rc(code)
     out.pointee = Unmanaged.passRetained(rccode).toOpaque()
   } catch let error {
-    let rcerr = Rc(error)
+    let rcerr: Rc<any Error> = Rc(error)
     return Unmanaged.passRetained(rcerr).toOpaque()
   }
 
-  return nil
-}
+  _ = cOpts
 
-@_cdecl("parseConfigForTOML")
-public func parseConfigForTOML(_ containerRawPtr: UnsafeRawPointer, _ output: UnsafeMutablePointer<UnsafeMutableRawPointer?>) -> UnsafeMutableRawPointer? {
-  return nil
-}
-
-@_cdecl("parseConfigForArguments")
-public func parseConfigForArguments(_ argsPtr: UnsafeRawPointer, out: UnsafeMutablePointer<UnsafeRawPointer?>) -> UnsafeMutableRawPointer? {
   return nil
 }

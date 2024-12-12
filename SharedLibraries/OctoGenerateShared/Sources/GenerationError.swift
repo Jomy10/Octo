@@ -38,3 +38,13 @@ public struct UnsupportedType: Error {
     self.type = type
   }
 }
+
+public struct UnsupportedFfiLanguage: Error {
+  public let ffiLanguage: Language
+  public let supported: [Language]
+
+  public init(_ ffiLanguage: Language, supported: [Language]) {
+    self.ffiLanguage = ffiLanguage
+    self.supported = supported
+  }
+}

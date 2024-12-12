@@ -16,9 +16,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - uses: swift-actions/setup-swift@v2
-        with:
-            swift-version: "5.9"
+      # - uses: swift-actions/setup-swift@v2
+      #   with:
+      #       swift-version: "5.9"
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.3'
