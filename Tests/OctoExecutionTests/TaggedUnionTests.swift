@@ -5,7 +5,7 @@ final class TaggedUnionTests: XCTestCase {
   override class func setUp() {
     super.setUp()
 
-    try! setup(name: "TaggedUnion")
+    try! setup(name: "taggedUnion")
   }
 
   func testRubyTaggedUnion() throws {
