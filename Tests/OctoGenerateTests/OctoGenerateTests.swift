@@ -2,7 +2,7 @@ import XCTest
 @testable import OctoGenerate
 import OctoIntermediate
 import Foundation
-import ColorizeSwift
+import OctoIO
 import OctoGenerateShared
 
 func formatCode(_ code: String) -> String {
@@ -96,7 +96,7 @@ final class OctoGenerateTests: XCTestCase {
     )
 
     let code = try OctoGenerator.generate(language: .ruby, lib: &lib, options: generationOptions)
-    let outPath = "./.build/tests/parseRecordTest.rb"
+    let outPath = "./.build/tests/generateRecordTest.rb"
     try code.write(to: URL(filePath: outPath))
 
     let expected = """

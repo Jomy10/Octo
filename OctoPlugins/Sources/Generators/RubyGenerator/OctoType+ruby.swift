@@ -25,9 +25,18 @@ extension OctoType {
       case .I64: return ":int64"
       case .I128: throw UnsupportedType(language: .ruby, type: self)
       case .U128: throw UnsupportedType(language: .ruby, type: self)
+      case .ISize: return ":int64_t"
+      case .USize: return ":uint64_t"
+      case .IntLeast(size: let size, sizeOnCurrentPlatform: _): return ":int\(size)_t"
+      case .UIntLeast(size: let size, sizeOnCurrentPlatform: _): return ":uint\(size)_t"
+      case .IntFast(size: let size, sizeOnCurrentPlatform: _): return ":int\(size)_t"
+      case .UIntFast(size: let size, sizeOnCurrentPlatform: _): return ":uint\(size)_t"
+      case .IntMax(sizeOnCurrentPlatform: _): return ":int64_t"
+      case .UIntMax(sizeOnCurrentPlatform: _): return ":uint64_t"
       case .F32: return ":float"
       case .F64: return ":double"
       case .FLong: return ":long_double"
+      case .UnicodeCString(scalarTypeSize: _): return ":pointer"
       case .CString:
         if self.mutable {
           return ":pointer"

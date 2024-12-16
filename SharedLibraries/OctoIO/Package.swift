@@ -16,6 +16,7 @@ let package = Package(
     .package(url: "https://github.com/mtynior/ColorizeSwift.git", from: "1.5.0"),
     .package(url: "https://github.com/apple/swift-log.git", from: "1.0.0"),
     .package(url: "https://github.com/sushichop/Puppy", from: "0.7.0"),
+    .package(url: "https://github.com/apple/swift-atomics.git", from: "1.2.0")
   ],
   targets: [
     .target(
@@ -24,6 +25,7 @@ let package = Package(
         "ColorizeSwift",
         "Puppy",
         .product(name: "Logging", package: "swift-log"),
+        .product(name: "Atomics", package: "swift-atomics"),
       ],
       path: "Sources"
     ),

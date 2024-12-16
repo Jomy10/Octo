@@ -35,8 +35,11 @@ public struct OctoLogFormatter: LogFormattable {
     }
 
     var message: String = "[\(levelString)] \(message)"
+    // TODO!
     if let origin = swiftLogInfo["metadata"] {
-      message += " @ \(origin)"
+      if origin != "" {
+        message += " @ \(origin)"
+      }
     }
     return message
   }

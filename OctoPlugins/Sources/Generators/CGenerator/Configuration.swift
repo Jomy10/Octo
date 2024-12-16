@@ -4,13 +4,13 @@ import OctoMemory
 
 public struct CConfig: Decodable {
   /// Prefix types using the library name
-  var prefixTypes: Bool = true
+  //var prefixTypes: Bool = true
   /// Prefix functions with the library name
-  var prefixFunctions: Bool = true
+  //var prefixFunctions: Bool = true
   /// Prefix functions with the library name if they are attached to a type
-  var prefixFunctionsIfAttached: Bool = false
+  //var prefixFunctionsIfAttached: Bool = false
   /// Prefix functions with the type name of the type the function is attached to
-  var prefixAttachedFunctionsWithType: Bool = true
+  //var prefixAttachedFunctionsWithType: Bool = true
   /// Use namespaces instead of the prefixed functions when `__cplusplus` is defined
   var useNamespaceInCxx: Bool = true
 }
@@ -70,15 +70,18 @@ public func parseConfigForArguments(_ argsPtr: UnsafeRawPointer, out: UnsafeMuta
     let args = argsPtr.assumingMemoryBound(to: [[Substring]].self)
     var config = CConfig()
     for arg in args.pointee {
+      if arg.count == 0 {
+        throw ValidationError("Malformed argument: No data '\(arg)' in argument list \(args.pointee)")
+      }
       switch (arg[0]) {
-        case "prefixTypes":
-          config.prefixTypes = try argBoolVal(arg)
-        case "prefixFunctions":
-          config.prefixFunctions = try argBoolVal(arg)
-        case "prefixFunctionsIfAttached":
-          config.prefixFunctionsIfAttached = try argBoolVal(arg)
-        case "prefixAttachedFunctionsWithType":
-          config.prefixAttachedFunctionsWithType = try argBoolVal(arg)
+        //case "prefixTypes":
+        //  config.prefixTypes = try argBoolVal(arg)
+        //case "prefixFunctions":
+        //  config.prefixFunctions = try argBoolVal(arg)
+        //case "prefixFunctionsIfAttached":
+        //  config.prefixFunctionsIfAttached = try argBoolVal(arg)
+        //case "prefixAttachedFunctionsWithType":
+        //  config.prefixAttachedFunctionsWithType = try argBoolVal(arg)
         case "useNamespaceInCxx":
           config.useNamespaceInCxx = try argBoolVal(arg)
         default:

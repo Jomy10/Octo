@@ -111,6 +111,7 @@ Currently, the following languages are implemented:
 
 **Generators**
 - Ruby
+- C
 
 ## Goals
 

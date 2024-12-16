@@ -1,3 +1,4 @@
+import Foundation
 import Clang
 import OctoIntermediate
 import OctoMemory
@@ -46,6 +47,12 @@ public struct CConfig: Decodable {
     self.logLevel = try container.decodeIfPresent(ClangDiagnostic.self, forKey: .logLevel) ?? Self.defaultLogLevel
     self.errorLevel = try container.decodeIfPresent(ClangDiagnostic.self, forKey: .errorLevel) ?? Self.defaultErrorLevel
   }
+
+  public func headerIncluded(_ headerLocation: URL) -> Bool {
+    if self.includeHeaders.count == 0 { return true }
+    // TODO: glob etc
+    return self.includeHeaders.map { URL(filePath: $0) }.contains(headerLocation)
+  }
 }
 
 @_cdecl("parseConfigForTOML")
@@ -88,6 +95,9 @@ public func parseConfigForArguments(_ argsPtr: UnsafeRawPointer, out: UnsafeMuta
     var errorLevel: ClangDiagnostic? = nil
 
     for arg in args.pointee {
+      if arg.count == 0 {
+        throw ValidationError("Malformed argument: No data '\(arg)' in argument list \(args.pointee)")
+      }
       switch (arg[0]) {
         case "include":
           let val = try argVal(arg)

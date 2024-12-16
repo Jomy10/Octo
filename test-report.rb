@@ -1,5 +1,5 @@
 # Output a prettier test report + create a report per language and the supported features
-# requires "xcpretty" to be installed: `gem install xcpretty`
+# requires "xcpretty" and "rexml" to be installed: `gem install xcpretty rexml`
 
 require 'rexml/document'
 require 'colorize'

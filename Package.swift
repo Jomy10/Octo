@@ -10,15 +10,15 @@ let package = Package(
       name: "octo",
       targets: ["OctoCLI"]
     ),
-    //.library(
-    //  name: "Octo",
-    //  targets: ["OctoParse", "OctoIntermediate", "OctoGenerate"]
-    //),
+    .library(
+      name: "Octo",
+      targets: ["OctoParse", "OctoGenerate"]
+    ),
   ],
   dependencies: [
     .package(url: "https://github.com/apple/swift-argument-parser", branch: "main"),
     .package(url: "https://github.com/LebJe/TOMLKit.git", from: "0.6.0"),
-    .package(url: "https://github.com/mtynior/ColorizeSwift.git", from: "1.5.0"),
+//    .package(url: "https://github.com/mtynior/ColorizeSwift.git", from: "1.5.0"),
     .package(url: "https://github.com/apple/swift-system", from: "1.2.1"),
     .package(url: "https://github.com/Jomy10/Plugins.git", branch: "master"),
     .package(path: "SharedLibraries/OctoIntermediate"),
@@ -92,7 +92,8 @@ let package = Package(
         .product(name: "OctoIntermediate", package: "OctoIntermediate"),
         .product(name: "OctoGenerateShared", package: "OctoGenerateShared"),
         "OctoGenerate",
-        "ColorizeSwift"
+//        "ColorizeSwift",
+        "OctoParse"
       ]
     ),
     .testTarget(
@@ -104,7 +105,8 @@ let package = Package(
         .product(name: "OctoIntermediate", package: "OctoIntermediate"),
         .product(name: "OctoIO", package: "OctoIO"),
         .product(name: "SystemPackage", package: "swift-system"),
-        "PluginManager"
+        "PluginManager",
+//        "ColorizeSwift"
       ],
       exclude: ["resources"]
     )

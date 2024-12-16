@@ -4,6 +4,7 @@ import OctoGenerateShared
 extension OctoFunction: CCodeGenerator {
   func generateHeaderCode(options: GenerationOptions, in lib: OctoLibrary) throws -> String {
     """
+    __attribute__((annotate("rename", "\(self.bindingName!)")))
     \(self.returnType.cType(options: options)) \(self.ffiName!)(\(self.arguments.map { arg in
       var attrs = ""
       if arg.isSelfArgument {

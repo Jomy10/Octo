@@ -6,13 +6,37 @@ import OctoParseTypes
 
 var C_PARSING_ERROR: (any Error)? = nil
 
+struct LogOnce {
+  static var msgs: Set<String> = Set()
+
+  static func logOnce(_ msg: String, _ level: Logger.Level) {
+    if !Self.msgs.contains(msg) {
+      clogger.log(level: level, "\(msg)")
+      Self.msgs.insert(msg)
+    }
+  }
+}
+
 func visitC(
   _ cursor: CXCursor,
   _ parent: CXCursor,
   _ clientData: CXClientData?
 ) -> CXChildVisitResult {
-  let library: UnsafeMutablePointer<OctoLibrary> = UnsafeMutableRawPointer(clientData!)
-    .bindMemory(to: OctoLibrary.self, capacity: 1)
+  let userData: UnsafeMutablePointer<UserData> = UnsafeMutableRawPointer(clientData!)
+    .assumingMemoryBound(to: UserData.self)
+  let library = withUnsafeMutablePointer(to: &userData.pointee.library) { $0 }
+  let config = userData.pointee.config
+
+  let (file, _, _, _) = cursor.location.expansionLocation
+  if !config.headerIncluded(URL(filePath: file.fileName)) {
+    LogOnce.logOnce("skipping file \(file.fileName)", .trace)
+    return CXChildVisit_Continue
+  }
+
+  //let (cursorFileLocation, _, _, _) = cursor.location.expansionLocation
+  //if !userData.pointee.config.headerIncluded(URL(filePath: cursorFileLocation.fileName)) {
+  //  return CXChildVisit_Continue
+  //}
 
   do {
     let parentType = parent.cursorType
@@ -20,7 +44,7 @@ func visitC(
       case CXCursor_StructDecl:
         if (parentType.kind == CXType_Typedef) { return CXChildVisit_Continue }
         if (parentType.kind != CXType_Invalid) {
-          throw ParseError("Unhandled parent type for struct: \(parentType.kind) ()", origin: .c(cursor.location))
+          throw ParseError("Unhandled parent type for struct: \(parentType.kind)", origin: .c(cursor.location))
         }
         return try visitStructDecl(cursor, &library.pointee)
       case CXCursor_FieldDecl:
@@ -116,13 +140,21 @@ fileprivate func visitStructDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) t
 
   let recordName = cursor.spelling!
   clogger.trace("@StructDecl.Record \(recordName)")
-  try lib.addObject(
-    OctoRecord(
-      origin: .c(cursor.location),
-      name: recordName,
-      type: .`struct`
-    ), ref: cursor
-  )
+
+  if let obj = lib.getObject(forRef: cursor) as? OctoRecord {
+    if obj.ffiName != recordName { throw ParseError("Redefinition with different name", origin: .c(cursor.location)) }
+    if obj.type != .`struct` {
+      throw ParseError("Redefinition of type \(recordName) with a different type (got \(obj.type), expected struct)", origin: .c(cursor.location))
+    }
+  } else {
+    try lib.addObject(
+      OctoRecord(
+        origin: .c(cursor.location),
+        name: recordName,
+        type: .`struct`
+      ), ref: cursor
+    )
+  }
 
   return CXChildVisit_Recurse
 }
@@ -138,13 +170,20 @@ fileprivate func visitUnionDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) th
 
   clogger.trace("@UnionDecl.Record \(recordName)")
 
-  try lib.addObject(
-    OctoRecord(
-      origin: .c(cursor.location),
-      name: recordName,
-      type: .`union`
-    ), ref: cursor
-  )
+  if let obj = lib.getObject(forRef: cursor) as? OctoRecord {
+    if obj.ffiName != recordName { throw ParseError("Redefinition with different name", origin: .c(cursor.location)) }
+    if obj.type != .union {
+      throw ParseError("Redefinition of type \(recordName) with a different type (got \(obj.type), expected union)", origin: .c(cursor.location))
+    }
+  } else {
+    try lib.addObject(
+      OctoRecord(
+        origin: .c(cursor.location),
+        name: recordName,
+        type: .`union`
+      ), ref: cursor
+    )
+  }
 
   return CXChildVisit_Recurse
 }
@@ -170,27 +209,6 @@ fileprivate func visitFieldDecl(_ cursor: CXCursor, parent: CXCursor, _ lib: ino
   return CXChildVisit_Recurse
 }
 
-// unused
-//func visitVarDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) throws -> CXChildVisitResult {
-//  let decl = try parseVarDecl(cursor)
-
-//  let global = cursor.hasVarDeclGlobalStorage
-//  let external = cursor.hasVarDeclExternalStorage
-
-//  if !global {
-//    clogger.warning("Unhandled non-global variable \(decl)")
-//    return CXChildVisit_Continue
-//  }
-
-//  clogger.debug("@VarDecl \(global ? "global " : "")\(external ? "extern " : "")\(decl.type) \(decl.name)")
-//  lib.addGlobalVariable(
-//    OctoGlobalVariable(type: decl.type, name: decl.name, external: external, origin: cursor.location.into()),
-//    id: cursor
-//  )
-
-//  return CXChildVisit_Continue
-//}
-
 fileprivate func visitTypedefDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) throws -> CXChildVisitResult {
   let cursorType: CXType = cursor.cursorType
 
@@ -199,17 +217,19 @@ fileprivate func visitTypedefDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) 
   }
 
   let typedefType = cursor.typedefDeclUnderlyingType
-  let type = try OctoType(cxType: typedefType, in: lib)
-
   let typedefName = cursorType.typedefName!
+  let type = try OctoType(cxType: typedefType, in: lib, origin: .c(cursor.location))
   clogger.trace("@TypedefDecl.typedef \(typedefName) = \(type)")
-  try lib.addObject(
-    OctoTypedef(
-      origin: .c(cursor.location),
-      name: typedefName,
-      refersTo: type // if this is ._Pending, then it will be filled in later
-    ), ref: cursor
-  )
+  lib.addTypedef(toType: type, name: typedefName)
+
+  //clogger.trace("@TypedefDecl.typedef \(typedefName) = <pending>")
+  //try lib.addObject(
+  //  OctoTypedef(
+  //    origin: .c(cursor.location),
+  //    name: typedefName,
+  //    refersToDeferred: typeDeferred
+  //  ), ref: cursor
+  //)
 
   return CXChildVisit_Recurse
 }
@@ -222,17 +242,25 @@ fileprivate func visitEnumDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) thr
   }
 
   let enumName = cursor.spelling!
-  var enumDeclIntegerType = try OctoType(cxType: cursor.enumDeclIntegerType, in: lib)
+  var enumDeclIntegerType = try OctoType(cxType: cursor.enumDeclIntegerType, in: lib, origin: .c(cursor.location))
   enumDeclIntegerType.mutable = false
 
   clogger.trace("@EnumDecl.Enum \(enumDeclIntegerType) \(enumName)")
-  try lib.addObject(
-    OctoEnum(
-      origin: .c(cursor.location),
-      name: enumName,
-      type: enumDeclIntegerType
-    ), ref: cursor
-  )
+
+  if let obj = lib.getObject(forRef: cursor) as? OctoEnum {
+    if obj.ffiName != enumName { throw ParseError("Redefinition with different name", origin: .c(cursor.location)) }
+    if obj.type != enumDeclIntegerType {
+      throw ParseError("Redefinition of enum with different enum integer type", origin: .c(cursor.location))
+    }
+  } else {
+    try lib.addObject(
+      OctoEnum(
+        origin: .c(cursor.location),
+        name: enumName,
+        type: enumDeclIntegerType
+      ), ref: cursor
+    )
+  }
 
   return CXChildVisit_Recurse
 }
@@ -267,7 +295,7 @@ fileprivate func visitEnumConstantDecl(_ cursor: CXCursor, parent: CXCursor, _ l
 
 fileprivate func visitFunctionDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) throws -> CXChildVisitResult {
   let cursorType: CXType = cursor.cursorType
-  guard case .Function(callingConv: _, args: _, result: let resultType) = try OctoType(cxType: cursorType, in: lib).kind else {
+  guard case .Function(callingConv: _, args: _, result: let resultType) = try OctoType(cxType: cursorType, in: lib, origin: .c(cursor.location)).kind else {
     throw ParseError.unhandledKind(cursorType.kind, location: cursor.location)
   }
 
@@ -326,7 +354,6 @@ fileprivate func visitAnnotateAttr(_ cursor: CXCursor, parent: CXCursor, _ lib: 
   var tokens: UnsafeMutablePointer<CXToken>? = nil
   var numTokens: UInt32 = 0
   clang_tokenize(cursor.translationUnit, range, &tokens, &numTokens)
-  defer { clang_disposeTokens(cursor.translationUnit, tokens, numTokens) }
   let params = try parseAnnotateAttrParams(translationUnit: cursor.translationUnit, fromTokens: tokens!, numTokens: numTokens)
 
   clogger.trace("@AnnotateAttr \(parentName) -> \(name) \(String(describing: params))")
@@ -337,6 +364,7 @@ fileprivate func visitAnnotateAttr(_ cursor: CXCursor, parent: CXCursor, _ lib: 
   }
 
   try addAttribute(cursor: cursor, parent: parent, attr, &lib)
+  clang_disposeTokens(cursor.translationUnit, tokens, numTokens)
 
   return CXChildVisit_Recurse
 }
@@ -348,7 +376,7 @@ fileprivate func visitUnexposedAttr(_ cursor: CXCursor, parent: CXCursor, _ lib:
   var tokens: UnsafeMutablePointer<CXToken>? = nil
   var numTokens: UInt32 = 0
   clang_tokenize(cursor.translationUnit, range, &tokens, &numTokens)
-  defer { clang_disposeTokens(cursor.translationUnit, tokens, numTokens) }
+
   var name: String = ""
   guard let attr = try parseUnexposedAttribute(origin: cursor.location, translationUnit: cursor.translationUnit, fromTokens: tokens!, numTokens: numTokens, in: lib, nameIfNil: &name) else {
     clogger.warning("Ignored attribute '\(name)' at \(cursor.location)")
@@ -357,6 +385,7 @@ fileprivate func visitUnexposedAttr(_ cursor: CXCursor, parent: CXCursor, _ lib:
 
   clogger.trace("@UnexposedAttr \(parentName) -> \(attr)")
   try addAttribute(cursor: cursor, parent: parent, attr, &lib)
+  clang_disposeTokens(cursor.translationUnit, tokens, numTokens)
 
   return CXChildVisit_Recurse
 }

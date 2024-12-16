@@ -2,38 +2,37 @@ import OctoIntermediate
 import OctoGenerateShared
 
 extension OctoEnum: CCodeGenerator {
-  func cTypedefName(options: GenerationOptions) -> String {
-    if (options.cOpts.prefixTypes) {
-      return "\(options.moduleName)_\(self.bindingName!)"
-    } else {
-      return "\(self.bindingName!)"
-    }
-  }
-
-  func cEnumName(options: GenerationOptions) -> String {
-    if (options.cOpts.prefixTypes) {
-      return "\(options.moduleName)_\(self.bindingName!)"
-    } else {
-      return "\(self.bindingName!)"
-    }
-  }
-
   func generateHeaderCode(options: GenerationOptions, in lib: OctoLibrary) throws -> String {
-    let enumName = self.cEnumName(options: options)
-    let typedefName = self.cTypedefName(options: options)
+    let enumName = "_" + self.ffiName!
+    //let typedefName = self.cTypedefName(options: options)
 
-    var prefixAttribute = ""
+    var attributes: [String] = []
     if let prefix = self.enumPrefix {
-      prefixAttribute = "__attribute__((annotate(\"enumPrefix\", \"\(prefix)\")))"
+      attributes.append("__attribute__((annotate(\"enumPrefix\", \"\(prefix)\")))")
     }
 
-    return """
-    typedef enum \(enumName) \(typedefName);
-    enum \(enumName) {
-    \(indentCode(indent: options.indent, {
-      self.cases.map { c in "\(c.ffiName!)\(c.value == nil ? "" : " = \(c.value!.literalValue)")" }.joined(separator: ", ")
-    }))
-    }\(prefixAttribute);
-    """
+    attributes.append("__attribute__((annotate(\"rename\", \"\(self.bindingName!)\")))")
+
+    return codeBuilder {
+      if options.cOpts.useNamespaceInCxx {
+        """
+        #ifdef __cplusplus
+        typedef enum \(enumName) \(self.bindingName!);
+        #else
+        typedef enum \(enumName) \(self.ffiName!);
+        #endif
+        """
+      } else {
+        "typedef enum \(enumName) \(self.ffiName!);"
+      }
+
+      """
+      enum \(enumName) {
+      \(indentCode(indent: options.indent, {
+        self.cases.map { c in "\(c.ffiName!)\(c.value == nil ? "" : " = \(c.value!.literalValue)")" }.joined(separator: ", ")
+      }))
+      }\(attributes);
+      """
+    }
   }
 }

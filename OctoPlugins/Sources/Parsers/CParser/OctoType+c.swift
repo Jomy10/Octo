@@ -7,13 +7,24 @@ import OctoParseTypes
 extension OctoType {
   init(
     cxType: CXType,
-    in lib: OctoLibrary
+    in lib: OctoLibrary,
+    origin: OctoOrigin? = nil
   ) throws {
-    let kind = try OctoType.Kind(cxType: cxType, in: lib)
-    self.init(cxType: cxType, kind: kind)
+    let kind: OctoType.Kind
+    var resolveTypeKind: ((OctoLibrary) -> OctoType.Kind)? = nil
+    do {
+      kind = try OctoType.Kind(cxType: cxType, in: lib, origin: origin)
+    } catch let mustResolve as Kind.MustResolve {
+      kind = .Void
+      resolveTypeKind = mustResolve.resolution
+    } catch let error {
+      throw error
+    }
+    self.init(cxType: cxType, kind: kind, origin: origin)
+    self.resolveTypeKind = resolveTypeKind
   }
 
-  init(cxType: CXType, kind: OctoType.Kind) {
+  init(cxType: CXType, kind: OctoType.Kind, origin: OctoOrigin? = nil) {
     // TODO: get rid of nullability attributes and rely on this function?
     let nullability = clang_Type_getNullability(cxType)
     self.init(
@@ -25,7 +36,12 @@ extension OctoType {
 }
 
 extension OctoType.Kind {
-  init(cxType: CXType, in lib: OctoLibrary) throws {
+  // TODO: better way of handling this
+  struct MustResolve: Error {
+    let resolution: (OctoLibrary) -> OctoType.Kind
+  }
+
+  init(cxType: CXType, in lib: OctoLibrary, origin: OctoOrigin? = nil) throws {
     switch (cxType.kind) {
       case CXType_Void: self = .Void
       case CXType_Bool: self = .Bool
@@ -46,23 +62,24 @@ extension OctoType.Kind {
           case 64 / 8: self = .U64
           case 128 / 8: self = .U128
           default:
-            throw ParseError("Invalid length for unsigned integer variant \(cxType.size) bytes")
+            throw ParseError("Invalid length for unsigned integer variant \(cxType.size) bytes", origin: origin)
         }
       case CXType_Char_S: fallthrough
-      case CXType_SChar: fallthrough
+      case CXType_SChar:
+        self = .Char8
       case CXType_Short: fallthrough
       case CXType_Int: fallthrough
       case CXType_Long: fallthrough
       case CXType_LongLong: fallthrough
       case CXType_Int128:
-        switch (cxType.size) {
+        switch (Int(cxType.size)) {
           case 8 / 8: self = .I8
           case 16 / 8: self = .I16
           case 32 / 8: self = .I32
           case 64 / 8: self = .I64
           case 128 / 8: self = .I128
           default:
-            throw ParseError("Invalid length for signed integer variant \(cxType.size) bytes")
+            throw ParseError("Invalid length for signed integer variant \(cxType.size) bytes", origin: origin)
         }
       case CXType_Float: self = .F32
       case CXType_Double: self = .F64
@@ -70,7 +87,8 @@ extension OctoType.Kind {
       case CXType_Pointer:
         let type = try OctoType(cxType: cxType.pointeeType, in: lib)
         switch (type.kind) {
-          case .UnicodeScalar: fallthrough
+          case .UnicodeScalar(bitCharSize: let size):
+            self = .UnicodeCString(scalarTypeSize: size!)
           case .Char8:
             self = .CString
           default:
@@ -88,28 +106,70 @@ extension OctoType.Kind {
           case CXCursor_StructDecl: fallthrough
           case CXCursor_UnionDecl:
             guard let object = lib.getObject(forRef: cursor) as? OctoRecord else {
-              throw ParseError("Object \(cursor.spelling!) is not a record or doesn't exist")
+              throw ParseError("Object \(cursor.spelling!) is not a record or doesn't exist", origin: origin)
             }
             self = .Record(object)
           case CXCursor_EnumDecl:
             guard let object = lib.getObject(forRef: cursor) as? OctoEnum else {
-              throw ParseError("Object \(cursor.spelling!) is not an enum or doesn't exist")
+              throw ParseError("Object \(cursor.spelling!) is not an enum or doesn't exist", origin: origin)
             }
             self = .Enum(object)
           case CXCursor_TypedefDecl:
-            guard let object = lib.getObject(forRef: cursor) as? OctoTypedef else {
-              throw ParseError("Object \(cursor.spelling!) is not a typedef or doesn't exist")
+            if let object = lib.getObject(forRef: cursor) as? OctoTypedef {
+              if object.mustFinalize {
+                throw MustResolve(resolution: { lib in
+                  object.refersTo.kind
+                })
+              } else {
+                self = object.refersTo.kind
+              }
+            } else {
+              guard let type = Self.systemTypedef(cxType: cxType, name: cursor.spelling!) else {
+                throw ParseError("Object \(cursor.spelling!) is not a typedef or doesn't exist", origin: origin)
+              }
+              self = type
             }
-            // TODO: mutability and optional?
-            self = object.refersTo.kind
-          default: throw ParseError("Unhandled elaborated type \(cursor.kind)")
+          default: throw ParseError("Unhandled elaborated type \(cursor.kind)", origin: origin)
         }
       case CXType_ConstantArray:
         let type = try OctoType(cxType: cxType.arrayElementType, in: lib)
         let size: Int64 = cxType.arraySize
         self = .ConstantArray(type: type, size: size)
       default:
-        throw ParseError.unhandledKind(cxType.kind)
+        throw ParseError.unhandledKind(cxType.kind, origin: origin)
+    }
+  }
+
+  static func systemTypedef(cxType: CXType, name: String) -> OctoType.Kind? {
+    switch (name) {
+      case "size_t": return .USize
+      case "intptr_t": return .ISize
+      case "uintptr_t": return .USize
+      case "intmax_t": return .IntMax(sizeOnCurrentPlatform: Int(cxType.size))
+      case "uintmax_t": return .UIntMax(sizeOnCurrentPlatform: Int(cxType.size))
+      case "uint8_t": return .U8
+      case "uint16_t": return .U16
+      case "uint32_t": return .U32
+      case "uint64_t": return .U64
+      case "uint128_t": return .U128
+      case "int8_t": return .I8
+      case "int16_t": return .I16
+      case "int32_t": return .I32
+      case "int64_t": return .I64
+      case "int128_t": return .I128
+      case "char8_t": return .UnicodeScalar(bitCharSize: 8)
+      case "char16_t": return .UnicodeScalar(bitCharSize: 16)
+      case "char32_t": return .UnicodeScalar(bitCharSize: 32)
+      case "wchar_t": return .UnicodeScalar(bitCharSize: Int(cxType.size))
+      case "int_least8_t": return .IntLeast(size: 8, sizeOnCurrentPlatform: Int(cxType.size))
+      case "int_least16_t": return .IntLeast(size: 16, sizeOnCurrentPlatform: Int(cxType.size))
+      case "int_least32_t": return .IntLeast(size: 32, sizeOnCurrentPlatform: Int(cxType.size))
+      case "int_least64_t": return .IntLeast(size: 64, sizeOnCurrentPlatform: Int(cxType.size))
+      case "uint_least8_t": return .UIntLeast(size: 8, sizeOnCurrentPlatform: Int(cxType.size))
+      case "uint_least16_t": return .UIntLeast(size: 16, sizeOnCurrentPlatform: Int(cxType.size))
+      case "uint_least32_t": return .UIntLeast(size: 32, sizeOnCurrentPlatform: Int(cxType.size))
+      case "uint_least64_t": return .UIntLeast(size: 64, sizeOnCurrentPlatform: Int(cxType.size))
+      default: return nil
     }
   }
 
@@ -132,7 +192,7 @@ extension OctoCallingConv {
       //case CXCallingConv_SwiftAsync: self = .swiftAsync
       //case CXCallingConv_Win64: self = .win64
       //case CXCallingConv_Invalid: self = .invalid
-      default: throw ParseError("unimplemented")
+      default: throw ParseError("unimplemented calling convention \(cxCallingConv)")
     }
   }
 }

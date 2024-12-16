@@ -16,12 +16,6 @@ public struct OctoLibrary: AutoRemovable {
   //public var objectInclude: (OctoObject) -> Bool = { (object: OctoObject) in true }
   // TODO: provide includes for C?
 
-  @available(*, deprecated)
-  public func includedObjects() -> some Sequence<OctoObject> {
-    //self.objects.filter(self.objectInclude)
-    self.objects
-  }
-
   public init() {}
 
   enum AddObjectError: Error {
@@ -43,21 +37,13 @@ public struct OctoLibrary: AutoRemovable {
     }
     self.langRefMap[ref] = self.objects.count
     self.objects.append(obj)
-    //var resolved: [Int] = []
-    //for (i, resolution) in self.deferredTypedefResolutions.enumerated() {
-    //  let (typedefName, typeResolution) = resolution
-    //  if let resolvedType = typeResolution(self) {
-    //    self.addTypedef(toType: resolvedType, name: typedefName)
-    //    resolved.append(i)
-    //  }
-    //}
-    //for resolvedIndex in resolved.reversed() {
-    //  self.deferredTypedefResolutions.remove(at: resolvedIndex)
-    //}
   }
 
   public func getObject(forRef ref: AnyHashable) -> OctoObject? {
     guard let id = self.langRefMap[ref] else {
+      #if OCTO_DEBUGINFO
+      Self.logger.trace("Couldn't find object for ref \(ref) in \(self.langRefMap) \(self.langRefMap.map { (k,_) in k == ref })")
+      #endif
       return nil
     }
     return self.objects[id]
@@ -157,12 +143,19 @@ public struct OctoLibrary: AutoRemovable {
 
 extension OctoLibrary: CustomDebugStringConvertible {
   public var debugDescription: String {
-    """
+    var msg = """
     OctoLibrary:
       ffiLanguage = \(self.ffiLanguage)
-    \(self.objects.filter { obj in !(obj is OctoField || obj is OctoEnumCase || obj is OctoArgument) }.map { obj in
+    \(self.objects.enumerated().filter { (_, obj) in !(obj is OctoField || obj is OctoEnumCase || obj is OctoArgument) }.map { (i, obj) in
       String(reflecting: obj)
     }.joined(separator: "\n"))
     """
+    #if OCTO_DEBUGINFO
+    msg += "\n" + self.langRefMap.map { (k, v) in
+      let obj = self.objects[v]
+      return "\(k): \(obj.ffiName ?? "\(obj)")"
+    }.joined(separator: "\n")
+    #endif
+    return msg
   }
 }

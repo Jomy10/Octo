@@ -1,6 +1,5 @@
 import OctoIO
 import ArgumentParser
-import ColorizeSwift
 
 fileprivate extension ValidationError {
   private static func formatShouldntExist(_ argName: String) -> String {

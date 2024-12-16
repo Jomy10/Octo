@@ -20,18 +20,20 @@ public func plugin_parseC(_ input: UnsafeRawPointer, _ config: UnsafeRawPointer,
     let lib = try parseC(input: inputURL.pointee, config: cConfig.takeInner())
     let libPtr = Unmanaged.passRetained(lib).toOpaque()
     out.pointee = libPtr
-  } catch let error as ParseError {
-    let rcerr = Rc(error)
-    return Unmanaged.passRetained(rcerr).toOpaque()
   } catch let error {
-    // TODO: should this be handled?
-    fatalError(error.localizedDescription)
+    let rcerr: Rc<any Error> = Rc(error)
+    return Unmanaged.passRetained(rcerr).toOpaque()
   }
   //let lib = OctoLibrary()
   //let autoreleaseLib = AutoRemoveReference(lib)
   //let unmanagedLib = Unmanaged.passRetained(autoreleaseLib)
   //out.pointee = unmanagedLib.toOpaque()
   return nil
+}
+
+struct UserData {
+  var library: OctoLibrary
+  let config: CConfig
 }
 
 func parseC(input inputURL: URL, config: CConfig) throws -> AutoRemoveReference<OctoLibrary> {
@@ -64,14 +66,22 @@ func parseC(input inputURL: URL, config: CConfig) throws -> AutoRemoveReference<
 
   let cursor = CXCursor(forTranslationUnit: unit)
 
-  var library = OctoLibrary()
-  library.destroy = {
+  var data = UserData(library: OctoLibrary(), config: config)
+  data.library.destroy = {
     index.dispose()
     unit.dispose()
   }
+  //library.objectInclude = { object in
+  //  switch (object.origin) {
+  //    case .file(file: let file, line: _, column: _):
+  //      return config.headerIncluded(file)
+  //    default:
+  //      return true
+  //  }
+  //}
 
   do {
-    try cursor.visitChildren(visitC, userData: &library)
+    try cursor.visitChildren(visitC, userData: &data)
   } catch is CXCursor.VisitChildrenBreak {
     guard let err = C_PARSING_ERROR else {
       fatalError("unreachable (bug)")
@@ -82,5 +92,5 @@ func parseC(input inputURL: URL, config: CConfig) throws -> AutoRemoveReference<
     fatalError("unreachable")
   }
 
-  return AutoRemoveReference(library)
+  return AutoRemoveReference(data.library)
 }

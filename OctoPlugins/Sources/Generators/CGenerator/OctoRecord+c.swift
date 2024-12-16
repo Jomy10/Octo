@@ -2,24 +2,20 @@ import OctoIntermediate
 import OctoGenerateShared
 
 extension OctoRecord: CCodeGenerator {
+  @available(*, deprecated)
   func cTypedefName(options: GenerationOptions) -> String {
-    if (options.cOpts.prefixTypes) {
-      return "\(options.moduleName)_\(self.bindingName!)"
-    } else {
-      return "\(self.bindingName!)"
-    }
+    fatalError()
+    // ffiName, bindingName in c++ if namespaces
   }
 
+  @available(*, deprecated)
   func cRecordName(options: GenerationOptions) -> String {
-    if options.cOpts.prefixTypes {
-      return "_\(options.moduleName)_\(self.ffiName!)"
-    } else {
-      return "_\(self.ffiName!)"
-    }
+    fatalError()
+    // ffiName, bindingName in c++ if namespaces
   }
 
   func generateHeaderCode(options: GenerationOptions, in lib: OctoLibrary) throws -> String {
-    let recordName = self.cRecordName(options: options)
+    let recordName = "_" + self.ffiName!
 
     var attributes = ""
     let recordType: String
@@ -31,19 +27,19 @@ extension OctoRecord: CCodeGenerator {
         recordType = "struct"
     }
 
-    let typedefName = self.cTypedefName(options: options)
+    attributes.append("__attribute__((annotate(\"rename\", \"\(self.bindingName!)\")))")
 
     return codeBuilder {
       if options.cOpts.useNamespaceInCxx {
         """
         #ifdef __cplusplus
-        typedef struct \(recordName) \(self.bindingName!);
+        typedef \(recordType) \(recordName) \(self.bindingName!);
         #else
-        typedef struct \(recordName) \(typedefName);
+        typedef \(recordType) \(recordName) \(self.ffiName!);
         #endif
         """
       } else {
-        "typedef struct \(recordName) \(typedefName);"
+        "typedef \(recordType) \(recordName) \(self.ffiName!);"
       }
 
       """
@@ -53,7 +49,7 @@ extension OctoRecord: CCodeGenerator {
           if let caseName = field.taggedUnionCaseName {
             "__attribute__((annotate(\"taggedUnionType\", \"\(caseName)\")))" // TODO: enum prefix!
           }
-          field.type.cType(options: options, name: field.bindingName!) + ";"
+          field.type.cType(options: options, name: field.bindingName!, isRecordField: true) + ";"
         }
       }))
       }\(attributes);

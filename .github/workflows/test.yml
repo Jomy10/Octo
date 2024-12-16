@@ -27,7 +27,7 @@ jobs:
         run: gem install xcpretty -v 0.3
       - uses: KyleMayes/install-llvm-action@v2
         with:
-          version: "15" # TODO: platform dependent (https://github.com/KyleMayes/install-llvm-action/blob/master/assets.json)
+          version: "17" # TODO: platform dependent (https://github.com/KyleMayes/install-llvm-action/blob/master/assets.json)
       - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: nightly

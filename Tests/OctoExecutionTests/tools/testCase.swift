@@ -3,11 +3,14 @@ import XCTest
 import OctoIO
 import OctoParse
 import OctoGenerate
+import OctoIntermediate
 import OctoGenerateShared
 import SystemPackage
 import PluginManager
 
 func setup(name: String) throws {
+  setupTestLogger("be.jonaseveraert.Octo.Tests")
+    
   // Tests output directory
   try FileManager.default.createDirectory(
     atPath: "./.build/tests/",
@@ -92,6 +95,9 @@ func execRubyTestCase(
     config: config,
     input: testFile("\(name)/\(name).h")
   )
+  try lib.inner.finalize()
+
+  print(String(reflecting: lib.inner), to: .stderr)
 
   let code = try OctoGenerator.generate(
     language: .ruby,

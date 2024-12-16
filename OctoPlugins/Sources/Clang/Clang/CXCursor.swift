@@ -98,13 +98,32 @@ extension CXCursor {
   }
 }
 
+// Only used in CParser! --> This implementation mitigates the parent
+// to allow for declaring typedefs before the type itself is declared
 extension CXCursor: Hashable, Equatable {
   public static func ==(lhs: Self, rhs: Self) -> Bool {
-    clang_equalCursors(lhs, rhs) != 0
+    //clang_equalCursors(lhs, rhs) != 0
+    if lhs.kind != rhs.kind { return false }
+    let res = lhs.xdata == rhs.xdata
+      && lhs.data.1! == rhs.data.1!
+      && lhs.data.2! == rhs.data.2!
+
+    if lhs.kind != CXCursor_EnumDecl && lhs.kind != CXCursor_StructDecl && lhs.kind != CXCursor_UnionDecl {
+      return res && lhs.data.0! == rhs.data.0!
+    } else {
+      return res
+    }
   }
 
   public func hash(into hasher: inout Hasher) {
-    hasher.combine(clang_hashCursor(self))
+    //hasher.combine(clang_hashCursor(self))
+    hasher.combine(self.kind.rawValue)
+    hasher.combine(self.xdata)
+    if self.kind != CXCursor_EnumDecl && self.kind != CXCursor_StructDecl && self.kind != CXCursor_UnionDecl {
+      hasher.combine(self.data.0!)
+    }
+    hasher.combine(self.data.1!)
+    hasher.combine(self.data.2!)
   }
 }
 

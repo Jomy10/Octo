@@ -1,10 +1,13 @@
 import Foundation
+import Atomics
 @_exported import Logging
 @_exported import Puppy
 
 public protocol IntoMetadataValue {
   func into() -> Logger.MetadataValue
 }
+
+var isBootstrappedOnce = ManagedAtomic<Bool>(false)
 
 extension Logger {
   public func trace(
@@ -71,6 +74,14 @@ extension Logger {
     origin: some IntoMetadataValue
   ) -> Never {
     self.fatal(message(), metadata: ["origin": origin.into()])
+  }
+}
+
+extension LoggingSystem {
+  public static func bootstrapOnce(_ factory: @escaping (String) -> LogHandler) {
+    let isBootstrapped = isBootstrappedOnce.exchange(true, ordering: .relaxed)
+    if isBootstrapped { return }
+    Self.bootstrap(factory)
   }
 }
 

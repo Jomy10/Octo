@@ -7,9 +7,9 @@ func setupTestLogger(_ ctx: String) {
   let consoleLogger = ConsoleLogger(ctx, logFormat: logFormat)
   var puppy = Puppy()
   puppy.add(consoleLogger)
-  LoggingSystem.bootstrap {
+  LoggingSystem.bootstrapOnce {
     var handler = PuppyLogHandler(label: $0, puppy: puppy)
-    handler.logLevel = .debug
+    handler.logLevel = .trace
     return handler
   }
 }

@@ -1,4 +1,5 @@
 import Plugins
+import Foundation
 import OctoMemory
 import OctoIntermediate
 import OctoGenerateShared
@@ -11,7 +12,7 @@ extension Plugin {
     UnsafeRawPointer, // input (URL)
     UnsafeRawPointer, // config (Rc<LangConfig?>)
     UnsafeMutablePointer<UnsafeMutableRawPointer?> // output AutoRemoveReference<OctoLibrary>
-  ) -> UnsafeMutableRawPointer? // error (ParseError)
+  ) -> UnsafeMutableRawPointer? // error (any Error)
 
   /// Indicates whether the parser expects a file or a directory
   public typealias ParserExpectsFileFunction = @convention(c) () -> UInt8
@@ -36,7 +37,7 @@ extension Plugin {
 }
 
 extension Plugin {
-  public var parse: PluginFunction<ParseFunction> {
+  public var parseFn: PluginFunction<ParseFunction> {
     self.loadFunction(name: "parse")!
   }
 
@@ -50,6 +51,22 @@ extension Plugin {
 
   public var outputIsFileFn: PluginFunction<GeneratorOutputIsFileFunction> {
     self.loadFunction(name: "outputIsFile")!
+  }
+
+  public var parse: (URL, UnsafeMutableRawPointer) throws -> AutoRemoveReference<OctoLibrary> {
+    return { (inputURL, config) in
+      var libPtr: UnsafeMutableRawPointer? = nil
+      let error = withUnsafePointer(to: inputURL) { inputURLPtr in
+        self.parseFn.function(inputURLPtr, config, &libPtr)
+      }
+      if let error = error {
+        let rcerror: Rc<any Error> = Unmanaged.fromOpaque(error).takeRetainedValue()
+        throw rcerror.takeInner()
+      }
+      let unmanagedLib: Unmanaged<AutoRemoveReference<OctoLibrary>> = Unmanaged.fromOpaque(libPtr!)
+      let lib: AutoRemoveReference<OctoLibrary> = unmanagedLib.takeRetainedValue()
+      return lib
+    }
   }
 
   public var parserExpectsFile: Bool {

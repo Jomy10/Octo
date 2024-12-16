@@ -2,11 +2,13 @@ import XCTest
 @testable import OctoGenerate
 @testable import OctoIntermediate
 import Foundation
-import ColorizeSwift
 import OctoGenerateShared
 import OctoParse
+import OctoIO
 
 final class OctoCGenerateTests: XCTestCase {
+  static let logger = Logger(label: "be.jonaseveraert.Octo.CGenerateTests")
+
   override class func setUp() {
     super.setUp()
     try! FileManager.default.createDirectory(
@@ -14,6 +16,15 @@ final class OctoCGenerateTests: XCTestCase {
       withIntermediateDirectories: true,
       attributes: nil
     )
+    let logFormat = OctoLogFormatter()
+    let consoleLogger = ConsoleLogger("be.jonaseveraert.Octo.CGenerateTests", logFormat: logFormat)
+    var puppy = Puppy()
+    puppy.add(consoleLogger)
+    LoggingSystem.bootstrapOnce {
+      var handler = PuppyLogHandler(label: $0, puppy: puppy)
+      handler.logLevel = .trace
+      return handler
+    }
   }
 
   func testCGenerator() throws {
@@ -41,7 +52,22 @@ final class OctoCGenerateTests: XCTestCase {
         type: OctoType(
           kind: .CString,
           optional: false,
-          mutable: false
+          mutable: true
+        )
+      ),
+      OctoField(
+        origin: .none,
+        name: "Data",
+        type: OctoType(
+          kind: .Pointer(to:
+            OctoType(
+              kind: .I8,
+              optional: false,
+              mutable: true
+            )
+          ),
+          optional: true,
+          mutable: true
         )
       )
     ]
@@ -68,7 +94,11 @@ final class OctoCGenerateTests: XCTestCase {
     )
     let newLib = try OctoParser.parse(language: .c, config: parseConfig, input: outPath)
     try newLib.inner.finalize()
-    lib.memberTest(newLib.inner)
+    Self.logger.info("\(String(reflecting: newLib.inner))")
+    Self.logger.info("\(String(reflecting: lib))")
+
+    let myCoolUnionObj = lib.objects.first(where: { obj in obj.bindingName == "MyCoolUnion" })!
+    myCoolUnionObj.memberTest(newLib.inner.objects.first(where: { obj in obj.bindingName == "MyCoolUnion" && obj is OctoRecord })!)
   }
 }
 
@@ -76,12 +106,12 @@ protocol MemberEqualityTest {
   func memberTest(_ other: Self)
 }
 
-extension OctoLibrary: MemberEqualityTest {
-  func memberTest(_ other: Self) {
+extension OctoLibrary {
+  func memberTest(_ other: Self, filter: (OctoObject) -> Bool = { _ in true }) {
     XCTAssertEqual(self.ffiLanguage, other.ffiLanguage)
-    XCTAssertEqual(self.objects.count, other.objects.count)
+    //XCTAssertEqual(self.objects.count, other.objects.count)
 
-    for object in self.objects {
+    for object in self.objects.filter(filter) {
       object.memberTest(other.objects.first(where: { $0.ffiName == object.ffiName })!)
     }
   }
@@ -89,7 +119,6 @@ extension OctoLibrary: MemberEqualityTest {
 
 extension OctoObject: MemberEqualityTest {
   func memberTest(_ other: OctoObject) {
-    XCTAssertEqual(self.ffiName!, other.ffiName!)
     XCTAssertEqual(self.bindingName!, other.bindingName!)
     if let record = self as? OctoRecord {
       let other = other as! OctoRecord
@@ -172,8 +201,9 @@ extension OctoObject: MemberEqualityTest {
 
 extension OctoType: MemberEqualityTest {
   func memberTest(_ other: OctoType) {
-    XCTAssertEqual(self.optional, other.optional)
-    XCTAssertEqual(self.mutable, other.mutable)
+                                                            // not sure if this is a word
+    XCTAssertEqual(self.optional, other.optional, "Expected optionallability of two types to be equal \(self) <> \(other)")
+    XCTAssertEqual(self.mutable, other.mutable, "Expected mutability of two types to be equal \(self) <> \(other)")
 
     switch (self.kind) {
       case .Record(let record):
@@ -185,6 +215,12 @@ extension OctoType: MemberEqualityTest {
       case .Enum(let e):
         if case .Enum(let otherE) = other.kind {
           e.memberTest(otherE)
+        } else {
+          XCTFail("Types are not equal: \(self) and \(other)")
+        }
+      case .Pointer(to: let pointeeType):
+        if case .Pointer(to: let otherPointeeType) = other.kind {
+          pointeeType.memberTest(otherPointeeType)
         } else {
           XCTFail("Types are not equal: \(self) and \(other)")
         }

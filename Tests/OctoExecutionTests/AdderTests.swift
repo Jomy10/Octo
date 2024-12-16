@@ -10,8 +10,6 @@ final class AdderTests: XCTestCase {
   override class func setUp() {
     super.setUp()
 
-    setupTestLogger("be.jonaseveraert.Octo.AdderTests")
-
     try! setup(name: "adder")
 
     // General tools info
