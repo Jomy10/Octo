@@ -18,7 +18,7 @@ public enum IOStream: TextOutputStream {
     }
   }
   #elseif canImport(Glibc)
-  var to: UnsafeMutablePonter<FILE> {
+  var to: UnsafeMutablePointer<FILE> {
     switch (self) {
       case .stdout: return Glibc.stdout
       case .stderr: return Glibc.stderr

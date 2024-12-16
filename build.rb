@@ -14,6 +14,8 @@ def pluginsGroup
   [:CParser, :CGenerator, :RubyGenerator]
 end
 
+mode = ARGV[1] || "debug"
+
 case ARGV[0]
 when "all", nil
   packages << :ExpressionInterpreter
@@ -31,17 +33,20 @@ when "SharedLibraries"
 when "CLI"
   packages << :octo
 when "test"
-  packages << :octo
-  packages << :SharedLibraries
+  if ARGV[1].nil?
+    packages << :octo
+    packages << :SharedLibraries
+  else
+    packages << :octo
+  end
   swiftMode = :test
+  mode = "debug" # TODO: allow selecting
 when "clean"
   exec "cargo clean", "cleaning cargo workspace"
   exec "swift package clean", "cleaning swift package"
 else
   packages << ARGV[0].to_sym
 end
-
-mode = ARGV[1] || "debug"
 
 for package in packages
   puts "Building package #{package}...".blue
@@ -135,7 +140,8 @@ let PLUGIN_PATH = URL(filePath: "#{plugin_path}").resolvingSymlinksInPath()
       else
         exec "cargo +nightly build #{mode == "release" ? "--release" : ""}", package
         exec "cargo +nightly run --bin uniffi-bindgen generate src/lib.udl --language swift --out-dir generated", package
-        exec "mkdir ExpressionInterpreter", package
+        # exec "mkdir ExpressionInterpreter", package
+        Dir.mkdir "ExpressionInterpreter" unless Dir.exist? "ExpressionInterpreter"
         exec "mv generated/ExpressionInterpreter.swift ExpressionInterpreter/ExpressionInterpreter.swift", package
         exec "mv generated/ExpressionInterpreterFFI.modulemap generated/module.modulemap", package
       end
