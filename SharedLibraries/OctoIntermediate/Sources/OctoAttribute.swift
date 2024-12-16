@@ -63,18 +63,22 @@ public enum OctoAttribute {
           }
         }
         // Get the object we want to attach to
-        var obj: OctoObject
-        if let typedef = lib.getObject(byName: attachToName) as? OctoTypedef { // get inner object from typedef
-          obj = try _typedefInnerObject(typedef, origin: origin)
-          while let typedef = obj as? OctoTypedef {
-            obj = try _typedefInnerObject(typedef, origin: origin)
-          }
-        } else {
-          guard let obj2 = lib.getObject(byName: attachToName) else {
-            throw AttributeError("Cannot attach function to \"\(attachToName)\": object doesn't exist", origin: origin)
-          }
-          obj = obj2
+        guard let obj: OctoObject = lib.getObject(byName: attachToName) else {
+          fatalError("unhandled")
         }
+        //if let typedef = lib.getObject(byName: attachToName) as? OctoTypedef { // get inner object from typedef
+        //  obj = try _typedefInnerObject(typedef, origin: origin)
+        //  while let typedef = obj as? OctoTypedef {
+        //    obj = try _typedefInnerObject(typedef, origin: origin)
+        //  }
+        //} else {
+        //  guard let obj2 = lib.getObject(byName: attachToName) else {
+        //    throw AttributeError("Cannot attach function to \"\(attachToName)\": object doesn't exist", origin: origin)
+        //  }
+        //  obj = obj2
+        //}
+        //if let typedef = obj as? OctoTypedef {
+        //  self = .deferredAttach(to: typedef, type: type ?? .method)
         if let fnAttachable = obj as? (any OctoFunctionAttachable) {
           self = .attach(to: fnAttachable, type: type ?? .method)
         } else {
@@ -129,12 +133,15 @@ fileprivate func _typedefInnerObject(_ typedef: OctoTypedef, origin: OctoOrigin?
 public struct AttributeError: Error {
   let message: String
   let origin: OctoOrigin?
+  /// The object this attribute is applied to
+  let appliedTo: OctoObject?
 
   let thrownAt: (file: String, function: String, line: UInt, column: UInt)
 
   public init(
     _ message: String,
     origin: OctoOrigin? = nil,
+    appliedTo: OctoObject? = nil,
     file: String = #file,
     function: String = #function,
     line: UInt = #line,
@@ -142,6 +149,7 @@ public struct AttributeError: Error {
   ) {
     self.message = message
     self.origin = origin
+    self.appliedTo = appliedTo
 
     self.thrownAt = (
       file: file,
@@ -155,6 +163,9 @@ public struct AttributeError: Error {
 extension AttributeError: CustomStringConvertible {
   public var description: String {
     var msg = "AttributeError: \(self.message)"
+    if let appliedTo = self.appliedTo {
+      msg += " applied to \(appliedTo)"
+    }
     if let origin = self.origin {
       msg += " @ \(origin)"
     }

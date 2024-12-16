@@ -88,7 +88,7 @@ public final class OctoFunction: OctoObject {
     self.returnType.optional = false
   }
 
-  override func finalize() throws {
+  override func finalize(_ lib: OctoLibrary) throws {
     guard let object = self.attachedTo else {
       return
     }
@@ -130,6 +130,9 @@ public final class OctoFunction: OctoObject {
         self.initializerType = .returnsSelf
       }
     }
+
+    self.returnType.finalize(lib)
+    try super.finalize(lib)
   }
 }
 
@@ -157,6 +160,11 @@ public final class OctoArgument: OctoObject {
 
   public override func setNullable(_ val: Bool) throws {
     self.type.optional = val
+  }
+
+  override func finalize(_ lib: OctoLibrary) throws {
+    self.type.finalize(lib)
+    try super.finalize(lib)
   }
 }
 
@@ -222,4 +230,22 @@ extension OctoFunctionAttachable {
 public enum OctoCallingConv {
   case c
   case swift
+}
+
+// String //
+
+extension OctoFunction: CustomDebugStringConvertible {
+  public var debugDescription: String {
+    var msg = "@Function \(self.bindingName!) ->\(self.returnType) attach:\(self.attachedTo == nil ? "nil" : "\(self.attachedTo!)"))"
+    for arg in self.arguments {
+      msg += "\n  \(String(reflecting: arg))"
+    }
+    return msg
+  }
+}
+
+extension OctoArgument: CustomDebugStringConvertible {
+  public var debugDescription: String {
+    "@Argument \(String(describing: self.bindingName)) \(self.type) self:\(self.isSelfArgument) named:\(self.namedArgument)"
+  }
 }

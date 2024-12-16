@@ -41,7 +41,7 @@ public final class OctoEnum: OctoObject, OctoFunctionAttachable {
     self.enumPrefix = prefix
   }
 
-  override func finalize() throws {
+  override func finalize(_ lib: OctoLibrary) throws {
     self.cases.forEach { enumCase in
       if let prefix = self.enumPrefix {
         if enumCase.ffiName!.hasPrefix(prefix) {
@@ -54,6 +54,7 @@ public final class OctoEnum: OctoObject, OctoFunctionAttachable {
         enumCase.strippedName = enumCase.ffiName
       }
     }
+    try super.finalize(lib)
   }
 }
 
@@ -107,5 +108,21 @@ public final class OctoEnumCase: OctoObject {
 extension OctoEnum: CustomStringConvertible {
   public var description: String {
     "Enum(name: \(self.bindingName!))"
+  }
+}
+
+extension OctoEnum: CustomDebugStringConvertible {
+  public var debugDescription: String {
+    var msg = "@Enum \(self.bindingName!) \(type) prefix:\(String(describing: self.enumPrefix))"
+    for c in self.cases {
+      msg += "\n  \(String(reflecting: c))"
+    }
+    return msg
+  }
+}
+
+extension OctoEnumCase: CustomDebugStringConvertible {
+  public var debugDescription: String {
+    "@EnumCase \(self.bindingName!) \(self.value?.literalValue ?? "")"
   }
 }

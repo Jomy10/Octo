@@ -73,5 +73,5 @@ public class OctoObject: Equatable, Hashable {
     }
   }
 
-  func finalize() throws {}
+  func finalize(_ lib: OctoLibrary) throws {}
 }

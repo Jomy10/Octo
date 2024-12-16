@@ -1,5 +1,7 @@
+@available(*, deprecated, message: "Use `OctoLibrary.addTypedef` instead")
 public final class OctoTypedef: OctoObject {
-  public let refersTo: OctoType
+  public private(set) var refersTo: OctoType
+  private let refersToDeferred: ((OctoLibrary) throws -> OctoType)?
 
   public init(
     origin: OctoOrigin,
@@ -7,6 +9,17 @@ public final class OctoTypedef: OctoObject {
     refersTo: OctoType
   ) {
     self.refersTo = refersTo
+    self.refersToDeferred = nil
+    super.init(origin: origin, name: name)
+  }
+
+  public init(
+    origin: OctoOrigin,
+    name: String,
+    refersToDeferred: @escaping (OctoLibrary) throws -> OctoType
+  ) {
+    self.refersTo = OctoType(kind: .Void, optional: false, mutable: false)
+    self.refersToDeferred = refersToDeferred
     super.init(origin: origin, name: name)
   }
 
@@ -24,5 +37,23 @@ public final class OctoTypedef: OctoObject {
       default:
         break
     }
+  }
+
+  public var mustFinalize: Bool {
+    self.refersToDeferred != nil
+  }
+
+  override func finalize(_ lib: OctoLibrary) throws {
+    if let refersToDeferred = self.refersToDeferred {
+      self.refersTo = try refersToDeferred(lib)
+    }
+    self.refersTo.finalize(lib)
+    try super.finalize(lib)
+  }
+}
+
+extension OctoTypedef: CustomDebugStringConvertible {
+  public var debugDescription: String {
+    "@typedef \(self.bindingName!) = \(String(reflecting: self.refersTo))"
   }
 }

@@ -69,7 +69,7 @@ public final class OctoRecord: OctoObject, OctoFunctionAttachable {
     self.type = .taggedUnion
   }
 
-  override func finalize() throws {
+  override func finalize(_ lib: OctoLibrary) throws {
     if self.type == .taggedUnion {
       if self.fields.count != 2 {
         throw TaggedUnionError.expected2Fields(found: self.fields.count)
@@ -85,6 +85,7 @@ public final class OctoRecord: OctoObject, OctoFunctionAttachable {
         throw TaggedUnionError.noTagField
       }
     }
+    try super.finalize(lib)
   }
 }
 
@@ -118,6 +119,11 @@ public final class OctoField: OctoObject {
   public override func setTaggedUnionType(enumCase: String) throws {
     self.taggedUnionCaseName = enumCase
   }
+
+  override func finalize(_ lib: OctoLibrary) throws {
+    self.type.finalize(lib)
+    try super.finalize(lib)
+  }
 }
 
 // String //
@@ -125,5 +131,21 @@ public final class OctoField: OctoObject {
 extension OctoRecord: CustomStringConvertible {
   public var description: String {
     "Record(name: \(self.bindingName!))"
+  }
+}
+
+extension OctoRecord: CustomDebugStringConvertible {
+  public var debugDescription: String {
+    var msg = "@Record.\(self.type) \(self.bindingName!)"
+    for field in self.fields {
+      msg += "\n  \(String(reflecting: field))"
+    }
+    return msg
+  }
+}
+
+extension OctoField: CustomDebugStringConvertible {
+  public var debugDescription: String {
+    "@Field \(self.bindingName!) \(self.type)"
   }
 }
