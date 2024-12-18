@@ -108,32 +108,33 @@ extension CXCursor: Hashable, Equatable {
       && lhs.data.1! == rhs.data.1!
       && lhs.data.2! == rhs.data.2!
 
-    if lhs.kind != CXCursor_EnumDecl && lhs.kind != CXCursor_StructDecl && lhs.kind != CXCursor_UnionDecl {
-      return res && lhs.data.0! == rhs.data.0!
-    } else {
-      return res
-    }
+    return res && lhs.data.0! == rhs.data.0!
   }
 
   public func hash(into hasher: inout Hasher) {
-    //hasher.combine(clang_hashCursor(self))
-    hasher.combine(self.kind.rawValue)
-    hasher.combine(self.xdata)
-    if self.kind != CXCursor_EnumDecl && self.kind != CXCursor_StructDecl && self.kind != CXCursor_UnionDecl {
-      if let data = self.data.0 {
-        hasher.combine(data)
-      } else {
-        hasher.combine(0)
-      }
-    }
-    if let data = self.data.1 {
-      hasher.combine(data)
-    } else {
-      hasher.combine(0)
-    }
-    if let data = self.data.2 {
-      hasher.combine(data)
-    }
+    hasher.combine(clang_hashCursor(self))
+
+    //hasher.combine(self.kind.rawValue)
+    //hasher.combine(self.xdata)
+    //hasher.combine(self.data.0)
+    //hasher.combine(self.data.1)
+    //hasher.combine(self.data.2)
+
+    //if self.kind != CXCursor_EnumDecl && self.kind != CXCursor_StructDecl && self.kind != CXCursor_UnionDecl {
+    //  if let data = self.data.0 {
+    //    hasher.combine(data)
+    //  } else {
+    //    hasher.combine(0)
+    //  }
+    //}
+    //if let data = self.data.1 {
+    //  hasher.combine(data)
+    //} else {
+    //  hasher.combine(0)
+    //}
+    //if let data = self.data.2 {
+    //  hasher.combine(data)
+    //}
   }
 }
 

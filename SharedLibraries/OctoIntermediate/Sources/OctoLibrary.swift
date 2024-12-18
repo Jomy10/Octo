@@ -65,6 +65,18 @@ public struct OctoLibrary: AutoRemovable {
     return self.objects[id]
   }
 
+  public func getObjectHash(byName name: String, ofType type: OctoObject.Type) -> AnyHashable? {
+    guard let id = self.nameMap[name] else {
+      return nil
+    }
+
+    if Swift.type(of: self.objects[id]) != type {
+      return nil
+    }
+
+    return langRefMap.first(where: { (hash, objId) in objId == id })?.key
+  }
+
   /// Get the underlying type of a typedef
   public func getType(byName name: String) -> OctoType? {
     if let typedefType = self.typedefs[name] {

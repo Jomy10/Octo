@@ -145,8 +145,15 @@ fileprivate func visitStructDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) t
   let recordName = cursor.spelling!
   clogger.trace("@StructDecl.Record \(recordName)")
 
+  let ref: AnyHashable
+  if let obj = lib.getObjectHash(byName: recordName, ofType: OctoRecord.self) as? OctoRecord {
+    ref = obj
+  } else {
+    ref = cursor
+  }
+
   if let obj = lib.getObject(forRef: cursor) as? OctoRecord {
-    if obj.ffiName != recordName { throw ParseError("Redefinition with different name", origin: .c(cursor.location)) }
+    if obj.ffiName != recordName { throw ParseError("Redefinition with different name (was \(obj.ffiName!), trying to replace with \(recordName))", origin: .c(cursor.location)) }
     if obj.type != .`struct` {
       throw ParseError("Redefinition of type \(recordName) with a different type (got \(obj.type), expected struct)", origin: .c(cursor.location))
     }
@@ -156,7 +163,7 @@ fileprivate func visitStructDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) t
         origin: .c(cursor.location),
         name: recordName,
         type: .`struct`
-      ), ref: cursor
+      ), ref: ref
     )
   }
 
@@ -343,11 +350,16 @@ fileprivate func addAttribute(
   _ attr: OctoAttribute,
   _ lib: inout OctoLibrary
 ) throws {
-  guard let object = lib.getObject(forRef: parent) else {
-    throw ParseError("Object \(parent.spelling!) is not defined", origin: .c(cursor.location))
+  if let object = lib.getObject(forRef: parent) {
+    try object.addAttribute(attr)
+  } else {
+    if let object = lib.getObject(byName: parent.spelling!) {
+      try object.addAttribute(attr)
+    } else {
+      throw ParseError("Object \(parent.spelling!) is not defined", origin: .c(cursor.location))
+    }
   }
 
-  try object.addAttribute(attr)
 }
 
 fileprivate func visitAnnotateAttr(_ cursor: CXCursor, parent: CXCursor, _ lib: inout OctoLibrary) throws -> CXChildVisitResult {
