@@ -90,15 +90,23 @@ extension OctoType.Kind {
         switch (cursor.kind) {
           case CXCursor_StructDecl: fallthrough
           case CXCursor_UnionDecl:
-            guard let object = lib.getObject(forRef: cursor) as? OctoRecord else {
-              throw ParseError("Object \(cursor.spelling!) is not a record or doesn't exist", origin: origin)
+            if let object = lib.getObject(forRef: cursor) as? OctoRecord {
+              self = .Record(object)
+            } else {
+              guard let object = lib.getObject(byName: cursor.spelling!) as? OctoRecord else {
+                throw ParseError("Object \(cursor.spelling!) is not a record or doesn't exist", origin: origin)
+              }
+              self = .Record(object)
             }
-            self = .Record(object)
           case CXCursor_EnumDecl:
-            guard let object = lib.getObject(forRef: cursor) as? OctoEnum else {
-              throw ParseError("Object \(cursor.spelling!) is not an enum or doesn't exist", origin: origin)
+            if let object = lib.getObject(forRef: cursor) as? OctoEnum {
+              self = .Enum(object)
+            } else {
+              guard let object = lib.getObject(byName: cursor.spelling!) as? OctoEnum else {
+                throw ParseError("Object \(cursor.spelling!) is not an enum or doesn't exist", origin: origin)
+              }
+              self = .Enum(object)
             }
-            self = .Enum(object)
           case CXCursor_TypedefDecl:
             if let obj = lib.getObject(forRef: cursor.typedefDeclUnderlyingType.typeDeclaration) {
               if let obj = obj as? OctoRecord {

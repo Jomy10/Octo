@@ -1,5 +1,6 @@
 import OctoIntermediate
 import OctoGenerateShared
+import OctoIO
 
 func rubyConstantName(of name: some StringProtocol) -> String {
   if name.first!.isLetter {
@@ -52,16 +53,19 @@ extension OctoLibrary {
         try object.generateRubyBindingCode(options: options, in: self, ffiModuleName: ffiModuleName)
       }
 
-      for (name, type) in self.typedefs {
-        {switch (type.kind) {
-          case .Record(let record):
-            return "\(rubyConstantName(of: name)) = \(record.rubyName)"
-          case .Enum(let e):
-            return "\(rubyConstantName(of: name)) = \(e.rubyName)"
-          default:
-            return ""
-        }}()
-      }
+      self.typedefs.map { (name, type) in
+        switch (type.kind) {
+          case .Record(let record): return "\(rubyConstantName(of: name)) = \(record.rubyName)"
+          case .Enum(let e): return "\(rubyConstantName(of: name)) = \(e.rubyName)"
+          case .Pointer(to: let val):
+            switch (val.kind) {
+              case .Record(let record): return "\(rubyConstantName(of: name)) = \(record.rubyName)"
+              case .Enum(let e): return "\(rubyConstantName(of: name)) = \(e.rubyName)"
+              default: return ""
+            }
+          default: return ""
+        }
+      }.joined(separator: "\n")
     }))
     end
     """

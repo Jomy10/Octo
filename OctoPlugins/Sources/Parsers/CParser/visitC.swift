@@ -181,6 +181,13 @@ fileprivate func visitUnionDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) th
 
   clogger.trace("@UnionDecl.Record \(recordName)")
 
+  let ref: AnyHashable
+  if let obj = lib.getObjectHash(byName: recordName, ofType: OctoRecord.self) as? OctoRecord {
+    ref = obj
+  } else {
+    ref = cursor
+  }
+
   if let obj = lib.getObject(forRef: cursor) as? OctoRecord {
     if obj.ffiName != recordName { throw ParseError("Redefinition with different name", origin: .c(cursor.location)) }
     if obj.type != .union {
@@ -192,7 +199,7 @@ fileprivate func visitUnionDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) th
         origin: .c(cursor.location),
         name: recordName,
         type: .`union`
-      ), ref: cursor
+      ), ref: ref
     )
   }
 
@@ -258,6 +265,13 @@ fileprivate func visitEnumDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) thr
 
   clogger.trace("@EnumDecl.Enum \(enumDeclIntegerType) \(enumName)")
 
+  let ref: AnyHashable
+  if let obj = lib.getObjectHash(byName: enumName, ofType: OctoRecord.self) as? OctoRecord {
+    ref = obj
+  } else {
+    ref = cursor
+  }
+
   if let obj = lib.getObject(forRef: cursor) as? OctoEnum {
     if obj.ffiName != enumName { throw ParseError("Redefinition with different name", origin: .c(cursor.location)) }
     if obj.type != enumDeclIntegerType {
@@ -269,7 +283,7 @@ fileprivate func visitEnumDecl(_ cursor: CXCursor, _ lib: inout OctoLibrary) thr
         origin: .c(cursor.location),
         name: enumName,
         type: enumDeclIntegerType
-      ), ref: cursor
+      ), ref: ref
     )
   }
 
