@@ -120,10 +120,20 @@ extension CXCursor: Hashable, Equatable {
     hasher.combine(self.kind.rawValue)
     hasher.combine(self.xdata)
     if self.kind != CXCursor_EnumDecl && self.kind != CXCursor_StructDecl && self.kind != CXCursor_UnionDecl {
-      hasher.combine(self.data.0!)
+      if let data = self.data.0 {
+        hasher.combine(data)
+      } else {
+        hasher.combine(0)
+      }
     }
-    hasher.combine(self.data.1!)
-    hasher.combine(self.data.2!)
+    if let data = self.data.1 {
+      hasher.combine(data)
+    } else {
+      hasher.combine(0)
+    }
+    if let data = self.data.2 {
+      hasher.combine(data)
+    }
   }
 }
 

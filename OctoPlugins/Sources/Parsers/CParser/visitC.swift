@@ -103,11 +103,10 @@ func visitC(
         return CXChildVisit_Continue
       case CXCursor_IntegerLiteral:
         return CXChildVisit_Continue
-      //case CXCursor_UnexposedExpr:
-      //  print("UnexposedExpr")
-      //  print(cursor.spelling!, cursor.kind, cursor.cursorType.spelling!)
-      //  fatalError()
-      //  return CXChildVisit_Continue
+      case CXCursor_UnexposedExpr: fallthrough
+      case CXCursor_StringLiteral:
+        clogger.debug("\(cursor.spelling!) \(cursor.kind.spelling!) \(cursor.cursorType.spelling!)")
+        return CXChildVisit_Recurse
       default:
         throw ParseError.unhandledKind(cursor.kind, location: cursor.location)
     }

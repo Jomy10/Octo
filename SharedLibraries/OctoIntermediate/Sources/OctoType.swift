@@ -43,7 +43,7 @@ public struct OctoType: Equatable {
   }
 
   public static func ==(lhs: Self, rhs: Self) -> Bool {
-    return lhs.kind == rhs.kind && lhs.optional == rhs.optional && lhs.mutable == rhs.optional
+    return lhs.kind == rhs.kind && lhs.optional == rhs.optional && lhs.mutable == rhs.mutable
   }
 
   public enum Kind: Equatable {

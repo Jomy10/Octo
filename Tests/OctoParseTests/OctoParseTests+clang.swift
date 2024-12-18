@@ -153,11 +153,12 @@ final class OctoParseTests_Clang: XCTestCase {
 
         XCTAssertEqual(obj.kind, OctoFunction.FunctionType.function)
         XCTAssert(obj.attachedTo == nil)
-        XCTAssertEqual(obj.returnType, OctoType(
+        let t = OctoType(
           kind: .Void,
           optional: false,
           mutable: true
-        ))
+        )
+        XCTAssertEqual(obj.returnType, t, "Kind: \(obj.returnType.kind == t.kind) optional: \(obj.returnType.optional == t.optional) mutable: \(obj.returnType.mutable == t.mutable)")
 
         XCTAssertEqual(obj.arguments.count, 1)
         XCTAssertEqual(obj.arguments[0].ffiName, nil)
