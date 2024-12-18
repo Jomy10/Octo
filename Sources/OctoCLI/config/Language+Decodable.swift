@@ -1,7 +1,7 @@
 import OctoIntermediate
 import ArgumentParser
 
-extension Language: Decodable, CodingKey, ExpressibleByArgument {
+extension Language: @retroactive Decodable, @retroactive CodingKey, @retroactive ExpressibleByArgument {
   public init(from decoder: Decoder) throws {
     let valueContainer = try decoder.singleValueContainer()
     let stringValue = try valueContainer.decode(String.self)

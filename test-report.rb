@@ -116,11 +116,11 @@ for _, testSuiteData in out
 end
 
 for name, testSuiteData in out
-  puts "#{name.blue}: #{formatCounts(testSuiteData[:testCount], testSuiteData[:failures])}"
+  puts "#{(name || "unknown").blue}: #{formatCounts(testSuiteData[:testCount], testSuiteData[:failures])}"
   for testSuiteGroupName, testSuiteGroupData in testSuiteData[:testSuiteGroups]
     puts "  #{testSuiteGroupName.cyan}: #{formatCounts(testSuiteGroupData[:totalCount], testSuiteGroupData[:totalFailures])}"
     for testSuite in testSuiteGroupData[:testSuites]
-      puts "    #{testSuite[:name].yellow}: #{formatCounts(testSuite[:testCount], testSuite[:failures])}"
+      puts "    #{(testSuite[:name] || "unknown").yellow}: #{formatCounts(testSuite[:testCount], testSuite[:failures])}"
       for testCaseName, testCaseData in testSuite[:testCases]
         puts "      #{formatTestCase(testCaseName, testCaseData)}"
         for failure in testCaseData[:failures]
@@ -131,6 +131,8 @@ for name, testSuiteData in out
     end
   end
 end
+
+# Test failures per language (features)
 
 def determineLang(testCaseName)
   return :ruby if testCaseName.include?("Ruby")
@@ -151,6 +153,11 @@ def determineFeatureName(testCaseName)
 end
 
 language_support = Hash.new
+
+if out["OctoPackageTests.xctest"].nil? || out["OctoPackageTests.xctest"][:testSuiteGroups].nil? || out["OctoPackageTests.xctest"][:testSuiteGroups]["OctoExecutionTests"].nil?
+  puts "No test results found per language".red
+  exit 1
+end
 
 testSuiteGroup = out["OctoPackageTests.xctest"][:testSuiteGroups]["OctoExecutionTests"]
 for testSuite in testSuiteGroup[:testSuites]

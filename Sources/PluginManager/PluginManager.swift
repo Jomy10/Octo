@@ -1,5 +1,6 @@
 import Plugins
 import Foundation
+import Synchronization
 
 //#if DEBUG
 //let PLUGIN_PATH = Bundle.main.resourceURL! //URL(filePath: ".build/debug")
@@ -7,10 +8,10 @@ import Foundation
 //#error("unimplemented")
 //#endif
 
-public struct PluginManager {
-  public static var `default` = PluginManager(pluginPath: PLUGIN_PATH)
+public struct PluginManager: ~Copyable {
+  nonisolated(unsafe) public static var `default` = PluginManager(pluginPath: PLUGIN_PATH)
 
-  var plugins: [String:Plugin] = [:]
+  let plugins: Mutex<[String:Plugin]> = Mutex([:])
   // TODO: rename to pluginURL for consistency with stdlib
   let pluginPath: URL
 
@@ -26,12 +27,14 @@ public struct PluginManager {
     deinitData: UnsafeMutableRawPointer? = nil,
     deinitFunctionName: String? = nil
   ) throws -> Plugin {
-    if let plugin = self.plugins[name] {
-      return plugin
-    } else {
-      let plugin = try Plugin(name: name, location: self.pluginPath, initData: initData, initFunctionName: initFunctionName, deinitData: deinitData, deinitFunctionName: deinitFunctionName)
-      self.plugins[name] = plugin
-      return plugin
+    return try self.plugins.withLock { plugins in
+      if let plugin = plugins[name] {
+        return plugin
+      } else {
+        let plugin = try Plugin(name: name, location: self.pluginPath, initData: initData, initFunctionName: initFunctionName, deinitData: deinitData, deinitFunctionName: deinitFunctionName)
+        plugins[name] = plugin
+        return plugin
+      }
     }
   }
 

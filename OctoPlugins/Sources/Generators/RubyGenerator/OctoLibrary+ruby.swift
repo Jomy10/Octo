@@ -51,6 +51,17 @@ extension OctoLibrary {
       }) {
         try object.generateRubyBindingCode(options: options, in: self, ffiModuleName: ffiModuleName)
       }
+
+      for (name, type) in self.typedefs {
+        {switch (type.kind) {
+          case .Record(let record):
+            return "\(rubyConstantName(of: name)) = \(record.rubyName)"
+          case .Enum(let e):
+            return "\(rubyConstantName(of: name)) = \(e.rubyName)"
+          default:
+            return ""
+        }}()
+      }
     }))
     end
     """

@@ -10,18 +10,8 @@ extension OctoType {
     in lib: OctoLibrary,
     origin: OctoOrigin? = nil
   ) throws {
-    let kind: OctoType.Kind
-    var resolveTypeKind: ((OctoLibrary) -> OctoType.Kind)? = nil
-    do {
-      kind = try OctoType.Kind(cxType: cxType, in: lib, origin: origin)
-    } catch let mustResolve as Kind.MustResolve {
-      kind = .Void
-      resolveTypeKind = mustResolve.resolution
-    } catch let error {
-      throw error
-    }
+    let kind: OctoType.Kind = try OctoType.Kind(cxType: cxType, in: lib, origin: origin)
     self.init(cxType: cxType, kind: kind, origin: origin)
-    self.resolveTypeKind = resolveTypeKind
   }
 
   init(cxType: CXType, kind: OctoType.Kind, origin: OctoOrigin? = nil) {
@@ -36,11 +26,6 @@ extension OctoType {
 }
 
 extension OctoType.Kind {
-  // TODO: better way of handling this
-  struct MustResolve: Error {
-    let resolution: (OctoLibrary) -> OctoType.Kind
-  }
-
   init(cxType: CXType, in lib: OctoLibrary, origin: OctoOrigin? = nil) throws {
     switch (cxType.kind) {
       case CXType_Void: self = .Void
@@ -115,14 +100,16 @@ extension OctoType.Kind {
             }
             self = .Enum(object)
           case CXCursor_TypedefDecl:
-            if let object = lib.getObject(forRef: cursor) as? OctoTypedef {
-              if object.mustFinalize {
-                throw MustResolve(resolution: { lib in
-                  object.refersTo.kind
-                })
+            if let obj = lib.getObject(forRef: cursor.typedefDeclUnderlyingType.typeDeclaration) {
+              if let obj = obj as? OctoRecord {
+                self = .Record(obj)
+              } else if let obj = obj as? OctoEnum {
+                self = .Enum(obj)
               } else {
-                self = object.refersTo.kind
+                throw ParseError("Object cannot be typedef'd \(obj)", origin: origin)
               }
+            } else if let type = lib.getType(byName: cxType.spelling!) {
+              self = type.kind
             } else {
               guard let type = Self.systemTypedef(cxType: cxType, name: cursor.spelling!) else {
                 throw ParseError("Object \(cursor.spelling!) is not a typedef or doesn't exist", origin: origin)

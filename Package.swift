@@ -1,10 +1,10 @@
-// swift-tools-version: 5.7
+// swift-tools-version: 6.0
 
 import PackageDescription
 
 let package = Package(
   name: "Octo",
-  platforms: [.macOS(.v13)],
+  platforms: [.macOS(.v15)],
   products: [
     .executable(
       name: "octo",

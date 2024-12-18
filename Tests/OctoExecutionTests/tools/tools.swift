@@ -27,9 +27,9 @@ fileprivate func checkCommand(name: String) throws -> URL? {
 }
 
 struct Tools {
-  static var clang: URL? = try? checkCommand(name: "clang")
-  static var ruby: URL? = try? checkCommand(name: "ruby")
-  static var gem: URL? = try? checkCommand(name: "gem")
+  static let clang: URL? = try? checkCommand(name: "clang")
+  static let ruby: URL? = try? checkCommand(name: "ruby")
+  static let gem: URL? = try? checkCommand(name: "gem")
 }
 
 enum ExecutionError: Error {

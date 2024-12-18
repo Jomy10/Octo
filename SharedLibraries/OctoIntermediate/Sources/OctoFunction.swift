@@ -131,7 +131,6 @@ public final class OctoFunction: OctoObject {
       }
     }
 
-    self.returnType.finalize(lib)
     try super.finalize(lib)
   }
 }
@@ -160,11 +159,6 @@ public final class OctoArgument: OctoObject {
 
   public override func setNullable(_ val: Bool) throws {
     self.type.optional = val
-  }
-
-  override func finalize(_ lib: OctoLibrary) throws {
-    self.type.finalize(lib)
-    try super.finalize(lib)
   }
 }
 

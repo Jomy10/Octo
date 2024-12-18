@@ -8,7 +8,7 @@ public struct OctoLibrary: AutoRemovable {
   public var ffiLanguage: Language = .c
   private var langRefMap: [AnyHashable:Int] = [:]
   private var nameMap: [String:Int] = [:]
-  private var typedefs: [String:OctoType] = [:]
+  public private(set) var typedefs: [String:OctoType] = [:]
   public private(set) var objects: [OctoObject] = []
   public var destroy: () -> Void = {}
   private var hasFinalized = false
@@ -65,6 +65,7 @@ public struct OctoLibrary: AutoRemovable {
     return self.objects[id]
   }
 
+  /// Get the underlying type of a typedef
   public func getType(byName name: String) -> OctoType? {
     if let typedefType = self.typedefs[name] {
       return typedefType
@@ -153,7 +154,7 @@ extension OctoLibrary: CustomDebugStringConvertible {
     #if OCTO_DEBUGINFO
     msg += "\n" + self.langRefMap.map { (k, v) in
       let obj = self.objects[v]
-      return "\(k): \(obj.ffiName ?? "\(obj)")"
+      return "\(k.hashValue): \(obj.ffiName ?? "\(obj)")"
     }.joined(separator: "\n")
     #endif
     return msg

@@ -2,8 +2,6 @@ public struct OctoType: Equatable {
   public var kind: OctoType.Kind
   public var optional: Bool
   public var mutable: Bool
-  /// resolve `kind` in finalize method
-  public var resolveTypeKind: ((OctoLibrary) -> OctoType.Kind)? = nil
 
   public init(
     kind: OctoType.Kind,
@@ -42,12 +40,6 @@ public struct OctoType: Equatable {
 
   public var isUserType: Bool {
     Self.isUserType(self)
-  }
-
-  public mutating func finalize(_ lib: OctoLibrary) {
-    if let resolveTypeKind = self.resolveTypeKind {
-      self.kind = resolveTypeKind(lib)
-    }
   }
 
   public static func ==(lhs: Self, rhs: Self) -> Bool {

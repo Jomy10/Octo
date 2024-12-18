@@ -6,7 +6,7 @@ import OctoConfigKeys
 
 extension OctoConfig: Decodable {
   init(decodingTOMLFile fileURL: URL) throws {
-    let fileContents = try String(contentsOf: fileURL)
+    let fileContents = try String(contentsOf: fileURL, encoding: .utf8)
     self = try TOMLDecoder(strictDecoding: true)
       .decode(Self.self, from: fileContents)
   }

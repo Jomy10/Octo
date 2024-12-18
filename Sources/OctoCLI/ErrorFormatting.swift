@@ -1,6 +1,6 @@
 import TOMLKit
 
-extension Swift.DecodingError: CustomStringConvertible {
+extension Swift.DecodingError: @retroactive CustomStringConvertible {
   private var errorTypeMsg: String {
     switch (self) {
       case .typeMismatch: return "type mismatch"
@@ -48,7 +48,7 @@ extension Swift.DecodingError: CustomStringConvertible {
   }
 }
 
-extension TOMLKit.UnexpectedKeysError: CustomStringConvertible {
+extension TOMLKit.UnexpectedKeysError: @retroactive CustomStringConvertible {
   public var description: String {
     let keys = self.keys.map { k, v in
       "'\(k)' at \(v.map { "\($0.stringValue)" }.joined(separator: "."))"

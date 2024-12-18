@@ -42,14 +42,6 @@ public final class OctoTypedef: OctoObject {
   public var mustFinalize: Bool {
     self.refersToDeferred != nil
   }
-
-  override func finalize(_ lib: OctoLibrary) throws {
-    if let refersToDeferred = self.refersToDeferred {
-      self.refersTo = try refersToDeferred(lib)
-    }
-    self.refersTo.finalize(lib)
-    try super.finalize(lib)
-  }
 }
 
 extension OctoTypedef: CustomDebugStringConvertible {

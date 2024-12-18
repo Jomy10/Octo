@@ -119,11 +119,6 @@ public final class OctoField: OctoObject {
   public override func setTaggedUnionType(enumCase: String) throws {
     self.taggedUnionCaseName = enumCase
   }
-
-  override func finalize(_ lib: OctoLibrary) throws {
-    self.type.finalize(lib)
-    try super.finalize(lib)
-  }
 }
 
 // String //

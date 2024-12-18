@@ -26,7 +26,7 @@ func findDifferences(_ got: String, _ expected: String) -> String {
 }
 
 func testEq(_ file: String, _ expected: String, limit: Int? = nil) throws {
-  var got = try String(contentsOfFile: file)
+  var got = try String(contentsOfFile: file, encoding: .utf8)
   if let limit = limit {
     got = String(got[..<got.index(got.startIndex, offsetBy: limit)])
   }

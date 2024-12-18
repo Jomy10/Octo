@@ -1,4 +1,4 @@
-public enum Language: Equatable, Hashable {
+public enum Language: Equatable, Hashable, Sendable {
   case c
   case cxx
   case swift

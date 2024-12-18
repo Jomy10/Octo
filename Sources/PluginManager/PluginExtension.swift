@@ -4,6 +4,8 @@ import OctoMemory
 import OctoIntermediate
 import OctoGenerateShared
 
+extension Plugin: @retroactive @unchecked Sendable {}
+
 // This describes the interface a ParserPlugin should have
 extension Plugin {
   // TODO: pluginAPIVersion -> determine if Plugin is compatible with current Octo version
